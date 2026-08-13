@@ -1,0 +1,8 @@
+# Noyau : rien. Python 3.11+ suffit (dataclasses, decimal, json).
+# Ce qui suit ne sert qu'au parsing, aux graphiques et à l'interface.
+
+beautifulsoup4>=4.12    # parsing MT5 (PAS pandas.read_html : voir core/parser.py)
+lxml>=5.0
+streamlit>=1.35         # 1.35 minimum : on utilise st.plotly_chart(on_select=...)
+plotly>=5.20
+pytest>=8.0             # dev

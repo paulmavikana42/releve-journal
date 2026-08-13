@@ -1,0 +1,164 @@
+Lors de la creation d'un nouveau compte:
+	il faut une isolation totale des informations (les idées, les thèses et tout le reste)
+
+
+ajoute aussi l'option pour abandonner une idée comme pour la thèse 
+
+supprime les review de these supprimé et assure toi que c'est aussi le cas pour les idées abandonnés
+
+
+
+Les specs apprises sur le menu de gauche supprime moi ça 
+
+dans l'ajout d'une idée,
+	le je viens d'entrer supprime ça 
+	
+	le thème macro laisse le client l'ecrire et non proposé un menu deroulant
+
+	fait pareil dans nouvelle thèse 
+
+
+
+	
+
+
+dans réglages
+	tes données, Journal et captures : C:\Users\Paul\Documents\saas\data supprime ça  
+	
+
+
+
+
+Modification d'une idée:
+	supprimer les captures ne suffisent pas (je veux une modification totale sans marquage plus tard)
+	
+	je veux que lors de la creation d'une idée je puisse déjà raccorder la thèse liée
+
+	
+	pendant une modification tout ce qui est lié à la review post trade ne doit pas s'afficher, donc apres le truc lié la thèse je doit voir un bouton sauvegarder
+
+	
+	 
+
+
+
+
+Modification d'une thèse:
+	applique les mm contraintes liées à ce qu'on a fait sur idée sur la thèse 
+
+
+
+
+Sur gérer les comptes il est impossible réellement modifier les informations déjà entrer dès la creation du compte corrige ça
+
+il doit rentrer le profit split de sa prop firm 
+
+	aussi permet de renter les objectifs de la prop non pas en objectif de profit unique, propose 	d'abord le type de challenge (1 phase avec son objectif de profit, 2 phase avec son 	objectif de profit, instant funding dans le dernier cas pas 	d'objectif de profit à afficher cette options est soit grisé soit disparait direct), 	
+	permet aussi que quelqu'un puisse directement commencé en phase 2 sans avoir fait la phase 1 adapte la structure présenté comme pour 
+	le precedent cas 
+
+	si le client est en 2 phases alors il doit notifier l'objectif phase 1 et objectif phase 2
+
+	le client doit selectionner sa devise en $ ou euro ou gbp adapte ainsi sur ce compte 	l'affichage du symbole à utiliser 
+
+	sur jours de trading min le client doit specifier si jour de trading sur sa prop firm veut 	dire juste une position ouverte, une position ouverte avec un gain egale à (il doit rentrer un 	pourcentage) ou avec une perte egale à (il doit rentrer un pourcentage), puis de lui demander 	si sa prop utilise les jours de trading min uniquement en challenge ou aussi en funded
+
+supprime position ouverte pendant le weekend 
+ 
+
+
+
+j'aimerais qu'on retravaille compliance prop:
+	etanchéité totale comme je te l'ai demandé pour la creation d'un nouveau compte
+
+	en fonction de ce qui est selectionné adapte en conséquences le panneau d'affichage de 	compliance prop
+
+	aussi pour un nouveau compte le dd max doit revenir à 0
+
+	pour le dd max sur l'ecrito plancher fatal si 90k est tapé le il te reste doit 	afficher 0
+
+ 	pour le dd journalier le avant breach une fois il est superieur ou egale au restant du dd max 	indexe le à la mm somme que le dd max (en pourcentage pour qu'il sache combien il peut risquer 	dans la mm journée et base du jour doit representer cette somme (pourcentage) en $ ou devise 	choisit lors de la creation du compte
+
+	adapte aussi le calcul du dd daily en fonction du statique ou trailing 
+
+	sur jours de trading min recupere ce que le client a mis lors de la creation du compte et 	ajuste le conteneur de jours de trading min de sorte à ce que une fois les jours de trading 	complété (ex 3/3 ça n'avance plus à 4/3)
+
+	supprime aussi position ouverte le weekend
+
+
+	va chercher les besoins d'un traders prop firm futures et verifie si notre solution correspond 	à ces besoins ou y'a des points qu'on peut upgrade	
+
+	sur chaque conteneur si c'est bon pour le client met ça en vert si ça se porte bien mais pas encore bon vert pale, la couleur du neutre c'est la couleur du background par defaut du conteneur et plus les objectifs s'eloigne on part vers le rouge pale et le rouge vif si on est vraiment mal
+
+	met toi dans la peau d'un user et si tu sens le moindre point de friction met le rond avec le point ? dedans et explique clairement à un non initié
+
+	le calendrier present dans le Dashboard emmene le aussi dans compliance prop imbrique au dessus de regle du challenge 
+
+	aussi recupere la phase dans laquelle se trouve le client depuis les réglages du compte pour mieux afficher les data (par exemple si le client marque qu'il est déjà dans sa phase 2 l'objectif de profit doit etre du nombre de % qu'il a renseigné 
+
+en instant funding ou pour un 	user qui vient de terminer sa phase 2 donc il est funded ou un trader qui était en monophase et qui la termine donc qui est funded ne doit plus avoir d'objectif de profit au contraire à la place du contenu de ce conteneur il doit avoir le profit generé indexé de son profit split donc de ce qu'il va réellement touché sur un payout s'il en perte signale juste que son profit est negatif et respecte le code couleur du conteneur.  
+
+
+
+Dans le Dashboard,
+
+	a) espace les petites écritures collés aux grosses, aligne les conteneurs trop court ou trop gros (je parle de tout ce qui est au dessus de le mois, jour par jour, etat du challenge aussi bref met toi dans la peau d'un ux/ui design afin que tout soit propre et agreable à l'œil je te fais confiance)
+
+	dans trades récents, symbole décisions et statut sont trop collés ligne de gauche decolle les afin qu'il respire pareil pour les thèses aussi
+
+	qualité de la courbe c'est bcp trop brouillon applique ce que je t'ai demandé sur a) et retire les méthodes de calculs de sharpe et sortino 
+
+	Sur 3 jours, l'intervalle de confiance de ce Sharpe couvre largement le zéro : il est indiscernable du hasard. Il est affiché pour le suivre grandir, pas pour en tirer une 	conclusion. Le drawdown, lui, est mesuré après chaque transaction — comme le fait ta prop firm, pas en clôture de journée. supprime ça à la place remplace et rond ? pour expliquer à un noob ce qu'est le sharpe et le sortino et en quoi ça peut aider dans l'analyse de data
+
+	au niveau de l'analyse pour la matrice elle ne doit pas etre sur chaque mois mais plutôt sur l'ensemble des trades du compte (cloisonne bien sur le compte exclusivement et pas sur tout les comptes on est ok ? ) tout mois confondu 
+
+	pour cette matrice fait des conteneur propre en respectant le a) et avec la norme de couleur que tu as use pour compliance prop le mieux c'est qu'on decide tout les deux de ce qui sera compris dans ces differents conteneur pour que le client comprenne rapidement ses propres datas 
+
+
+
+
+la transition du point par point entre section est un peu saccadé et parfois il faut s'y prendre à 2 reprises ce qui est chiant revois cette aspect
+
+
+
+
+Change le nom de journal et met idée à la place 
+
+
+
+
+Pour la navigatio,
+	que la section idée s'affiche en bas de reglage dès que je manip une idée est mal fait la navigation n'est pas bonne 
+
+	aussi quand je click sur l'histogramme des trades sur le dashboard ça cree ce point idée dans le menu c'est ce dont je parlais ajuste 
+
+	sur le bouton retour ne doit pas ramené vers idée (anciennement journal) mais vers le dashbord, retiens cette logique quelqu'un qui rentre dans une petite section par le biais d'une grande sectin exemple mon cas quelqu'un qui est dans dashboard (grande section) click sur une barre donc est redirigé vers l'idée son bouton retour doit etre sur la grande section (ici le dashboard exactement au point ou il etait donc dans la partie tes idées, une par barre  
+
+
+
+
+
+dans la review d'un trade, 
+	le marché a t-il donné raison à la thèse (retire thèse et met idée car si je ne me trompe pas le calcul de la justesse est basé sur la validité d'une idée
+
+	justesse — le marché t'a-t-il donné raison ? supprime thèse et idée abandonné remplace ces point par idées fausse et idée non testé je suis sorti avant que le marché et idée icorrect ajuste les ecritos qui parlait de thèse pour les calé sur le mot idée et positionne le rond ? pour expliquer au noob 
+
+
+
+
+
+pour la matrice une fois les 30/30 atteint je veux qu'elle se presente comme le html (mon croquis) que je t'ai envoyé bien sur respecte le a) et l'identité visuelle de notre saas 
+
+
+
+
+
+je veux que tu rajoutes sur l'ecriture d'une these la possibilité de rajouter des images ou des png de diagrammes par exemple, refere toi au html (mon corquis) que je t'ai envoyé bien sur respecte le a) et l'identité visuelle de notre saas 
+
+
+
+
+
+ 
+	
+	

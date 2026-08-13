@@ -1,0 +1,38 @@
+RELEVÉ — Licence d'utilisation
+==============================
+
+Copyright © 2026 Paul (paulmavikana42@icloud.com). Tous droits réservés.
+
+Le logiciel « Relevé » et l'ensemble des fichiers de ce dossier — code source,
+exécutable, ressources, documentation — sont la propriété exclusive de l'auteur.
+
+
+CE QUI EST ACCORDÉ
+------------------
+Cette copie est fournie à des fins d'ÉVALUATION PRIVÉE, à titre personnel et
+gratuit. Elle ne transfère aucun droit de propriété. Vous êtes autorisé à
+installer et utiliser cette copie sur vos propres appareils, pour l'évaluer.
+
+
+CE QUI N'EST PAS ACCORDÉ (sans accord écrit préalable de l'auteur)
+-----------------------------------------------------------------
+  - redistribuer, publier, revendre, louer ou prêter ce logiciel ou l'un de ses
+    fichiers, en tout ou en partie ;
+  - le décompiler, le désassembler, ou en extraire le code source pour le
+    réutiliser ailleurs ;
+  - en créer des œuvres dérivées ;
+  - retirer ou masquer les présentes mentions de propriété.
+
+
+AUCUNE GARANTIE
+---------------
+LE LOGICIEL EST FOURNI « EN L'ÉTAT », SANS GARANTIE D'AUCUNE SORTE, EXPRESSE OU
+IMPLICITE. L'AUTEUR NE POURRA ÊTRE TENU RESPONSABLE D'AUCUN DOMMAGE, PERTE DE
+DONNÉES OU PERTE FINANCIÈRE LIÉ À SON UTILISATION.
+
+Relevé n'est ni un conseil en investissement ni un logiciel financier certifié.
+Les chiffres qu'il affiche proviennent de vos propres données déclaratives et
+n'engagent que vous.
+
+
+Pour toute autre utilisation, contactez l'auteur : paulmavikana42@icloud.com

@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# LE THÈME EST DÉCLARÉ ICI, PAS SEULEMENT EN CSS.
+#
+# Sans cette section, Streamlit suit le thème du SYSTÈME. Il rend alors ses
+# widgets dans une palette qui n'est pas la nôtre — et le premier widget que le
+# CSS aurait oublié reste illisible. On fixe la cause, pas les symptômes.
+#
+# base = "dark" + les quatre couleurs = la palette de app/theme.py.
+# Un test vérifie la correspondance : si l'une des deux bouge, il casse.
+# ---------------------------------------------------------------------------
+[theme]
+base = "dark"
+primaryColor = "#F5A83C"              # ACCENT — l'ambre : boutons primaires, nav active
+backgroundColor = "#0B1220"           # PAPER — le fond bleu-graphite
+secondaryBackgroundColor = "#111B2E"  # CARD — champs, widgets, cartes
+textColor = "#E9EFF7"                 # INK — tout le texte
+font = "sans serif"
+
+[server]
+headless = true
+port = 8501
+fileWatcherType = "none"
+
+[browser]
+gatherUsageStats = false
+
+[client]
+toolbarMode = "minimal"
+showErrorDetails = true

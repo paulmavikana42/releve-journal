@@ -1,0 +1,81 @@
+RELEVÉ — journal de trading
+===========================
+
+Copyright © 2026 Paul. Tous droits réservés. Copie fournie pour ÉVALUATION
+PRIVÉE uniquement — voir LICENSE.txt dans ce dossier. Ne pas redistribuer.
+
+
+POUR DÉMARRER
+-------------
+Double-clique sur  Releve.exe  (dans ce dossier).
+
+Une fenêtre s'ouvre, prépare l'application quelques secondes, puis ton
+navigateur affiche Relevé. Il n'y a RIEN à installer : ni Python, ni quoi que
+ce soit d'autre. Aucune connexion internet n'est nécessaire.
+
+
+LES QUATRE CHOSES À SAVOIR
+-------------------------
+
+1. Windows va afficher un avertissement bleu la première fois :
+   « Windows a protégé votre ordinateur ».
+   Clique sur  Informations complémentaires  puis  Exécuter quand même.
+
+   Ce n'est pas un problème de sécurité. Windows affiche ce message pour tout
+   programme qu'il ne connaît pas encore — le supprimer demanderait d'acheter
+   un certificat à Microsoft.
+
+2. Garde ce dossier ENTIER. Releve.exe seul ne fonctionne pas : tout ce qui
+   l'entoure lui est nécessaire. Tu peux déplacer le dossier où tu veux
+   (le Bureau fait très bien l'affaire).
+
+3. Laisse la fenêtre ouverte pendant que tu t'en sers : c'est elle qui fait
+   tourner l'application. Pour arrêter, clique sur  Terminer  (fermer l'onglet
+   du navigateur ne suffit pas).
+
+4. Tout reste sur ton ordinateur. Aucune donnée ne part sur internet, il n'y a
+   ni compte à créer, ni mot de passe, ni cloud.
+
+
+AU PREMIER LANCEMENT
+--------------------
+L'application pose deux questions, une seule fois :
+
+  - les caractéristiques de ton compte (capital de départ, limites de perte) ;
+  - si tu veux démarrer sur un journal VIERGE ou avec des données de
+    DÉMONSTRATION pour voir à quoi ressemblent les écrans.
+
+Les données de démonstration sont entièrement inventées, et elles sont
+supprimées automatiquement dès ton premier import de vrais trades.
+
+Tout se corrige ensuite dans la page  Réglages.
+
+
+COMMENT ÇA S'UTILISE, EN TROIS TEMPS
+------------------------------------
+1. AVANT d'entrer : tu écris ton idée (ce que tu attends, ce qui l'invalide,
+   ton stop, une ou plusieurs captures d'écran).
+2. QUAND tu entres : tu déclares le numéro de ticket que t'affiche ton
+   terminal. Le trade passe « en cours » dans le journal.
+3. APRÈS la sortie : tu déposes l'export CSV de ton terminal dans la page
+   Import. L'outil retrouve ce ticket et referme le trade tout seul, avec les
+   vraies données. Rien à ressaisir.
+
+
+TES DONNÉES
+-----------
+Elles sont enregistrées dans ton dossier utilisateur :
+
+    C:\Users\<toi>\AppData\Local\Releve\data
+
+C'est ce dossier qu'il faut copier pour les sauvegarder. Le programme, lui, se
+réinstalle en le recopiant.
+
+
+EN CAS DE SOUCI
+---------------
+- Rien ne se passe au double-clic → attends 10 à 20 secondes, la première
+  ouverture est plus lente.
+- Le navigateur dit « connexion refusée » → reviens sur la fenêtre et clique
+  « Ouvrir dans le navigateur » quand elle affiche « C'est prêt ».
+- L'antivirus met le programme en quarantaine → autorise le dossier Releve.
