@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Decimal } from "@releve/core";
 import { loadCampaigns } from "./data";
 import { abandonCampaign, attachIdea, createCampaign, detachIdea } from "./actions";
+import { addCapture, removeCapture } from "../journal/actions";
 import SubmitButton from "../components/SubmitButton";
 
 function rFmt(x: Decimal | null): string {
@@ -16,7 +17,7 @@ function money(x: Decimal): string {
 export default async function CampaignsPage() {
   const view = await loadCampaigns();
   if (!view) redirect("/login");
-  const { campaigns, unattached, book } = view;
+  const { campaigns, unattached, book, captureUrls } = view;
 
   return (
     <main className="wrap">
@@ -139,6 +140,40 @@ export default async function CampaignsPage() {
                     <SubmitButton className="ghost" pendingLabel="…">Rattacher une idée</SubmitButton>
                   </form>
                 )}
+
+                {/* Captures de la thèse */}
+                <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
+                  {c.captures.length > 0 && (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 8, marginBottom: 8 }}>
+                      {c.captures.map((cap) => (
+                        <div key={cap.id}>
+                          {captureUrls.get(cap.id) ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={captureUrls.get(cap.id)} alt={cap.caption || cap.original_name} style={{ width: "100%", borderRadius: 8, border: "1px solid var(--border)" }} />
+                          ) : (
+                            <div className="muted" style={{ fontSize: ".8rem" }}>image indisponible</div>
+                          )}
+                          <div className="between" style={{ marginTop: 4 }}>
+                            <span className="muted" style={{ fontSize: ".75rem" }}>{cap.caption || cap.kind}</span>
+                            <form action={removeCapture}>
+                              <input type="hidden" name="attachment_id" value={cap.id} />
+                              <input type="hidden" name="owner_id" value={c.id} />
+                              <input type="hidden" name="owner_type" value="campaign" />
+                              <SubmitButton className="ghost" pendingLabel="…">Retirer</SubmitButton>
+                            </form>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <form action={addCapture} className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                    <input type="hidden" name="owner_type" value="campaign" />
+                    <input type="hidden" name="owner_id" value={c.id} />
+                    <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif" required />
+                    <input name="caption" placeholder="légende (facultatif)" style={{ flex: 1, minWidth: 140 }} />
+                    <SubmitButton className="ghost" pendingLabel="Envoi…">Joindre une capture</SubmitButton>
+                  </form>
+                </div>
               </div>
             );
           })}

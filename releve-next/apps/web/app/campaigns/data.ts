@@ -1,6 +1,6 @@
 import "server-only";
 import { Campaign, Idea, mine, SpecBook } from "@releve/core";
-import { currentUser, openStore } from "../journal/data";
+import { currentUser, openStore, signedCaptureUrls } from "../journal/data";
 import { activeScope } from "../settings/data";
 
 export type CampaignsView = {
@@ -8,6 +8,7 @@ export type CampaignsView = {
   campaigns: Campaign[];
   unattached: Idea[]; // idées exécutables/écrites sans thèse macro
   book: SpecBook;
+  captureUrls: Map<string, string>;
 } | null;
 
 export async function loadCampaigns(): Promise<CampaignsView> {
@@ -25,5 +26,8 @@ export async function loadCampaigns(): Promise<CampaignsView> {
     (i) => !i.campaign_id && mine(i, activeUid, accountUids),
   );
 
-  return { userEmail: user.email ?? "", campaigns, unattached, book };
+  const allCaptures = campaigns.flatMap((c) => c.captures);
+  const captureUrls = await signedCaptureUrls(supabase, allCaptures);
+
+  return { userEmail: user.email ?? "", campaigns, unattached, book, captureUrls };
 }
