@@ -5,7 +5,8 @@
   "type": "module",
   "description": "Bascule de Relevé vers Next.js/TypeScript. Phase 0 : échafaudage. Le moteur (packages/core) se porte avant toute UI.",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "apps/*"
   ],
   "scripts": {
     "test": "vitest run",
