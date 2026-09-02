@@ -21,11 +21,11 @@ import {
 import { currentUser, openStore } from "../journal/data";
 import { activeScope } from "../settings/data";
 
-const QUADRANTS: [Quadrant, string][] = [
-  [Quadrant.MASTERY, "Maîtrise"],
-  [Quadrant.LUCK, "Chance"],
-  [Quadrant.VARIANCE, "Aléa OK"],
-  [Quadrant.ERROR, "Erreur"],
+const QUADRANTS: [Quadrant, string, string][] = [
+  [Quadrant.MASTERY, "Maîtrise", "mastery"],
+  [Quadrant.LUCK, "Chance", "luck"],
+  [Quadrant.VARIANCE, "Aléa OK", "variance"],
+  [Quadrant.ERROR, "Erreur", "error"],
 ];
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "gain" | "loss" }) {
@@ -210,17 +210,17 @@ export default async function Dashboard({
           </span>
         </h2>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-          {QUADRANTS.map(([q, label]) => {
+          {QUADRANTS.map(([q, label, klass]) => {
             const c = dm.get(q);
-            const bad = q === Quadrant.LUCK || q === Quadrant.ERROR;
             return (
-              <div key={q} className="card" style={{ padding: "10px 14px" }}>
+              <div key={q} className={`quad ${klass}`}>
                 <div className="between">
-                  <strong style={{ color: bad ? "var(--loss)" : "var(--gain)" }}>{label}</strong>
-                  <span className="chip">{c.n}</span>
+                  <span className="lab">{label}</span>
+                  {c.pct !== null && <span className="lab">{c.pct > 0 ? "+" : ""}{c.pct.toFixed(1)} %</span>}
                 </div>
-                <div className="muted" style={{ fontSize: ".85rem", marginTop: 4 }}>
-                  {c.pnl > 0 ? "+" : ""}{c.pnl.toFixed(2)} $
+                <div className="n">{c.n}</div>
+                <div className="note" style={{ marginTop: 4 }}>
+                  {c.pnl > 0 ? "+" : ""}{c.pnl.toFixed(2)} {cur}
                 </div>
               </div>
             );
