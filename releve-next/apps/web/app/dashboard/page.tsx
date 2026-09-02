@@ -23,8 +23,10 @@ import {
   thesisLines,
   Unit,
 } from "@releve/core";
+import { convictionCalibration } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
 import { activeScope } from "../settings/data";
+import { CalibrationChart, CumulativeCurve, EquityCurve, RHistogram } from "../components/charts";
 
 const JOURS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
@@ -93,6 +95,15 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     .filter((i) => i.is_executed)
     .sort((a, b) => (b.closed_at?.getTime() ?? 0) - (a.closed_at?.getTime() ?? 0))
     .slice(0, 5);
+
+  // Données des graphiques (SVG)
+  const curveSeries = closed.filter((l) => l.r !== null).map((l) => ({ label: l.label, value: l.r as number }));
+  const histoBars = [...all]
+    .filter((i) => i.is_executed && i.r_multiple(book) !== null)
+    .sort((a, b) => (a.closed_at?.getTime() ?? 0) - (b.closed_at?.getTime() ?? 0))
+    .map((i) => ({ label: i.display_name, r: (i.r_multiple(book) as Decimal).toNumber(), clean: i.review ? i.discipline_score === 5 : null }));
+  const calib = convictionCalibration(all);
+  const equityPts = eq ? eq.points.map((p) => ({ balance: p.balance.toNumber() })) : [];
 
   const money = (x: number | Decimal) => {
     const n = typeof x === "number" ? x : x.toNumber();
@@ -175,6 +186,20 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
         {correct && <Kpi label="Idées correctes" value={correct.rate !== null ? pct0(correct.rate) : "—"} sub={`le marché t'a donné raison · n=${correct.n}`} />}
       </section>
 
+      {/* Courbe de R cumulé (bicolore) */}
+      {curveSeries.length > 0 && (
+        <>
+          <Eyebrow>courbe d'équité · cumul de R</Eyebrow>
+          <div className="card">
+            <CumulativeCurve series={curveSeries} unit="R" />
+            <div className="note" style={{ marginTop: 6 }}>
+              Le R cumulé neutralise la taille de position : c'est la courbe de ta <b>compétence</b>,
+              pas de ton levier. Vert au-dessus de zéro, rouge en dessous.
+            </div>
+          </div>
+        </>
+      )}
+
       {/* Décision × résultat */}
       <Eyebrow>décision × résultat</Eyebrow>
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -210,6 +235,12 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
             {lowest && <Kpi label="Plus-bas touché" value={lowest.toFixed(2) + " " + cur} />}
             {dd && <Kpi label="Drawdown max" value={"-" + dd.max_dd_pct.toFixed(2) + " %"} tone="loss" sub={`${dd.max_dd_abs.toFixed(0)} ${cur} · après chaque transaction`} />}
           </section>
+          {measured && equityPts.length >= 2 && (
+            <div className="card" style={{ marginTop: 10 }}>
+              <div className="eyebrow" style={{ marginBottom: 6 }}>courbe de solde</div>
+              <EquityCurve points={equityPts} />
+            </div>
+          )}
           {(comp.breached.length > 0 || (lowest && lowest.lt(comp.floor))) && (
             <div className="banner loss" style={{ marginTop: 10 }}>
               <div>
@@ -330,6 +361,33 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
                 ))}
               </tbody>
             </table>
+          </div>
+        </>
+      )}
+      {/* Histogramme : une idée par barre */}
+      {histoBars.length > 0 && (
+        <>
+          <Eyebrow>tes idées, une par barre</Eyebrow>
+          <div className="card">
+            <RHistogram bars={histoBars} />
+            <div className="note" style={{ marginTop: 6 }}>
+              Une barre = une idée. <b>Pleine</b> = plan respecté (5/5) · <b>estompée</b> = plan
+              dégradé · <b>contour</b> = review à faire.
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Calibration de conviction */}
+      {calib.length >= 2 && (
+        <>
+          <Eyebrow>calibration de conviction</Eyebrow>
+          <div className="card">
+            <CalibrationChart points={calib} />
+            <div className="note" style={{ marginTop: 6 }}>
+              Tes convictions élevées surperforment-elles les basses ? Sinon, sizer sur ta conviction,
+              c'est sizer sur du bruit.
+            </div>
           </div>
         </>
       )}
