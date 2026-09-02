@@ -91,6 +91,68 @@ export async function createOffPlan(formData: FormData): Promise<void> {
   revalidatePath("/journal");
 }
 
+function decOf(fd: FormData, k: string): Decimal | null {
+  const v = String(fd.get(k) ?? "").trim().replace(",", ".");
+  return v ? new Decimal(v) : null;
+}
+
+/** Modifier la thèse d'une idée (create existe déjà ; ici on remplace). */
+export async function updateThesis(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  if (!ideaId) return;
+
+  const store = await openStore(supabase, user.id);
+  const { ideas } = store.load();
+  const idea = ideas.get(ideaId);
+  if (!idea) return;
+
+  const targets = String(formData.get("targets") ?? "")
+    .split(/[,;\s]+/)
+    .map((s) => s.trim().replace(",", "."))
+    .filter(Boolean)
+    .map((s) => new Decimal(s));
+  const conv = String(formData.get("conviction") ?? "").trim();
+
+  const thesis = new Thesis({
+    instrument: String(formData.get("instrument") ?? "").trim().toUpperCase() || (idea.thesis?.instrument ?? ""),
+    direction: String(formData.get("direction")) === "sell" ? Direction.SELL : Direction.BUY,
+    entry_planned: decOf(formData, "entry_planned"),
+    stop_initial: decOf(formData, "stop_initial"),
+    targets,
+    risk_pct: decOf(formData, "risk_pct"),
+    conviction: conv ? Math.trunc(Number(conv)) : null,
+    macro_theme: String(formData.get("macro_theme") ?? "").trim(),
+    catalyst: String(formData.get("catalyst") ?? "").trim(),
+    setup: String(formData.get("setup") ?? "").trim(),
+    timeframe: String(formData.get("timeframe") ?? "").trim(),
+    technical_note: String(formData.get("technical_note") ?? "").trim(),
+    thesis_kill_switch: String(formData.get("thesis_kill_switch") ?? "").trim(),
+    macro_note: String(formData.get("macro_note") ?? "").trim(),
+    risk_source: RiskSource.COMPUTED,
+  });
+
+  store.update_thesis(ideaId, thesis, String(formData.get("label") ?? "").trim() || null);
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
+  revalidatePath("/journal");
+  redirect(`/journal/${ideaId}`);
+}
+
+/** Abandonner une idée (marquée, jamais effacée — décision [K]). */
+export async function abandonIdea(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  if (!ideaId) return;
+  const store = await openStore(supabase, user.id);
+  store.abandon(ideaId);
+  await store.flush();
+  revalidatePath("/journal");
+  redirect("/journal");
+}
+
 /**
  * Déclare le ticket à l'ENTRÉE (décision [N]) : l'idée passe « en cours » et le
  * stop réellement placé est enregistré AVANT que le broker ne l'écrase (un stop

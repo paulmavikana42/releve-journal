@@ -11,7 +11,7 @@ import {
   type Position,
 } from "@releve/core";
 import { currentUser, openStore } from "../data";
-import { cancelTrade, completeReview, openTrade } from "../actions";
+import { abandonIdea, cancelTrade, completeReview, openTrade } from "../actions";
 import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -105,6 +105,23 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             {idea.label || idea.display_name} · écrite le {idea.created_at.toISOString().slice(0, 10)}
             {idea.closed_at && ` · clôturée le ${idea.closed_at.toISOString().slice(0, 10)}`}
           </div>
+        </div>
+        <div className="row" style={{ gap: 8 }}>
+          {!rev && (
+            <Link
+              href={`/journal/${idea.id}/edit`}
+              className="ghost"
+              style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", textDecoration: "none" }}
+            >
+              Modifier
+            </Link>
+          )}
+          {!idea.is_executed && idea.status !== IdeaStatus.ABANDONED && (
+            <form action={abandonIdea}>
+              <input type="hidden" name="ideaId" value={idea.id} />
+              <SubmitButton className="ghost" pendingLabel="…">Abandonner</SubmitButton>
+            </form>
+          )}
         </div>
       </header>
 
