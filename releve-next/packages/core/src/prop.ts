@@ -8,7 +8,7 @@
 // arrivent avec settings.ts. Ici : la LOGIQUE pure (règles, compliance,
 // cloisonnement), entièrement testable sans I/O.
 import { Decimal } from "./decimal";
-import type { Deal, Idea } from "./models";
+import type { Campaign, Deal, Idea } from "./models";
 import { dayKey } from "./metrics";
 
 const ZERO = new Decimal(0);
@@ -216,6 +216,59 @@ export function belongs_to(
   defaultAccountId = "",
 ): boolean {
   return (idea.account_id || defaultAccountId) === accountId;
+}
+
+// ------------------------------------------------------------- cloisonnement
+//
+// LE POINT UNIQUE d'isolation par compte — port de app/main.py (_mine + filtres).
+// L'uid interne du compte tague et cloisonne, PAS le numéro broker (vide ou
+// partagé chez Paul → il fuiterait entre comptes). Deux challenges ne partagent
+// RIEN. Un objet dont le tag ne correspond à aucun compte connu (données d'avant
+// l'uid, ou compte supprimé) retombe sur le PREMIER compte — rien ne disparaît.
+// Un seul compte ⇒ tout est visible (y compris l'historique jamais tagué).
+
+/** L'objet appartient-il au compte actif ? (uids ordonnés, [0] = défaut) */
+export function mine(
+  obj: { account_id?: string },
+  activeUid: string,
+  accountUids: readonly string[],
+): boolean {
+  if (accountUids.length <= 1) return true;
+  return owner_uid(obj, new Set(accountUids), accountUids[0]!) === activeUid;
+}
+
+export interface ScopedState {
+  ideas: Idea[];
+  campaigns: Map<string, Campaign>;
+  deals: Deal[];
+}
+
+/**
+ * Restreint l'état chargé au compte actif. Miroir exact de main.py:144-150 —
+ * idées triées par date décroissante, campagnes et transactions filtrées.
+ */
+export function scopeToAccount(
+  state: {
+    ideas: Map<string, Idea> | readonly Idea[];
+    // Les campagnes viennent de store.campaigns(), pas de load() — donc à part
+    // (comme dans app/main.py). Absentes ⇒ carte vide.
+    campaigns?: Map<string, Campaign>;
+    deals: readonly Deal[];
+  },
+  activeUid: string,
+  accountUids: readonly string[],
+): ScopedState {
+  const allIdeas = state.ideas instanceof Map ? [...state.ideas.values()] : [...state.ideas];
+  const keep = (o: { account_id?: string }) => mine(o, activeUid, accountUids);
+
+  const ideas = allIdeas
+    .filter(keep)
+    .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+  const campaigns = new Map<string, Campaign>();
+  if (state.campaigns) for (const [cid, c] of state.campaigns) if (keep(c)) campaigns.set(cid, c);
+  const deals = state.deals.filter(keep);
+
+  return { ideas, campaigns, deals };
 }
 
 // ------------------------------------------------------------------- la courbe
