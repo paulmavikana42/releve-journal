@@ -37,3 +37,47 @@ export async function addIdea(formData: FormData): Promise<void> {
 
   revalidatePath("/journal");
 }
+
+/** Rattache une position orpheline à une idée (décision humaine de l'appariement). */
+export async function linkPosition(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  const positionUid = String(formData.get("positionUid") ?? "");
+  if (!ideaId || !positionUid) return;
+
+  const store = await openStore(supabase, user.id);
+  store.link(ideaId, positionUid);
+  await store.flush();
+  revalidatePath("/journal");
+}
+
+/**
+ * Une position sans idée candidate = un trade HORS-PLAN : on crée une idée
+ * marquée off_plan à partir de la position, et on la rattache. Rien n'est perdu,
+ * et la métrique "hors-plan" reste une vraie information.
+ */
+export async function createOffPlan(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const positionUid = String(formData.get("positionUid") ?? "");
+  if (!positionUid) return;
+
+  const store = await openStore(supabase, user.id);
+  const { positions } = store.load();
+  const p = positions.get(positionUid);
+  if (!p) return;
+
+  const idea = store.create_thesis(
+    new Thesis({
+      instrument: p.symbol,
+      direction: p.direction,
+      entry_planned: p.open_price,
+      risk_source: RiskSource.UNKNOWN,
+    }),
+    { off_plan: true, account_id: "", label: `${p.symbol} (hors-plan)` },
+  );
+  store.link(idea.id, p.uid);
+  await store.flush();
+  revalidatePath("/journal");
+}

@@ -1,8 +1,9 @@
 import { redirect } from "next/navigation";
-import { Direction, IdeaStatus } from "@releve/core";
+import { candidates as matchCandidates, Direction, IdeaStatus } from "@releve/core";
 import { currentUser, openStore } from "./data";
 import AddIdeaForm from "./AddIdeaForm";
 import ImportPanel from "./ImportPanel";
+import OrphanRow from "./OrphanRow";
 
 const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.DRAFT]: "brouillon",
@@ -22,9 +23,26 @@ export default async function JournalPage() {
   const list = [...ideas.values()].sort(
     (a, b) => b.created_at.getTime() - a.created_at.getTime(),
   );
+  const allIdeas = [...ideas.values()];
   const orphans = store
     .orphans()
-    .sort((a, b) => b.close_time.getTime() - a.close_time.getTime());
+    .sort((a, b) => b.close_time.getTime() - a.close_time.getTime())
+    .map((p) => ({
+      uid: p.uid,
+      symbol: p.symbol,
+      dirLabel: p.direction === Direction.SELL ? "Vente" : "Achat",
+      ticket: p.position_id,
+      opened: p.open_time.toISOString().slice(0, 10),
+      closed: p.close_time.toISOString().slice(0, 10),
+      pnl: p.pnl_net.toFixed(2),
+      pnlPos: p.pnl_net.gt(0),
+      candidates: matchCandidates(p, allIdeas).map((c) => ({
+        ideaId: c.idea.id,
+        label: c.idea.label || c.idea.display_name,
+        reason: c.reason,
+        kind: c.kind,
+      })),
+    }));
 
   return (
     <main className="wrap">
@@ -53,36 +71,9 @@ export default async function JournalPage() {
             Trades importés à rapparier ({orphans.length})
           </h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {orphans.map((p) => {
-              const pos = p.pnl_net.gt(0);
-              return (
-                <div key={p.uid} className="card between">
-                  <div>
-                    <div className="row">
-                      <strong>{p.symbol}</strong>
-                      <span className="muted">
-                        {p.direction === Direction.SELL ? "Vente" : "Achat"}
-                      </span>
-                      <span className="chip">#{p.position_id}</span>
-                    </div>
-                    <div className="muted" style={{ fontSize: ".85rem", marginTop: 2 }}>
-                      {p.open_time.toISOString().slice(0, 10)} →{" "}
-                      {p.close_time.toISOString().slice(0, 10)}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      fontWeight: 600,
-                      whiteSpace: "nowrap",
-                      color: pos ? "var(--gain)" : "var(--loss)",
-                    }}
-                  >
-                    {pos ? "+" : ""}
-                    {p.pnl_net.toFixed(2)}
-                  </div>
-                </div>
-              );
-            })}
+            {orphans.map((p) => (
+              <OrphanRow key={p.uid} {...p} />
+            ))}
           </div>
         </section>
       )}
