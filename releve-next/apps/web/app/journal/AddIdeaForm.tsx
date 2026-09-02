@@ -1,17 +1,26 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { addIdea } from "./actions";
 
 export default function AddIdeaForm() {
   const formRef = useRef<HTMLFormElement>(null);
+  const [pending, setPending] = useState(false);
 
   return (
     <form
       ref={formRef}
       action={async (fd) => {
-        await addIdea(fd);
-        formRef.current?.reset();
+        // Garde-fou anti double-envoi : le journal est append-only, un double
+        // clic créerait deux idées identiques.
+        if (pending) return;
+        setPending(true);
+        try {
+          await addIdea(fd);
+          formRef.current?.reset();
+        } finally {
+          setPending(false);
+        }
       }}
       className="card"
       style={{ marginBottom: 20 }}
@@ -39,8 +48,8 @@ export default function AddIdeaForm() {
       </div>
       <div className="between" style={{ marginTop: 12 }}>
         <input name="label" placeholder="Libellé (ex. Short NDX100 — CPI)" style={{ flex: 1 }} />
-        <button type="submit" className="primary" style={{ marginLeft: 12 }}>
-          Écrire l'idée
+        <button type="submit" className="primary" style={{ marginLeft: 12 }} disabled={pending}>
+          {pending ? "Écriture…" : "Écrire l'idée"}
         </button>
       </div>
     </form>
