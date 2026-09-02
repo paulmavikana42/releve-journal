@@ -225,7 +225,7 @@ export interface LoadResult {
 // --------------------------------------------------------------------- journal
 
 export class Store {
-  private _events: EventRecord[] = [];
+  protected _events: EventRecord[] = [];
   private _campaigns = new Map<string, Campaign>();
   demo: boolean;
 

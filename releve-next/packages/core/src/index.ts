@@ -8,6 +8,8 @@ export * from "./prop";
 export * from "./challenge";
 export * from "./store";
 export { JsonlStore } from "./jsonl-store";
+export { SupabaseStore } from "./supabase-store";
+export * from "./events-backend";
 export * from "./matcher";
 
 // parser et csvimport exposent chacun un `num` (dialectes différents) : on les
