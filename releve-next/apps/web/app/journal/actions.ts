@@ -2,7 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Decimal, Direction, Review, RiskSource, Thesis, ThesisOutcome } from "@releve/core";
+import {
+  Decimal,
+  Direction,
+  OpenTrade,
+  Review,
+  RiskSource,
+  serverNow,
+  Thesis,
+  ThesisOutcome,
+} from "@releve/core";
 import { currentUser, openStore } from "./data";
 
 /**
@@ -79,6 +88,62 @@ export async function createOffPlan(formData: FormData): Promise<void> {
   );
   store.link(idea.id, p.uid);
   await store.flush();
+  revalidatePath("/journal");
+}
+
+/**
+ * Déclare le ticket à l'ENTRÉE (décision [N]) : l'idée passe « en cours » et le
+ * stop réellement placé est enregistré AVANT que le broker ne l'écrase (un stop
+ * passé au breakeven vaudrait quelques points et produirait un R absurde). Le
+ * numéro de ticket devient la clé de clôture à l'import.
+ */
+export async function openTrade(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  const ticket = String(formData.get("ticket") ?? "").trim();
+  if (!ideaId || !ticket) return;
+
+  const store = await openStore(supabase, user.id);
+  const { ideas } = store.load();
+  const idea = ideas.get(ideaId);
+  if (!idea || !idea.thesis) return;
+  const t = idea.thesis;
+  const dec = (k: string) => {
+    const v = String(formData.get(k) ?? "").trim().replace(",", ".");
+    return v ? new Decimal(v) : null;
+  };
+
+  store.open_trade(
+    ideaId,
+    new OpenTrade({
+      ticket,
+      symbol: t.instrument,
+      direction: t.direction,
+      volume: dec("volume") ?? new Decimal("0"),
+      open_time: serverNow(),
+      open_price: dec("open_price") ?? t.entry_planned ?? new Decimal("0"),
+      account_id: "",
+      stop: dec("stop") ?? t.stop_initial,
+    }),
+  );
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
+  revalidatePath("/journal");
+}
+
+/** Annule un ticket déclaré par erreur (append-only : on ajoute l'annulation). */
+export async function cancelTrade(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  const uid = String(formData.get("uid") ?? "");
+  if (!uid) return;
+
+  const store = await openStore(supabase, user.id);
+  store.cancel_trade(uid);
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
   revalidatePath("/journal");
 }
 

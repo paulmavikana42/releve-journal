@@ -11,7 +11,7 @@ import {
   type Position,
 } from "@releve/core";
 import { currentUser, openStore } from "../data";
-import { completeReview } from "../actions";
+import { cancelTrade, completeReview, openTrade } from "../actions";
 import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -150,6 +150,70 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             dans le temps — deux trades distincts additionneraient leurs risques à tort.
           </div>
         </div>
+      )}
+
+      {/* Trade en cours / déclarer le ticket */}
+      {idea.is_running ? (
+        <section className="card" style={{ marginBottom: 20 }}>
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Trade en cours</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {idea.open_trades.map((o) => (
+              <div key={o.uid} className="between">
+                <div>
+                  <div className="row">
+                    <span className="chip">#{o.ticket}</span>
+                    <span>{o.open_price.toString()}</span>
+                    <span className="muted">stop {o.stop ? o.stop.toString() : "—"}</span>
+                    <span className="muted">vol {o.volume.toString()}</span>
+                  </div>
+                  <div className="muted" style={{ fontSize: ".82rem", marginTop: 2 }}>
+                    ouvert le {o.open_time.toISOString().slice(0, 16).replace("T", " ")}
+                  </div>
+                </div>
+                <form action={cancelTrade}>
+                  <input type="hidden" name="ideaId" value={idea.id} />
+                  <input type="hidden" name="uid" value={o.uid} />
+                  <SubmitButton className="ghost" pendingLabel="…">Annuler</SubmitButton>
+                </form>
+              </div>
+            ))}
+          </div>
+          <div className="muted" style={{ fontSize: ".82rem", marginTop: 8 }}>
+            Le prochain import contenant ce numéro de ticket clôturera le trade automatiquement.
+          </div>
+        </section>
+      ) : (
+        !idea.is_executed && t && (
+          <form action={openTrade} className="card" style={{ marginBottom: 20, display: "grid", gap: 12 }}>
+            <input type="hidden" name="ideaId" value={idea.id} />
+            <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Déclarer le ticket (entrée)</h2>
+            <div className="muted" style={{ fontSize: ".85rem", marginTop: -6 }}>
+              Dès l'entrée : l'idée passe « en cours » et le stop réellement placé est enregistré
+              avant que le broker ne l'écrase.
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+              <div>
+                <label>N° de ticket</label>
+                <input name="ticket" required placeholder="88210912" style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label>Volume</label>
+                <input name="volume" inputMode="decimal" placeholder="1.0" style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label>Prix d'entrée</label>
+                <input name="open_price" inputMode="decimal" defaultValue={t.entry_planned ? t.entry_planned.toString() : ""} style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label>Stop réel</label>
+                <input name="stop" inputMode="decimal" defaultValue={t.stop_initial ? t.stop_initial.toString() : ""} style={{ width: "100%" }} />
+              </div>
+            </div>
+            <div>
+              <SubmitButton pendingLabel="Déclaration…">Je viens d'entrer</SubmitButton>
+            </div>
+          </form>
+        )
       )}
 
       {/* La thèse */}
