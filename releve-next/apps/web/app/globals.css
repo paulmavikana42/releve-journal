@@ -25,11 +25,12 @@ a { color: var(--accent); }
 .muted { color: var(--muted); }
 .row { display: flex; align-items: center; gap: 12px; }
 .between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-input, select, button { font: inherit; }
-input, select {
+input, select, button, textarea { font: inherit; }
+input, select, textarea {
   background: #0b0e13; color: var(--ink); border: 1px solid var(--border);
   border-radius: 8px; padding: 8px 10px;
 }
+textarea { resize: vertical; }
 label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 4px; }
 button.primary {
   background: var(--accent); color: var(--accent-ink); border: none;

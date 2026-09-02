@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { Decimal, Direction, RiskSource, Thesis } from "@releve/core";
+import { Decimal, Direction, Review, RiskSource, Thesis, ThesisOutcome } from "@releve/core";
 import { currentUser, openStore } from "./data";
 
 /**
@@ -80,4 +80,43 @@ export async function createOffPlan(formData: FormData): Promise<void> {
   store.link(idea.id, p.uid);
   await store.flush();
   revalidatePath("/journal");
+}
+
+/**
+ * Revue d'une idée : décision × résultat. Les 5 cases de discipline mesurent le
+ * PROCESS (indépendamment du gain), le verdict de thèse dit si le marché t'a
+ * donné raison. C'est ce qui alimente le quadrant et la matrice du dashboard.
+ */
+export async function completeReview(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  if (!ideaId) return;
+
+  const on = (k: string) => formData.get(k) === "on";
+  const outcomeRaw = String(formData.get("thesis_outcome") ?? "non_testee");
+  const outcome =
+    outcomeRaw === "correcte"
+      ? ThesisOutcome.CORRECT
+      : outcomeRaw === "fausse"
+        ? ThesisOutcome.WRONG
+        : ThesisOutcome.UNTESTED;
+
+  const store = await openStore(supabase, user.id);
+  store.complete_review(
+    ideaId,
+    new Review({
+      entry_in_zone: on("entry_in_zone"),
+      size_conforme: on("size_conforme"),
+      stop_at_invalidation: on("stop_at_invalidation"),
+      stop_never_widened: on("stop_never_widened"),
+      exit_per_plan: on("exit_per_plan"),
+      thesis_outcome: outcome,
+      emotional_state: String(formData.get("emotional_state") ?? "").trim(),
+      lesson: String(formData.get("lesson") ?? "").trim(),
+    }),
+  );
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
+  revalidatePath("/dashboard");
 }

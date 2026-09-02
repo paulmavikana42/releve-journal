@@ -11,6 +11,8 @@ import {
   type Position,
 } from "@releve/core";
 import { currentUser, openStore } from "../data";
+import { completeReview } from "../actions";
+import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.DRAFT]: "brouillon",
@@ -206,6 +208,53 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           {tickets.length === 0 && <div className="card muted">Aucun ticket rattaché.</div>}
         </div>
       </section>
+
+      {/* Faire la revue (idée exécutée, pas encore revue) */}
+      {!rev && idea.is_executed && (
+        <form action={completeReview} className="card" style={{ marginBottom: 20, display: "grid", gap: 12 }}>
+          <input type="hidden" name="ideaId" value={idea.id} />
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Faire la revue</h2>
+          <div className="muted" style={{ fontSize: ".85rem", marginTop: -6 }}>
+            La discipline mesure le <em>process</em>, indépendamment du gain. Le verdict dit si le
+            marché t'a donné raison. Les deux se croisent dans le quadrant.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {[
+              ["entry_in_zone", "Entrée dans la zone prévue"],
+              ["size_conforme", "Taille conforme au risque"],
+              ["stop_at_invalidation", "Stop à l'invalidation"],
+              ["stop_never_widened", "Stop jamais élargi"],
+              ["exit_per_plan", "Sortie selon le plan"],
+            ].map(([k, label]) => (
+              <label key={k} className="row" style={{ gap: 8 }}>
+                <input type="checkbox" name={k} />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label>Le marché t'a-t-il donné raison ?</label>
+              <select name="thesis_outcome" defaultValue="non_testee" style={{ width: "100%" }}>
+                <option value="correcte">Thèse correcte</option>
+                <option value="fausse">Thèse fausse</option>
+                <option value="non_testee">Non tranchée</option>
+              </select>
+            </div>
+            <div>
+              <label>État émotionnel (facultatif)</label>
+              <input name="emotional_state" placeholder="Calme, FOMO, agacé…" style={{ width: "100%" }} />
+            </div>
+          </div>
+          <div>
+            <label>Leçon</label>
+            <textarea name="lesson" rows={3} placeholder="Ce que ce trade t'apprend, à répliquer ou à éviter." style={{ width: "100%" }} />
+          </div>
+          <div>
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer la revue</SubmitButton>
+          </div>
+        </form>
+      )}
 
       {/* La review */}
       {rev && (
