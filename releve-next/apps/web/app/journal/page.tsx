@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { candidates as matchCandidates, Direction, IdeaStatus } from "@releve/core";
 import { currentUser, openStore } from "./data";
@@ -88,12 +89,18 @@ export default async function JournalPage() {
             const pnl = executed ? i.pnl_net : null;
             const pnlPos = pnl ? pnl.gt(0) : false;
             return (
-              <div key={i.id} className="card between">
+              <Link
+                key={i.id}
+                href={`/journal/${i.id}`}
+                className="card between"
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
                 <div>
                   <div className="row">
                     <strong>{i.symbol}</strong>
                     <span className="muted">{dir}</span>
                     <span className="chip">{STATUS_LABEL[i.status] ?? i.status}</span>
+                    {i.off_plan && <span className="chip" style={{ color: "var(--loss)" }}>hors-plan</span>}
                   </div>
                   <div className="muted" style={{ fontSize: ".85rem", marginTop: 2 }}>
                     {i.label || i.display_name} ·{" "}
@@ -112,7 +119,7 @@ export default async function JournalPage() {
                     {pnl.toFixed(2)}
                   </div>
                 )}
-              </div>
+              </Link>
             );
           })}
         </div>
