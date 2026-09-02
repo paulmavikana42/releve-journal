@@ -6,3 +6,7 @@ coverage/
 .env
 .env.local
 .DS_Store
+
+# Non-régression : snapshot dérivé du VRAI journal — personnel, jamais committé.
+tools/snapshot.json
+*.jsonl
