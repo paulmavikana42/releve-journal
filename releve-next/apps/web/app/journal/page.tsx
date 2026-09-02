@@ -59,6 +59,7 @@ export default async function JournalPage() {
         </div>
         <nav className="row" style={{ gap: 14 }}>
           <Link href="/dashboard" className="muted">Tableau de bord</Link>
+          <Link href="/campaigns" className="muted">Thèses</Link>
           <Link href="/settings" className="muted">Réglages</Link>
           <form action="/auth/signout" method="post">
             <button type="submit" className="ghost">Se déconnecter</button>
