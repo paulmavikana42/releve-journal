@@ -57,9 +57,12 @@ export default async function JournalPage() {
           </h1>
           <div className="muted" style={{ fontSize: ".85rem" }}>{user.email}</div>
         </div>
-        <form action="/auth/signout" method="post">
-          <button type="submit" className="ghost">Se déconnecter</button>
-        </form>
+        <nav className="row" style={{ gap: 14 }}>
+          <Link href="/dashboard" className="muted">Tableau de bord</Link>
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="ghost">Se déconnecter</button>
+          </form>
+        </nav>
       </header>
 
       <ImportPanel />

@@ -1,0 +1,154 @@
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import {
+  compute,
+  decisionMatrix,
+  expectancyOf,
+  ideasCorrectRate,
+  Period,
+  Quadrant,
+  rMultiples,
+  Unit,
+} from "@releve/core";
+import { currentUser, openStore } from "../journal/data";
+
+const QUADRANTS: [Quadrant, string][] = [
+  [Quadrant.MASTERY, "Maîtrise"],
+  [Quadrant.LUCK, "Chance"],
+  [Quadrant.VARIANCE, "Aléa OK"],
+  [Quadrant.ERROR, "Erreur"],
+];
+
+function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "gain" | "loss" }) {
+  return (
+    <div className="card" style={{ padding: "12px 16px" }}>
+      <div className="muted" style={{ fontSize: ".78rem" }}>{label}</div>
+      <div
+        style={{
+          fontSize: "1.35rem",
+          fontWeight: 700,
+          whiteSpace: "nowrap",
+          color: tone === "gain" ? "var(--gain)" : tone === "loss" ? "var(--loss)" : "var(--ink)",
+        }}
+      >
+        {value}
+      </div>
+      {sub && <div className="muted" style={{ fontSize: ".78rem" }}>{sub}</div>}
+    </div>
+  );
+}
+
+export default async function Dashboard() {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+
+  const store = await openStore(supabase, user.id);
+  const { ideas, deals } = store.load();
+  const campaigns = store.campaigns();
+  const all = [...ideas.values()];
+  const executed = all.filter((i) => i.is_executed);
+
+  const exp = expectancyOf(rMultiples(all));
+  const correct = ideasCorrectRate(all);
+  const dm = decisionMatrix(all, campaigns, Unit.THESIS, null, null);
+  const st = deals.length ? compute(deals, new Period()) : null;
+
+  const pct = (x: number) => (x * 100).toFixed(0) + " %";
+  const r2 = (x: number) => (x > 0 ? "+" : "") + x.toFixed(2);
+
+  return (
+    <main className="wrap">
+      <header className="between" style={{ marginBottom: 20 }}>
+        <h1 style={{ margin: 0 }}>
+          Tableau de bord
+        </h1>
+        <nav className="row" style={{ gap: 14 }}>
+          <Link href="/journal" className="muted">Journal</Link>
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="ghost">Se déconnecter</button>
+          </form>
+        </nav>
+      </header>
+
+      {/* KPI */}
+      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10, marginBottom: 20 }}>
+        <Kpi label="Idées" value={String(all.length)} sub={`${executed.length} exécutées`} />
+        {exp ? (
+          <>
+            <Kpi label="Espérance" value={r2(exp.expectancy_r) + " R"} sub={`sur ${exp.n} décisions`} tone={exp.expectancy_r >= 0 ? "gain" : "loss"} />
+            <Kpi label="Taux de réussite" value={pct(exp.win_rate)} sub={`gain moy ${r2(exp.avg_win_r)}R · perte ${r2(exp.avg_loss_r)}R`} />
+            <Kpi label="R cumulé" value={r2(exp.total_r) + " R"} tone={exp.total_r >= 0 ? "gain" : "loss"} />
+          </>
+        ) : (
+          <Kpi label="Espérance" value="—" sub="pas encore de R fiable" />
+        )}
+        {correct && (
+          <Kpi label="Idées correctes" value={pct(correct.rate)} sub={`le marché t'a donné raison · n=${correct.n}`} />
+        )}
+      </section>
+
+      {/* Survie challenge */}
+      {st && (
+        <section className="card" style={{ marginBottom: 20 }}>
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>
+            Survie du challenge <span className="muted" style={{ fontWeight: 400 }}>· base 100 000 $ (FundedNext)</span>
+          </h2>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10 }}>
+            <Kpi label="Solde" value={st.balance.toFixed(2) + " $"} />
+            <Kpi label="Plancher fatal" value={st.floor.toFixed(0) + " $"} />
+            <Kpi
+              label="Marge avant échec"
+              value={st.margin_to_floor.toFixed(2) + " $"}
+              tone={st.margin_to_floor.gt(2000) ? "gain" : "loss"}
+            />
+            <Kpi label="Plus-bas touché" value={st.lowest_ever.toFixed(2) + " $"} />
+            <Kpi
+              label="Drawdown depuis 100k"
+              value={st.drawdown_from_start_pct.toFixed(2) + " %"}
+              tone={st.drawdown_from_start_pct.lt(10) ? undefined : "loss"}
+            />
+          </div>
+          {st.lowest_ever.lt(st.floor) && (
+            <div style={{ marginTop: 10, color: "var(--loss)", fontSize: ".9rem" }}>
+              ⚠️ Le plus-bas est passé SOUS le plancher : sur ces données, le challenge aurait été perdu.
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Matrice décision × résultat */}
+      <section className="card" style={{ marginBottom: 20 }}>
+        <h2 style={{ marginTop: 0, fontSize: "1rem" }}>
+          Décision × résultat{" "}
+          <span className="muted" style={{ fontWeight: 400 }}>
+            · {dm.n_reviewed} revue(s), {dm.n_pending} en attente
+          </span>
+        </h2>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+          {QUADRANTS.map(([q, label]) => {
+            const c = dm.get(q);
+            const bad = q === Quadrant.LUCK || q === Quadrant.ERROR;
+            return (
+              <div key={q} className="card" style={{ padding: "10px 14px" }}>
+                <div className="between">
+                  <strong style={{ color: bad ? "var(--loss)" : "var(--gain)" }}>{label}</strong>
+                  <span className="chip">{c.n}</span>
+                </div>
+                <div className="muted" style={{ fontSize: ".85rem", marginTop: 4 }}>
+                  {c.pnl > 0 ? "+" : ""}{c.pnl.toFixed(2)} $
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="muted" style={{ fontSize: ".82rem", marginTop: 8 }}>
+          Le quadrant qui coûte le plus cher est <em>Chance</em> : un mauvais process qui a payé est celui qu'on répète.
+        </div>
+      </section>
+
+      {all.length === 0 && (
+        <div className="card muted">Rien à analyser pour l'instant — écris des idées et importe tes trades.</div>
+      )}
+    </main>
+  );
+}
