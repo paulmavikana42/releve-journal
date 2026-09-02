@@ -12,7 +12,7 @@ import {
   type Position,
 } from "@releve/core";
 import { currentUser, openStore } from "../data";
-import { abandonIdea, cancelTrade, completeReview, openTrade, reviewMissed } from "../actions";
+import { abandonIdea, cancelTrade, completeReview, openTrade, reviewMissed, updateFloating } from "../actions";
 import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -175,26 +175,44 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
         <section className="card" style={{ marginBottom: 20 }}>
           <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Trade en cours</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-            {idea.open_trades.map((o) => (
-              <div key={o.uid} className="between">
-                <div>
-                  <div className="row">
-                    <span className="chip">#{o.ticket}</span>
-                    <span>{o.open_price.toString()}</span>
-                    <span className="muted">stop {o.stop ? o.stop.toString() : "—"}</span>
-                    <span className="muted">vol {o.volume.toString()}</span>
+            {idea.open_trades.map((o) => {
+              const pv = book.get(o.symbol)?.point_value ?? null;
+              const floating = o.floating_pnl(pv);
+              return (
+                <div key={o.uid} style={{ borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+                  <div className="between">
+                    <div>
+                      <div className="row">
+                        <span className="chip">#{o.ticket}</span>
+                        <span>{o.open_price.toString()}</span>
+                        <span className="muted">stop {o.stop ? o.stop.toString() : "—"}</span>
+                        <span className="muted">vol {o.volume.toString()}</span>
+                      </div>
+                      <div className="muted" style={{ fontSize: ".82rem", marginTop: 2 }}>
+                        ouvert le {o.open_time.toISOString().slice(0, 16).replace("T", " ")}
+                        {o.last_price && ` · dernier cours ${o.last_price.toString()}`}
+                      </div>
+                    </div>
+                    <form action={cancelTrade}>
+                      <input type="hidden" name="ideaId" value={idea.id} />
+                      <input type="hidden" name="uid" value={o.uid} />
+                      <SubmitButton className="ghost" pendingLabel="…">Annuler</SubmitButton>
+                    </form>
                   </div>
-                  <div className="muted" style={{ fontSize: ".82rem", marginTop: 2 }}>
-                    ouvert le {o.open_time.toISOString().slice(0, 16).replace("T", " ")}
-                  </div>
+                  <form action={updateFloating} className="row" style={{ gap: 8, marginTop: 8 }}>
+                    <input type="hidden" name="ideaId" value={idea.id} />
+                    <input type="hidden" name="uid" value={o.uid} />
+                    <input name="last_price" inputMode="decimal" placeholder="cours actuel" style={{ width: 140 }} />
+                    <SubmitButton className="ghost" pendingLabel="…">Mettre à jour le flottant</SubmitButton>
+                    {floating && (
+                      <span style={{ fontWeight: 600, color: floating.gt(0) ? "var(--gain)" : "var(--loss)" }}>
+                        flottant {money(floating)}
+                      </span>
+                    )}
+                  </form>
                 </div>
-                <form action={cancelTrade}>
-                  <input type="hidden" name="ideaId" value={idea.id} />
-                  <input type="hidden" name="uid" value={o.uid} />
-                  <SubmitButton className="ghost" pendingLabel="…">Annuler</SubmitButton>
-                </form>
-              </div>
-            ))}
+              );
+            })}
           </div>
           <div className="muted" style={{ fontSize: ".82rem", marginTop: 8 }}>
             Le prochain import contenant ce numéro de ticket clôturera le trade automatiquement.

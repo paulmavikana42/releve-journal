@@ -231,6 +231,21 @@ export async function openTrade(formData: FormData): Promise<void> {
   revalidatePath("/journal");
 }
 
+/** Saisir le cours courant d'un trade en cours → flottant (déclaratif). */
+export async function updateFloating(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  const uid = String(formData.get("uid") ?? "");
+  const price = decOf(formData, "last_price");
+  if (!uid || price === null) return;
+
+  const store = await openStore(supabase, user.id);
+  store.update_trade(uid, { last_price: price, last_price_at: serverNow() });
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
+}
+
 /** Annule un ticket déclaré par erreur (append-only : on ajoute l'annulation). */
 export async function cancelTrade(formData: FormData): Promise<void> {
   const { supabase, user } = await currentUser();
