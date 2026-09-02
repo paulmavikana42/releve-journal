@@ -16,6 +16,13 @@ const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.ABANDONED]: "abandonnée",
 };
 
+const STATUS_CHIP: Record<string, string> = {
+  [IdeaStatus.ARMED]: "acc",
+  [IdeaStatus.RUNNING]: "sig",
+  [IdeaStatus.REVIEWED]: "ok",
+  [IdeaStatus.ABANDONED]: "",
+};
+
 export default async function JournalPage() {
   const { supabase, user } = await currentUser();
   if (!user) redirect("/login");
@@ -84,9 +91,9 @@ export default async function JournalPage() {
 
       {orphans.length > 0 && (
         <section style={{ marginBottom: 20 }}>
-          <h2 style={{ fontSize: "1rem" }} className="muted">
-            Trades importés à rapparier ({orphans.length})
-          </h2>
+          <div className="eyebrow bar" style={{ marginTop: 24 }}>
+            trades importés à rapparier ({orphans.length})
+          </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {orphans.map((p) => (
               <OrphanRow key={p.uid} {...p} />
@@ -95,6 +102,7 @@ export default async function JournalPage() {
         </section>
       )}
 
+      <div className="eyebrow bar" style={{ marginTop: 24 }}>le journal</div>
       {list.length === 0 ? (
         <div className="card muted">Aucune idée pour l'instant. Écris la première ci-dessus.</div>
       ) : (
@@ -115,7 +123,7 @@ export default async function JournalPage() {
                   <div className="row">
                     <strong>{i.symbol}</strong>
                     <span className="muted">{dir}</span>
-                    <span className="chip">{STATUS_LABEL[i.status] ?? i.status}</span>
+                    <span className={`chip ${STATUS_CHIP[i.status] ?? ""}`}>{STATUS_LABEL[i.status] ?? i.status}</span>
                     {i.off_plan && <span className="chip" style={{ color: "var(--loss)" }}>hors-plan</span>}
                   </div>
                   <div className="muted" style={{ fontSize: ".85rem", marginTop: 2 }}>

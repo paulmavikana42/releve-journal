@@ -137,6 +137,28 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
         </div>
       </header>
 
+      {/* Cycle de vie */}
+      {idea.status === IdeaStatus.ABANDONED ? (
+        <div className="stepper">
+          <span className="step on" style={{ borderRadius: 6 }}>abandonnée</span>
+        </div>
+      ) : (
+        (() => {
+          const order = [IdeaStatus.ARMED, IdeaStatus.RUNNING, IdeaStatus.CLOSED, IdeaStatus.REVIEWED];
+          const labels = ["armée", "en cours", "clôturée", "revue"];
+          const cur = order.indexOf(idea.status);
+          return (
+            <div className="stepper">
+              {order.map((s, i) => (
+                <span key={s} className={`step ${idea.status === s ? "on" : cur >= 0 && i < cur ? "done" : ""}`}>
+                  {labels[i]}
+                </span>
+              ))}
+            </div>
+          );
+        })()
+      )}
+
       {/* Métriques clés */}
       <section
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(150px,1fr))", gap: 10, marginBottom: 20 }}
