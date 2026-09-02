@@ -1,14 +1,21 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
+  analysisRows,
+  dailyPnlRealise,
+  dailyReturns,
+  dailyReturnsFromRows,
+  dealCurve,
   decisionMatrix,
   equitySeries,
   evaluate,
-  expectancyOf,
+  expectancyOfRows,
   ideasCorrectRate,
   Quadrant,
-  rMultiples,
   scopeToAccount,
+  sharpe,
+  sortino,
+  SpecBook,
   Unit,
 } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
@@ -40,9 +47,16 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string; sub?: 
   );
 }
 
-export default async function Dashboard() {
+export default async function Dashboard({
+  searchParams,
+}: {
+  searchParams: Promise<{ unit?: string }>;
+}) {
   const { supabase, user } = await currentUser();
   if (!user) redirect("/login");
+
+  const { unit: unitParam } = await searchParams;
+  const unit = unitParam === "idea" ? Unit.IDEA : Unit.THESIS;
 
   const store = await openStore(supabase, user.id);
   const loaded = store.load();
@@ -59,14 +73,29 @@ export default async function Dashboard() {
 
   const account = active;
   const cur = account?.symbol ?? "$";
+  const book = new SpecBook([...loaded.positions.values()]);
 
-  const exp = expectancyOf(rMultiples(all));
+  // Unité d'analyse : une thèse macro compte pour UNE décision par défaut ([X]).
+  const rows = analysisRows(all, campaigns, unit, book);
+  const exp = expectancyOfRows(rows);
   const correct = ideasCorrectRate(all);
-  const dm = decisionMatrix(all, campaigns, Unit.THESIS, null, account ? account.start_balance : null);
+  const dm = decisionMatrix(all, campaigns, unit, book, account ? account.start_balance : null);
 
   // Survie : calculée sur les RÈGLES du compte (jamais 100k supposé).
   const comp = account ? evaluate(account, all, deals) : null;
   const lowest = account ? equitySeries(account, all, deals).lowest : null;
+
+  // Sharpe / Sortino : soldes broker si dispo, sinon reconstitués depuis les
+  // clôtures — et on dit laquelle ([Y]).
+  const measured = deals.length > 0;
+  const rets = measured
+    ? dailyReturns(dealCurve(deals))
+    : dailyReturnsFromRows(rows, account ? account.start_balance : 100000);
+  const sh = sharpe(rets);
+  const so = sortino(rets);
+
+  // Calendrier : P&L réalisé par jour (sortie partielle datée à son jour).
+  const parJour = [...dailyPnlRealise(all, deals).entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
 
   const pct = (x: number) => (x * 100).toFixed(0) + " %";
   const r2 = (x: number) => (x > 0 ? "+" : "") + x.toFixed(2);
@@ -74,9 +103,19 @@ export default async function Dashboard() {
   return (
     <main className="wrap">
       <header className="between" style={{ marginBottom: 20 }}>
-        <h1 style={{ margin: 0 }}>
-          Tableau de bord
-        </h1>
+        <div>
+          <h1 style={{ margin: 0 }}>Tableau de bord</h1>
+          <div className="row muted" style={{ gap: 8, fontSize: ".82rem", marginTop: 2 }}>
+            <span>Unité d'analyse :</span>
+            <Link href="/dashboard?unit=thesis" style={{ fontWeight: unit === Unit.THESIS ? 700 : 400, color: unit === Unit.THESIS ? "var(--accent)" : "var(--muted)" }}>
+              par thèse
+            </Link>
+            <span>·</span>
+            <Link href="/dashboard?unit=idea" style={{ fontWeight: unit === Unit.IDEA ? 700 : 400, color: unit === Unit.IDEA ? "var(--accent)" : "var(--muted)" }}>
+              par idée
+            </Link>
+          </div>
+        </div>
         <nav className="row" style={{ gap: 14 }}>
           <Link href="/journal" className="muted">Journal</Link>
           <Link href="/campaigns" className="muted">Thèses</Link>
@@ -102,6 +141,16 @@ export default async function Dashboard() {
         )}
         {correct && (
           <Kpi label="Idées correctes" value={pct(correct.rate)} sub={`le marché t'a donné raison · n=${correct.n}`} />
+        )}
+        {sh && (
+          <Kpi
+            label="Sharpe (annualisé)"
+            value={sh.value.toFixed(2)}
+            sub={`${measured ? "soldes broker" : "reconstitué"} · n=${sh.n}${sh.is_meaningful ? "" : " (échantillon faible)"}`}
+          />
+        )}
+        {so && (
+          <Kpi label="Sortino (annualisé)" value={so.value.toFixed(2)} sub={measured ? "soldes broker" : "reconstitué"} />
         )}
       </section>
 
@@ -181,6 +230,26 @@ export default async function Dashboard() {
           Le quadrant qui coûte le plus cher est <em>Chance</em> : un mauvais process qui a payé est celui qu'on répète.
         </div>
       </section>
+
+      {/* Calendrier — P&L réalisé par jour */}
+      {parJour.length > 0 && (
+        <section className="card" style={{ marginBottom: 20 }}>
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Calendrier — P&L par jour</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+            {parJour.slice(0, 30).map(([day, pnl]) => (
+              <div key={day} className="between" style={{ fontSize: ".9rem" }}>
+                <span className="muted">{day}</span>
+                <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: pnl > 0 ? "var(--gain)" : pnl < 0 ? "var(--loss)" : "var(--muted)" }}>
+                  {pnl > 0 ? "+" : ""}{pnl.toFixed(2)} {cur}
+                </span>
+              </div>
+            ))}
+          </div>
+          {parJour.length > 30 && (
+            <div className="muted" style={{ fontSize: ".8rem", marginTop: 6 }}>30 jours les plus récents.</div>
+          )}
+        </section>
+      )}
 
       {all.length === 0 && (
         <div className="card muted">Rien à analyser pour l'instant — écris des idées et importe tes trades.</div>
