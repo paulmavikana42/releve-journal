@@ -231,6 +231,20 @@ export async function openTrade(formData: FormData): Promise<void> {
   revalidatePath("/journal");
 }
 
+/** Détacher un ticket mal rattaché d'une idée (append-only : on ajoute). */
+export async function unlinkPosition(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  const positionUid = String(formData.get("positionUid") ?? "");
+  if (!ideaId || !positionUid) return;
+  const store = await openStore(supabase, user.id);
+  store.unlink(ideaId, positionUid);
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
+  revalidatePath("/journal");
+}
+
 /** Saisir le cours courant d'un trade en cours → flottant (déclaratif). */
 export async function updateFloating(formData: FormData): Promise<void> {
   const { supabase, user } = await currentUser();

@@ -12,7 +12,7 @@ import {
   type Position,
 } from "@releve/core";
 import { currentUser, openStore } from "../data";
-import { abandonIdea, cancelTrade, completeReview, openTrade, reviewMissed, updateFloating } from "../actions";
+import { abandonIdea, cancelTrade, completeReview, openTrade, reviewMissed, unlinkPosition, updateFloating } from "../actions";
 import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -299,8 +299,15 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
                     {" · risque "}{rk ? `${rk.toFixed(2)} $` : "—"}
                   </div>
                 </div>
-                <div style={{ fontWeight: 600, whiteSpace: "nowrap", color: p.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)" }}>
-                  {money(p.pnl_net)}
+                <div className="row" style={{ gap: 10 }}>
+                  <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: p.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)" }}>
+                    {money(p.pnl_net)}
+                  </span>
+                  <form action={unlinkPosition}>
+                    <input type="hidden" name="ideaId" value={idea.id} />
+                    <input type="hidden" name="positionUid" value={p.uid} />
+                    <SubmitButton className="ghost" pendingLabel="…">Détacher</SubmitButton>
+                  </form>
                 </div>
               </div>
             );
