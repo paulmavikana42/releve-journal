@@ -20,6 +20,7 @@ import {
   sharpe,
   sortino,
   SpecBook,
+  thesisExecutionMatrix,
   thesisLines,
   Unit,
 } from "@releve/core";
@@ -103,6 +104,7 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
     .sort((a, b) => (a.closed_at?.getTime() ?? 0) - (b.closed_at?.getTime() ?? 0))
     .map((i) => ({ label: i.display_name, r: (i.r_multiple(book) as Decimal).toNumber(), clean: i.review ? i.discipline_score === 5 : null }));
   const calib = convictionCalibration(all);
+  const tem = thesisExecutionMatrix(all);
   const equityPts = eq ? eq.points.map((p) => ({ balance: p.balance.toNumber() })) : [];
 
   const money = (x: number | Decimal) => {
@@ -368,6 +370,54 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
           </div>
         </>
       )}
+
+      {/* Analyse — thèse × exécution */}
+      {tem && (() => {
+        const cells = [
+          { bg: "var(--gain-soft)", col: "var(--gain)", tag: "ton vrai edge", verdict: "analyse juste, exécution nette — c'est ça qu'il faut scaler", cell: tem.clean_correct },
+          { bg: "var(--warn-soft)", col: "var(--warn)", tag: "ce que tu laisses sur la table", verdict: "l'analyse était bonne, l'indiscipline a mangé le gain", cell: tem.dirty_correct },
+          { bg: "transparent", col: "var(--muted)", tag: "coût normal du métier", verdict: "process propre, marché contraire — rien à corriger ici", cell: tem.clean_wrong },
+          { bg: "var(--loss-soft)", col: "var(--loss)", tag: "zone rouge", verdict: "mauvaise lecture ET mauvaise exécution — le vrai signal d'alarme", cell: tem.dirty_wrong },
+        ];
+        const colhead = (t: string) => <div className="eyebrow bar" style={{ margin: 0, alignSelf: "end", justifyContent: "center" }}>{t}</div>;
+        const rowlabel = (t: string) => <div className="eyebrow" style={{ margin: 0, color: "var(--ink)", alignSelf: "center", textAlign: "right" }}>{t}</div>;
+        const Cell = ({ c }: { c: typeof cells[number] }) => (
+          <div className="card" style={{ background: c.bg, minHeight: 140, display: "flex", flexDirection: "column" }}>
+            <div className="eyebrow" style={{ margin: 0, color: c.col }}>{c.tag}</div>
+            {c.cell.n === 0 ? (
+              <div className="stat none big" style={{ marginTop: 6 }}>—</div>
+            ) : (
+              <div className="stat big" style={{ marginTop: 6, color: c.col }}>{money(c.cell.expectancy_money)}</div>
+            )}
+            <div className="note" style={{ marginTop: "auto", paddingTop: 6 }}>
+              {c.cell.n === 0 ? "aucune donnée sur cette portée" : `moy./idée · n=${c.cell.n} · total ${money(c.cell.total_money)} · ${c.verdict}`}
+            </div>
+          </div>
+        );
+        return (
+          <>
+            <Eyebrow>analyse — ton analyse, ou toi ?</Eyebrow>
+            <div style={{ display: "grid", gridTemplateColumns: "0.5fr 1fr 1fr", gap: 10, alignItems: "stretch" }}>
+              <div />
+              {colhead("exécution propre · 5/5")}
+              {colhead("exécution dégradée · ≤3/5")}
+              {rowlabel("idée correcte")}
+              <Cell c={cells[0]!} />
+              <Cell c={cells[1]!} />
+              {rowlabel("idée fausse")}
+              <Cell c={cells[2]!} />
+              <Cell c={cells[3]!} />
+            </div>
+            {tem.cost_of_indiscipline !== null && (
+              <div className="note" style={{ marginTop: 8 }}>
+                <b>Le coût d'indiscipline</b> — sur tes idées <b>correctes</b>, passer d'une exécution
+                propre à dégradée te coûte <b className="txt-loss">{tem.cost_of_indiscipline.toFixed(2)} R par idée</b>.
+                Ce n'est pas ton analyse qui te ruine, c'est ta discipline.
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* Calibration de conviction */}
       {calib.length >= 2 && (
