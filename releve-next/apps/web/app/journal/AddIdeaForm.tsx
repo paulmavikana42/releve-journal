@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import { addIdea } from "./actions";
 
-export default function AddIdeaForm() {
+export default function AddIdeaForm({ symbols }: { symbols: string[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [pending, setPending] = useState(false);
 
@@ -28,7 +28,16 @@ export default function AddIdeaForm() {
       <div style={{ display: "grid", gridTemplateColumns: "1.4fr .8fr 1fr 1fr", gap: 12 }}>
         <div>
           <label>Instrument</label>
-          <input name="instrument" placeholder="NDX100" required style={{ width: "100%" }} />
+          <select name="instrument" required defaultValue="" style={{ width: "100%" }}>
+            <option value="" disabled>
+              Choisir…
+            </option>
+            {symbols.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
         </div>
         <div>
           <label>Sens</label>

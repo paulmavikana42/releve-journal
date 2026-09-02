@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { parser, csv, type Deal, type Position } from "@releve/core";
 import { currentUser, openStore } from "@/app/journal/data";
+import { learnSymbols } from "@/app/settings/data";
 
 // Import MT5/CSV — TOUJOURS côté serveur. Parse le fichier, écrit les positions
 // et transactions dans le journal (events), de façon IDEMPOTENTE (rapprochement
@@ -46,6 +47,9 @@ export async function POST(request: Request) {
   const store = await openStore(supabase, user.id);
   const fresh = store.import_report(parsed.positions, parsed.deals);
   await store.flush();
+
+  // Le broker fait foi : les symboles vus entrent dans la watchlist.
+  await learnSymbols(supabase, user.id, parsed.positions.map((p) => p.symbol));
 
   const orphans = store.orphans();
 

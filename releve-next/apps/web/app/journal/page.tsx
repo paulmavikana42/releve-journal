@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { candidates as matchCandidates, Direction, IdeaStatus } from "@releve/core";
 import { currentUser, openStore } from "./data";
+import { getWatchlist } from "../settings/data";
 import AddIdeaForm from "./AddIdeaForm";
 import ImportPanel from "./ImportPanel";
 import OrphanRow from "./OrphanRow";
@@ -20,7 +21,13 @@ export default async function JournalPage() {
   if (!user) redirect("/login");
 
   const store = await openStore(supabase, user.id);
-  const { ideas } = store.load();
+  const loaded = store.load();
+  const { ideas } = loaded;
+  // Symboles proposés : watchlist ∪ tout ce qui a été tradé (le broker fait foi).
+  const watchlist = await getWatchlist(supabase, user.id);
+  const knownSymbols = [
+    ...new Set([...watchlist, ...[...loaded.positions.values()].map((p) => p.symbol)]),
+  ].sort();
   const list = [...ideas.values()].sort(
     (a, b) => b.created_at.getTime() - a.created_at.getTime(),
   );
@@ -69,7 +76,7 @@ export default async function JournalPage() {
 
       <ImportPanel />
 
-      <AddIdeaForm />
+      <AddIdeaForm symbols={knownSymbols} />
 
       {orphans.length > 0 && (
         <section style={{ marginBottom: 20 }}>
