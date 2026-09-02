@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import {
   Decimal,
   Direction,
+  MissedOutcome,
+  MissedReview,
   OpenTrade,
   Review,
   RiskSource,
@@ -138,6 +140,37 @@ export async function updateThesis(formData: FormData): Promise<void> {
   revalidatePath(`/journal/${ideaId}`);
   revalidatePath("/journal");
   redirect(`/journal/${ideaId}`);
+}
+
+/**
+ * Review d'abandon (décision [L]/[AD]) : « ai-je eu l'occasion », pas « avais-je
+ * raison ». Setup absent = non-événement ; hésitation devant un setup valide =
+ * l'information qui compte. Marque l'idée abandonnée et enregistre le bilan.
+ */
+export async function reviewMissed(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  if (!ideaId) return;
+
+  const setup =
+    String(formData.get("setup_appeared")) === "hesitation" ? MissedOutcome.HESITATED : MissedOutcome.NO_SETUP;
+  const wonRaw = String(formData.get("would_have_won") ?? "");
+  const would = wonRaw === "oui" ? true : wonRaw === "non" ? false : null;
+
+  const store = await openStore(supabase, user.id);
+  store.review_missed(
+    ideaId,
+    new MissedReview({
+      setup_appeared: setup,
+      would_have_won: setup === MissedOutcome.HESITATED ? would : null,
+      reason: String(formData.get("reason") ?? "").trim(),
+      note: String(formData.get("note") ?? "").trim(),
+    }),
+  );
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
+  revalidatePath("/journal");
 }
 
 /** Abandonner une idée (marquée, jamais effacée — décision [K]). */

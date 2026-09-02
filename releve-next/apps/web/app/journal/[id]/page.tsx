@@ -4,6 +4,7 @@ import {
   Decimal,
   Direction,
   IdeaStatus,
+  MissedOutcome,
   Quadrant,
   SpecBook,
   ThesisOutcome,
@@ -11,7 +12,7 @@ import {
   type Position,
 } from "@releve/core";
 import { currentUser, openStore } from "../data";
-import { abandonIdea, cancelTrade, completeReview, openTrade } from "../actions";
+import { abandonIdea, cancelTrade, completeReview, openTrade, reviewMissed } from "../actions";
 import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -348,6 +349,65 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           </div>
           {rev.lesson && <p style={{ marginBottom: 0 }}>{rev.lesson}</p>}
         </section>
+      )}
+
+      {/* Bilan d'abandon (idée non prise) */}
+      {idea.missed_review && (
+        <section className="card" style={{ marginBottom: 20 }}>
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Bilan d'abandon</h2>
+          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
+            <span className="chip">
+              {idea.missed_review.setup_appeared === MissedOutcome.HESITATED
+                ? "setup présenté — pas pris"
+                : "setup absent"}
+            </span>
+            {idea.missed_review.setup_appeared === MissedOutcome.HESITATED && (
+              <span className="chip">
+                {idea.missed_review.would_have_won === true
+                  ? "aurait gagné"
+                  : idea.missed_review.would_have_won === false
+                    ? "aurait perdu"
+                    : "indécis"}
+              </span>
+            )}
+          </div>
+          {idea.missed_review.note && <p style={{ marginBottom: 0 }}>{idea.missed_review.note}</p>}
+        </section>
+      )}
+
+      {!idea.missed_review && !idea.is_executed && idea.status === IdeaStatus.ABANDONED && (
+        <form action={reviewMissed} className="card" style={{ marginBottom: 20, display: "grid", gap: 12 }}>
+          <input type="hidden" name="ideaId" value={idea.id} />
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Bilan d'abandon</h2>
+          <div className="muted" style={{ fontSize: ".85rem", marginTop: -6 }}>
+            La question n'est pas « avais-je raison » mais « ai-je eu l'occasion ». Un setup absent
+            est un non-événement ; une hésitation devant un setup valide est l'information qui compte.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label>Le setup s'est-il présenté ?</label>
+              <select name="setup_appeared" defaultValue="setup_absent" style={{ width: "100%" }}>
+                <option value="setup_absent">Non — il ne s'est pas présenté</option>
+                <option value="hesitation">Oui — je ne l'ai pas pris</option>
+              </select>
+            </div>
+            <div>
+              <label>Aurait-elle gagné ? (si présenté)</label>
+              <select name="would_have_won" defaultValue="indecis" style={{ width: "100%" }}>
+                <option value="oui">Oui</option>
+                <option value="non">Non</option>
+                <option value="indecis">Indécis</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label>Note</label>
+            <textarea name="note" rows={2} placeholder="Pourquoi je ne l'ai pas pris…" style={{ width: "100%" }} />
+          </div>
+          <div>
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer le bilan</SubmitButton>
+          </div>
+        </form>
       )}
     </main>
   );
