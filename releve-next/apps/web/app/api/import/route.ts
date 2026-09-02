@@ -1,14 +1,33 @@
 import { NextResponse } from "next/server";
-import { parser, csv } from "@releve/core";
-import { currentUser } from "@/app/journal/data";
+import { parser, csv, type Deal, type Position } from "@releve/core";
+import { currentUser, openStore } from "@/app/journal/data";
 
-// Parsing MT5/CSV — TOUJOURS côté serveur (jamais dans le navigateur). Cette
-// première tranche PARSE et renvoie un résumé ; la persistance (rapprochement
-// par ticket → events) viendra dans une tranche suivante.
+// Import MT5/CSV — TOUJOURS côté serveur. Parse le fichier, écrit les positions
+// et transactions dans le journal (events), de façon IDEMPOTENTE (rapprochement
+// par numéro de ticket : réimporter le même fichier n'ajoute rien). L'appariement
+// idée↔ticket reste une décision humaine (tranche suivante).
 export const runtime = "nodejs";
 
+type Parsed = { kind: string; positions: Position[]; deals: Deal[] };
+
+function parseFile(bytes: Uint8Array): Parsed {
+  // 1) rapport HTML MT5 ?
+  try {
+    const report = parser.parseReport(bytes);
+    return { kind: "mt5-html", positions: report.positions, deals: report.deals };
+  } catch (e) {
+    if (!(e instanceof parser.ParseError)) throw e;
+  }
+  // 2) sinon CSV (MT4/MT5/cTrader/générique)
+  const cf = csv.parse(bytes);
+  const acct = cf.account_id;
+  const positions = cf.closed.map((r) => r.to_position(acct));
+  const deals = csv.balanceDeals(cf, acct);
+  return { kind: "csv", positions, deals };
+}
+
 export async function POST(request: Request) {
-  const { user } = await currentUser();
+  const { supabase, user } = await currentUser();
   if (!user) return NextResponse.json({ error: "non authentifié" }, { status: 401 });
 
   const form = await request.formData();
@@ -16,34 +35,25 @@ export async function POST(request: Request) {
   if (!(file instanceof File)) {
     return NextResponse.json({ error: "aucun fichier" }, { status: 400 });
   }
-  const bytes = new Uint8Array(await file.arrayBuffer());
 
-  // 1) rapport HTML MT5 ?
+  let parsed: Parsed;
   try {
-    const report = parser.parseReport(bytes);
-    return NextResponse.json({
-      kind: "mt5-html",
-      account: report.account_id,
-      positions: report.positions.length,
-      deals: report.deals.length,
-    });
-  } catch (e) {
-    if (!(e instanceof parser.ParseError)) {
-      return NextResponse.json({ error: String(e) }, { status: 400 });
-    }
-  }
-
-  // 2) sinon, CSV (MT4/MT5/cTrader/générique)
-  try {
-    const cf = csv.parse(bytes);
-    return NextResponse.json({
-      kind: "csv",
-      closed: cf.closed.length,
-      still_open: cf.still_open.length,
-      has_balance: cf.has_balance,
-      missing: cf.missing,
-    });
+    parsed = parseFile(new Uint8Array(await file.arrayBuffer()));
   } catch (e) {
     return NextResponse.json({ error: `Fichier non reconnu : ${String(e)}` }, { status: 400 });
   }
+
+  const store = await openStore(supabase, user.id);
+  const fresh = store.import_report(parsed.positions, parsed.deals);
+  await store.flush();
+
+  const orphans = store.orphans();
+
+  return NextResponse.json({
+    kind: parsed.kind,
+    parsed_positions: parsed.positions.length,
+    parsed_deals: parsed.deals.length,
+    imported_positions: fresh.length, // nouvelles (idempotent : 0 si déjà importées)
+    orphans: orphans.length, // positions pas encore rattachées à une idée
+  });
 }

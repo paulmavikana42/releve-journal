@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { Direction, IdeaStatus } from "@releve/core";
 import { currentUser, openStore } from "./data";
 import AddIdeaForm from "./AddIdeaForm";
+import ImportPanel from "./ImportPanel";
 
 const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.DRAFT]: "brouillon",
@@ -21,6 +22,9 @@ export default async function JournalPage() {
   const list = [...ideas.values()].sort(
     (a, b) => b.created_at.getTime() - a.created_at.getTime(),
   );
+  const orphans = store
+    .orphans()
+    .sort((a, b) => b.close_time.getTime() - a.close_time.getTime());
 
   return (
     <main className="wrap">
@@ -39,7 +43,49 @@ export default async function JournalPage() {
         </form>
       </header>
 
+      <ImportPanel />
+
       <AddIdeaForm />
+
+      {orphans.length > 0 && (
+        <section style={{ marginBottom: 20 }}>
+          <h2 style={{ fontSize: "1rem" }} className="muted">
+            Trades importés à rapparier ({orphans.length})
+          </h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {orphans.map((p) => {
+              const pos = p.pnl_net.gt(0);
+              return (
+                <div key={p.uid} className="card between">
+                  <div>
+                    <div className="row">
+                      <strong>{p.symbol}</strong>
+                      <span className="muted">
+                        {p.direction === Direction.SELL ? "Vente" : "Achat"}
+                      </span>
+                      <span className="chip">#{p.position_id}</span>
+                    </div>
+                    <div className="muted" style={{ fontSize: ".85rem", marginTop: 2 }}>
+                      {p.open_time.toISOString().slice(0, 10)} →{" "}
+                      {p.close_time.toISOString().slice(0, 10)}
+                    </div>
+                  </div>
+                  <div
+                    style={{
+                      fontWeight: 600,
+                      whiteSpace: "nowrap",
+                      color: pos ? "var(--gain)" : "var(--loss)",
+                    }}
+                  >
+                    {pos ? "+" : ""}
+                    {p.pnl_net.toFixed(2)}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       {list.length === 0 ? (
         <div className="card muted">Aucune idée pour l'instant. Écris la première ci-dessus.</div>
