@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Decimal, PropRules } from "@releve/core";
 import { currentUser } from "@/app/journal/data";
-import { getActiveAccount, saveAccount } from "./data";
+import { getActiveAccount, removeAccount, saveAccount, setActiveAccount } from "./data";
 
 function dec(fd: FormData, key: string, fallback: string): Decimal {
   const v = String(fd.get(key) ?? "").trim().replace(",", ".");
@@ -39,4 +39,33 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
   await saveAccount(supabase, user.id, rules);
   revalidatePath("/dashboard");
   redirect("/dashboard");
+}
+
+/** Crée un nouveau compte (vierge) et l'active — à éditer ensuite. */
+export async function newAccountAction(): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  await saveAccount(supabase, user.id, new PropRules({ label: "Nouveau compte" }));
+  revalidatePath("/settings");
+  redirect("/settings");
+}
+
+export async function activateAccountAction(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const uid = String(formData.get("uid") ?? "");
+  if (uid) await setActiveAccount(supabase, user.id, uid);
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  redirect("/settings");
+}
+
+export async function removeAccountAction(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const uid = String(formData.get("uid") ?? "");
+  if (uid) await removeAccount(supabase, user.id, uid);
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+  redirect("/settings");
 }

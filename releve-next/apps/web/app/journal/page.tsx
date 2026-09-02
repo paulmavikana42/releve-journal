@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { candidates as matchCandidates, Direction, IdeaStatus } from "@releve/core";
+import { candidates as matchCandidates, Direction, IdeaStatus, mine } from "@releve/core";
 import { currentUser, openStore } from "./data";
-import { getWatchlist } from "../settings/data";
+import { activeScope, getWatchlist } from "../settings/data";
 import AddIdeaForm from "./AddIdeaForm";
 import ImportPanel from "./ImportPanel";
 import OrphanRow from "./OrphanRow";
@@ -23,17 +23,20 @@ export default async function JournalPage() {
   const store = await openStore(supabase, user.id);
   const loaded = store.load();
   const { ideas } = loaded;
+  const { activeUid, accountUids } = await activeScope(supabase, user.id);
   // Symboles proposés : watchlist ∪ tout ce qui a été tradé (le broker fait foi).
   const watchlist = await getWatchlist(supabase, user.id);
   const knownSymbols = [
     ...new Set([...watchlist, ...[...loaded.positions.values()].map((p) => p.symbol)]),
   ].sort();
-  const list = [...ideas.values()].sort(
-    (a, b) => b.created_at.getTime() - a.created_at.getTime(),
-  );
-  const allIdeas = [...ideas.values()];
+  // Cloisonnement par compte actif (0/1 compte ⇒ tout visible).
+  const list = [...ideas.values()]
+    .filter((i) => mine(i, activeUid, accountUids))
+    .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+  const allIdeas = list;
   const orphans = store
     .orphans()
+    .filter((p) => mine(p, activeUid, accountUids))
     .sort((a, b) => b.close_time.getTime() - a.close_time.getTime())
     .map((p) => ({
       uid: p.uid,

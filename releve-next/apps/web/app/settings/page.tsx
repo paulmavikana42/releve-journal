@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/app/journal/data";
-import { getActiveAccount } from "./data";
-import { saveAccountAction } from "./actions";
+import { getAccounts, getActiveAccount } from "./data";
+import {
+  activateAccountAction,
+  newAccountAction,
+  removeAccountAction,
+  saveAccountAction,
+} from "./actions";
+import SubmitButton from "../components/SubmitButton";
 
 export default async function SettingsPage() {
   const { supabase, user } = await currentUser();
   if (!user) redirect("/login");
   const a = await getActiveAccount(supabase, user.id);
+  const accounts = await getAccounts(supabase, user.id);
 
   const v = {
     label: a?.label ?? "FundedNext",
@@ -39,6 +46,47 @@ export default async function SettingsPage() {
         supposé. Ce sont elles qui rendent le tableau de bord (marge de survie, drawdown) juste.
       </p>
 
+      {accounts.length > 0 && (
+        <section style={{ marginBottom: 20 }}>
+          <div className="between" style={{ marginBottom: 8 }}>
+            <h2 style={{ margin: 0, fontSize: "1rem" }}>Comptes ({accounts.length})</h2>
+            <form action={newAccountAction}>
+              <SubmitButton className="ghost" pendingLabel="…">+ Nouveau compte</SubmitButton>
+            </form>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {accounts.map((acc) => {
+              const isActive = acc.uid === a?.uid;
+              return (
+                <div key={acc.uid} className="card between">
+                  <div className="row">
+                    <strong>{acc.label}</strong>
+                    <span className="muted">{acc.start_balance.toFixed(0)} {acc.symbol}</span>
+                    {acc.account_id && <span className="chip">#{acc.account_id}</span>}
+                    {isActive && <span className="chip" style={{ color: "var(--accent)" }}>actif</span>}
+                  </div>
+                  <div className="row" style={{ gap: 8 }}>
+                    {!isActive && (
+                      <form action={activateAccountAction}>
+                        <input type="hidden" name="uid" value={acc.uid} />
+                        <SubmitButton className="ghost" pendingLabel="…">Activer</SubmitButton>
+                      </form>
+                    )}
+                    {accounts.length > 1 && (
+                      <form action={removeAccountAction}>
+                        <input type="hidden" name="uid" value={acc.uid} />
+                        <SubmitButton className="ghost" pendingLabel="…">Supprimer</SubmitButton>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      <h2 style={{ fontSize: "1rem" }}>{a ? "Modifier le compte actif" : "Créer ton compte"}</h2>
       <form action={saveAccountAction} className="card" style={{ display: "grid", gap: 14 }}>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
           <div>

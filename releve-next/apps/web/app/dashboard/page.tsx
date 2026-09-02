@@ -8,10 +8,11 @@ import {
   ideasCorrectRate,
   Quadrant,
   rMultiples,
+  scopeToAccount,
   Unit,
 } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
-import { getActiveAccount } from "../settings/data";
+import { activeScope } from "../settings/data";
 
 const QUADRANTS: [Quadrant, string][] = [
   [Quadrant.MASTERY, "Maîtrise"],
@@ -44,12 +45,19 @@ export default async function Dashboard() {
   if (!user) redirect("/login");
 
   const store = await openStore(supabase, user.id);
-  const { ideas, deals } = store.load();
-  const campaigns = store.campaigns();
-  const all = [...ideas.values()];
+  const loaded = store.load();
+  const { active, activeUid, accountUids } = await activeScope(supabase, user.id);
+  const scoped = scopeToAccount(
+    { ideas: loaded.ideas, campaigns: store.campaigns(), deals: loaded.deals },
+    activeUid,
+    accountUids,
+  );
+  const all = scoped.ideas;
+  const deals = scoped.deals;
+  const campaigns = scoped.campaigns;
   const executed = all.filter((i) => i.is_executed);
 
-  const account = await getActiveAccount(supabase, user.id);
+  const account = active;
   const cur = account?.symbol ?? "$";
 
   const exp = expectancyOf(rMultiples(all));

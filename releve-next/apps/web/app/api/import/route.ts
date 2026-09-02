@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { parser, csv, type Deal, type Position } from "@releve/core";
+import { parser, csv, Deal, Position } from "@releve/core";
 import { currentUser, openStore } from "@/app/journal/data";
-import { learnSymbols } from "@/app/settings/data";
+import { activeScope, learnSymbols } from "@/app/settings/data";
 
 // Import MT5/CSV — TOUJOURS côté serveur. Parse le fichier, écrit les positions
 // et transactions dans le journal (events), de façon IDEMPOTENTE (rapprochement
@@ -44,8 +44,22 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Fichier non reconnu : ${String(e)}` }, { status: 400 });
   }
 
+  // Cloisonnement : on tague positions et soldes avec le compte ACTIF (comme la
+  // version Streamlit). Sans compte configuré (activeUid ""), on laisse tel quel.
+  const { activeUid } = await activeScope(supabase, user.id);
+  let positions = parsed.positions;
+  let deals = parsed.deals;
+  if (activeUid) {
+    positions = parsed.positions.map(
+      (p) => new Position({ ...p, account_id: activeUid } as unknown as ConstructorParameters<typeof Position>[0]),
+    );
+    deals = parsed.deals.map(
+      (d) => new Deal({ ...d, account_id: activeUid } as unknown as ConstructorParameters<typeof Deal>[0]),
+    );
+  }
+
   const store = await openStore(supabase, user.id);
-  const fresh = store.import_report(parsed.positions, parsed.deals);
+  const fresh = store.import_report(positions, deals);
   await store.flush();
 
   // Le broker fait foi : les symboles vus entrent dans la watchlist.

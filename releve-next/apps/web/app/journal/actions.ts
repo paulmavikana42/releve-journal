@@ -15,6 +15,7 @@ import {
   ThesisOutcome,
 } from "@releve/core";
 import { currentUser, openStore } from "./data";
+import { activeScope } from "../settings/data";
 
 /**
  * Écrit une idée dans le journal de l'utilisateur (table events).
@@ -33,6 +34,7 @@ export async function addIdea(formData: FormData): Promise<void> {
   const stop = String(formData.get("stop") ?? "").trim();
   const label = String(formData.get("label") ?? "").trim();
 
+  const { activeUid } = await activeScope(supabase, user.id);
   const store = await openStore(supabase, user.id);
   store.create_thesis(
     new Thesis({
@@ -42,7 +44,7 @@ export async function addIdea(formData: FormData): Promise<void> {
       stop_initial: stop ? new Decimal(stop) : null,
       risk_source: RiskSource.COMPUTED,
     }),
-    { label, account_id: "" },
+    { label, account_id: activeUid },
   );
   await store.flush();
 
@@ -74,6 +76,7 @@ export async function createOffPlan(formData: FormData): Promise<void> {
   const positionUid = String(formData.get("positionUid") ?? "");
   if (!positionUid) return;
 
+  const { activeUid } = await activeScope(supabase, user.id);
   const store = await openStore(supabase, user.id);
   const { positions } = store.load();
   const p = positions.get(positionUid);
@@ -86,7 +89,7 @@ export async function createOffPlan(formData: FormData): Promise<void> {
       entry_planned: p.open_price,
       risk_source: RiskSource.UNKNOWN,
     }),
-    { off_plan: true, account_id: "", label: `${p.symbol} (hors-plan)` },
+    { off_plan: true, account_id: activeUid, label: `${p.symbol} (hors-plan)` },
   );
   store.link(idea.id, p.uid);
   await store.flush();
@@ -199,6 +202,7 @@ export async function openTrade(formData: FormData): Promise<void> {
   const ticket = String(formData.get("ticket") ?? "").trim();
   if (!ideaId || !ticket) return;
 
+  const { activeUid } = await activeScope(supabase, user.id);
   const store = await openStore(supabase, user.id);
   const { ideas } = store.load();
   const idea = ideas.get(ideaId);
@@ -218,7 +222,7 @@ export async function openTrade(formData: FormData): Promise<void> {
       volume: dec("volume") ?? new Decimal("0"),
       open_time: serverNow(),
       open_price: dec("open_price") ?? t.entry_planned ?? new Decimal("0"),
-      account_id: "",
+      account_id: activeUid,
       stop: dec("stop") ?? t.stop_initial,
     }),
   );

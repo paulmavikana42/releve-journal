@@ -70,6 +70,24 @@ export async function removeAccount(supabase: Client, userId: string, uid: strin
   await writeData(supabase, userId, { accounts, active_uid: active });
 }
 
+/**
+ * Le scope de cloisonnement : compte actif, son uid, et l'ordre des uids
+ * ([0] = défaut). 0 ou 1 compte ⇒ tout est visible (scopeToAccount/mine le
+ * gèrent). C'est ce que consomment journal/dashboard/campaigns.
+ */
+export async function activeScope(
+  supabase: Client,
+  userId: string,
+): Promise<{ active: PropRules | null; activeUid: string; accountUids: string[] }> {
+  const row = await readRow(supabase, userId);
+  const accounts = (row.accounts ?? []).map((a) => PropRules.from_dict(a));
+  const accountUids = accounts.map((a) => a.uid);
+  const active = accounts.length
+    ? (accounts.find((a) => a.uid === row.active_uid) ?? accounts[0]!)
+    : null;
+  return { active, activeUid: active?.uid ?? "", accountUids };
+}
+
 // ---------------------------------------------------------------- watchlist
 
 export async function getWatchlist(supabase: Client, userId: string): Promise<string[]> {
