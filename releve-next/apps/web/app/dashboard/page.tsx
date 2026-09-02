@@ -1,16 +1,17 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  compute,
   decisionMatrix,
+  equitySeries,
+  evaluate,
   expectancyOf,
   ideasCorrectRate,
-  Period,
   Quadrant,
   rMultiples,
   Unit,
 } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
+import { getActiveAccount } from "../settings/data";
 
 const QUADRANTS: [Quadrant, string][] = [
   [Quadrant.MASTERY, "Maîtrise"],
@@ -48,10 +49,16 @@ export default async function Dashboard() {
   const all = [...ideas.values()];
   const executed = all.filter((i) => i.is_executed);
 
+  const account = await getActiveAccount(supabase, user.id);
+  const cur = account?.symbol ?? "$";
+
   const exp = expectancyOf(rMultiples(all));
   const correct = ideasCorrectRate(all);
-  const dm = decisionMatrix(all, campaigns, Unit.THESIS, null, null);
-  const st = deals.length ? compute(deals, new Period()) : null;
+  const dm = decisionMatrix(all, campaigns, Unit.THESIS, null, account ? account.start_balance : null);
+
+  // Survie : calculée sur les RÈGLES du compte (jamais 100k supposé).
+  const comp = account ? evaluate(account, all, deals) : null;
+  const lowest = account ? equitySeries(account, all, deals).lowest : null;
 
   const pct = (x: number) => (x * 100).toFixed(0) + " %";
   const r2 = (x: number) => (x > 0 ? "+" : "") + x.toFixed(2);
@@ -64,6 +71,7 @@ export default async function Dashboard() {
         </h1>
         <nav className="row" style={{ gap: 14 }}>
           <Link href="/journal" className="muted">Journal</Link>
+          <Link href="/settings" className="muted">Réglages</Link>
           <form action="/auth/signout" method="post">
             <button type="submit" className="ghost">Se déconnecter</button>
           </form>
@@ -87,34 +95,52 @@ export default async function Dashboard() {
         )}
       </section>
 
-      {/* Survie challenge */}
-      {st && (
+      {/* Survie — calculée sur les règles du compte, jamais supposée */}
+      {!account ? (
+        <section className="card" style={{ marginBottom: 20, borderColor: "var(--accent)" }}>
+          <strong>Configure ton compte</strong>
+          <div className="muted" style={{ fontSize: ".9rem", marginTop: 2 }}>
+            Sans capital ni règles, l'outil ne peut pas calculer ta marge de survie — et une jauge
+            fausse serait pire qu'absente.{" "}
+            <Link href="/settings">Renseigner mon challenge →</Link>
+          </div>
+        </section>
+      ) : comp ? (
         <section className="card" style={{ marginBottom: 20 }}>
           <h2 style={{ marginTop: 0, fontSize: "1rem" }}>
-            Survie du challenge <span className="muted" style={{ fontWeight: 400 }}>· base 100 000 $ (FundedNext)</span>
+            Survie du challenge{" "}
+            <span className="muted" style={{ fontWeight: 400 }}>
+              · {account.label} · base {account.start_balance.toFixed(0)} {cur}
+              {account.drawdown_static ? " · drawdown fixe" : " · trailing"}
+            </span>
           </h2>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10 }}>
-            <Kpi label="Solde" value={st.balance.toFixed(2) + " $"} />
-            <Kpi label="Plancher fatal" value={st.floor.toFixed(0) + " $"} />
+            <Kpi label="Solde" value={comp.balance.toFixed(2) + " " + cur} />
+            <Kpi label="Plancher fatal" value={comp.floor.toFixed(0) + " " + cur} />
             <Kpi
               label="Marge avant échec"
-              value={st.margin_to_floor.toFixed(2) + " $"}
-              tone={st.margin_to_floor.gt(2000) ? "gain" : "loss"}
+              value={comp.margin_to_floor.toFixed(2) + " " + cur}
+              tone={comp.margin_to_floor.gt(0) ? "gain" : "loss"}
             />
-            <Kpi label="Plus-bas touché" value={st.lowest_ever.toFixed(2) + " $"} />
+            {lowest && <Kpi label="Plus-bas touché" value={lowest.toFixed(2) + " " + cur} />}
             <Kpi
-              label="Drawdown depuis 100k"
-              value={st.drawdown_from_start_pct.toFixed(2) + " %"}
-              tone={st.drawdown_from_start_pct.lt(10) ? undefined : "loss"}
+              label={`Drawdown (limite ${comp.drawdown_limit_pct.toFixed(0)} %)`}
+              value={comp.drawdown_pct.toFixed(2) + " %"}
+              tone={comp.drawdown_pct.lt(comp.drawdown_limit_pct) ? undefined : "loss"}
             />
           </div>
-          {st.lowest_ever.lt(st.floor) && (
+          {comp.breached.length > 0 && (
             <div style={{ marginTop: 10, color: "var(--loss)", fontSize: ".9rem" }}>
+              ⚠️ Règle(s) enfreinte(s) : {comp.breached.map((c) => c.label).join(", ")}.
+            </div>
+          )}
+          {lowest && lowest.lt(comp.floor) && (
+            <div style={{ marginTop: 6, color: "var(--loss)", fontSize: ".9rem" }}>
               ⚠️ Le plus-bas est passé SOUS le plancher : sur ces données, le challenge aurait été perdu.
             </div>
           )}
         </section>
-      )}
+      ) : null}
 
       {/* Matrice décision × résultat */}
       <section className="card" style={{ marginBottom: 20 }}>
