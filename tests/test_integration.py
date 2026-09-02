@@ -170,9 +170,9 @@ def test_trade_sans_these_est_hors_plan(store):
         store.link(i.id, p.uid)
 
     ideas, _, _ = store.load()
-    comp = M.plan_vs_offplan(list(ideas.values()))
-    assert comp.off_plan_ratio == 1.0
-    assert comp.planned is None
+    executes = [i for i in ideas.values() if i.is_executed]
+    # Aucune de ces positions n'avait de thèse préalable : toutes sont hors-plan.
+    assert executes and all(i.off_plan for i in executes)
 
 
 def test_une_idee_journalisee_le_soir_est_un_trade_comme_un_autre(store):
@@ -479,6 +479,31 @@ def test_fenetre_de_cinq_jours_ouvres_saute_le_weekend():
     assert not clock.review_due(mercredi, datetime(2026, 7, 21, 10))
     assert clock.review_due(mercredi, datetime(2026, 7, 22, 10))     # 5 ouvrés
     assert clock.business_days_left(mercredi, datetime(2026, 7, 20, 10)) == 2
+
+
+def test_business_days_between_ne_renvoie_jamais_de_negatif():
+    """
+    Verrou de comportement : `business_days_between` renvoie TOUJOURS >= 0.
+
+    Après le retrait du doublon mort de cette fonction, la version conservée
+    renvoie 0 quand `end <= start` (jamais un négatif). C'est ce que supposent
+    ses deux appelants : une idée horodatée dans le futur (décalage d'horloge)
+    ne doit pas paraître « déjà expirée » (review_due) ni consommer des jours
+    non vécus (business_days_left = max(0, WINDOW - used)).
+    """
+    from core import clock
+
+    mercredi = datetime(2026, 7, 15, 10, 0)
+    lendemain = datetime(2026, 7, 16, 10, 0)
+
+    # même instant -> 0, et end AVANT start -> 0 (pas -1)
+    assert clock.business_days_between(mercredi, mercredi) == 0
+    assert clock.business_days_between(lendemain, mercredi) == 0
+
+    # un "now" dans le passé ne déclenche pas la fenêtre ni ne la consomme
+    assert not clock.review_due(mercredi, datetime(2026, 7, 10, 10))
+    assert clock.business_days_left(mercredi, datetime(2026, 7, 10, 10)) \
+        == clock.REVIEW_WINDOW_BUSINESS_DAYS
 
 
 def test_review_dune_idee_abandonnee(store):

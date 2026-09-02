@@ -415,7 +415,14 @@ class Thesis:
     # fonda
     macro_theme: str = ""          # catégoriel, agrégeable
     catalyst: str = ""             # l'événement attendu
-    macro_note: str = ""           # texte libre
+    macro_note: str = ""           # texte libre (reflet à plat des blocs)
+
+    # Le corps de l'idée en BLOCS ordonnés (même éditeur que la thèse macro,
+    # texte/image façon Notion). `macro_note` reste renseigné (concat des blocs
+    # texte) pour la recherche et la rétrocompatibilité : une ancienne idée sans
+    # `blocks` se lit via macro_note/technical_note + captures. Le journal ne
+    # stocke que le CHEMIN de l'image — archi [P].
+    blocks: list = field(default_factory=list)
 
     # technique
     setup: str = ""                # catégoriel
@@ -991,6 +998,14 @@ class Campaign:
     macro_theme: str = ""
     catalyst: str = ""
     note: str = ""
+    # Le corps de la thèse en BLOCS ordonnés (écriture façon Notion, #184) :
+    #   {"type": "text",  "text": "..."}
+    #   {"type": "image", "path": "captures/<owner>/<id>.png", "caption": "..."}
+    # `note` reste renseigné (concat des blocs texte) pour la recherche et la
+    # rétrocompatibilité : un ancien journal sans `blocks` se lit toujours via
+    # `note` + `captures`. Le journal ne stocke que le CHEMIN de l'image, jamais
+    # l'image elle-même — archi [P], auditable dix ans.
+    blocks: list = field(default_factory=list)
     conviction: Optional[int] = None
     kill_switch: str = ""
     closed: bool = False

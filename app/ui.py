@@ -8,7 +8,7 @@ from typing import Optional
 
 import streamlit as st
 
-from core.models import Attachment, Idea, IdeaStatus, Quadrant, RiskSource
+from core.models import Idea, IdeaStatus, Quadrant, RiskSource
 from . import theme as T
 
 STEPS = [
@@ -115,10 +115,23 @@ def fmt_r(r: Optional[Decimal | float]) -> str:
     return f"{float(r):+.2f} R"
 
 
-def fmt_money(x: Optional[Decimal | float], cur: str = "$") -> str:
+# La devise du COMPTE ACTIF, fixée une fois par run depuis main.py
+# (ui.set_currency). Tout fmt_money sans devise explicite l'emploie — la matrice,
+# les calendriers, les KPI, le détail : un seul point de vérité, aucune fmt_money
+# à re-câbler ailleurs. $ par défaut tant que rien n'est fixé.
+_CURRENCY = "$"
+
+
+def set_currency(symbol: str):
+    global _CURRENCY
+    _CURRENCY = symbol or "$"
+
+
+def fmt_money(x: Optional[Decimal | float], cur: Optional[str] = None) -> str:
     if x is None:
         return "—"
-    return f"{float(x):+,.2f} {cur}".replace(",", " ")
+    sym = cur if cur is not None else _CURRENCY
+    return f"{float(x):+,.2f} {sym}".replace(",", " ")
 
 
 # Les mois en toutes lettres, en dur. `locale.setlocale(LC_TIME, "fr_FR")` échoue
@@ -282,49 +295,9 @@ def _data_uri(path: Path) -> Optional[str]:
     return f"data:image/{mime};base64,{base64.b64encode(raw).decode()}"
 
 
-def gallery(data_dir, attachments: list[Attachment], per_row: int = 3,
-            on_remove=None, key_prefix: str = ""):
-    """
-    La galerie de captures d'une idée ou d'une thèse.
-
-    `on_remove(attachment_id)` : si fourni, chaque vignette porte un bouton de
-    retrait. Le retrait n'efface pas le fichier — il le sort de l'affichage.
-    """
-    shots = [a for a in attachments if not a.removed]
-    if not shots:
-        st.markdown(
-            '<div class="note">Aucune capture. Une image jointe au moment de '
-            'l\'entrée horodate ce que tu voyais — c\'est une donnée '
-            'pré-engagée, pas une décoration.</div>', unsafe_allow_html=True)
-        return
-
-    from core import captures as C
-    for start in range(0, len(shots), per_row):
-        cols = st.columns(per_row)
-        for col, a in zip(cols, shots[start:start + per_row]):
-            with col:
-                p = C.resolve(data_dir, a)
-                if p is None:
-                    st.markdown(
-                        f'<div class="card"><div class="note">Fichier introuvable :'
-                        f'<br><code>{a.path}</code></div></div>',
-                        unsafe_allow_html=True)
-                    continue
-                st.image(str(p), use_container_width=True)
-                legende = a.caption or a.original_name
-                st.markdown(
-                    f'<div class="note">{KIND_LABELS.get(a.kind.value, a.kind.value)}'
-                    f'{" · " + legende if legende else ""}'
-                    f'{" · joint le " + a.added_at.strftime("%d/%m %H:%M") if a.added_at else ""}'
-                    f'</div>', unsafe_allow_html=True)
-                if on_remove and st.button("Retirer", key=f"rm_{key_prefix}_{a.id}"):
-                    on_remove(a.id)
+# Alias public : une image redimensionnable (largeur en %) doit passer par une
+# balise <img> dans du HTML pour garder ses proportions — d'où le data-uri.
+def data_uri(path: Optional[Path]) -> Optional[str]:
+    return _data_uri(path) if path is not None else None
 
 
-KIND_LABELS = {
-    "these": "thèse",
-    "entree": "entrée",
-    "gestion": "gestion",
-    "sortie": "sortie",
-    "autre": "capture",
-}

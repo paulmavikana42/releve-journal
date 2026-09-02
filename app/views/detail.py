@@ -12,13 +12,13 @@ from decimal import Decimal
 
 import streamlit as st
 
-from core import captures as CAP
 from core import clock
 from core.models import (
-    Campaign, CaptureKind, Idea, OpenTrade, Quadrant, Review,
+    Campaign, Idea, Quadrant, Review,
     StopEvidence, ThesisOutcome,
 )
 from core.store import Store
+from .. import blocks as B
 from .. import theme as T
 from .. import ui
 
@@ -38,7 +38,7 @@ _VERDICT_COURT = {
 }
 
 
-def _thesis_block(idea: Idea):
+def _thesis_block(idea: Idea, data_dir=None):
     t = idea.thesis
     if t is None:
         return
@@ -50,16 +50,16 @@ def _thesis_block(idea: Idea):
         f'{" — avant l\'ouverture du premier ticket" if idea.opened_at and idea.created_at <= idea.opened_at else ""}.'
         f'</div>', unsafe_allow_html=True)
 
+    # Les métadonnées STRUCTURÉES (catalyseur, signal technique, invalidation).
+    # Le développement, lui, se lit en blocs juste en dessous.
     st.markdown(
         f'<div class="card">'
         f'<div class="eyebrow">catalyseur macro</div>'
         f'<b>{t.macro_theme or "—"}</b>'
         f'{" · " + t.catalyst if t.catalyst else ""}'
-        f'<p style="font-size:0.86rem;margin-top:6px">{t.macro_note or "—"}</p>'
         f'<hr class="rule" style="margin:14px 0 12px 0">'
         f'<div class="eyebrow">signal technique</div>'
         f'<b>{t.setup or "—"}</b> <span class="chip">{t.timeframe or "—"}</span>'
-        f'<p style="font-size:0.86rem;margin-top:6px">{t.technical_note or "—"}</p>'
         f'<hr class="rule" style="margin:14px 0 12px 0">'
         f'<div class="eyebrow">niveau d\'invalidation</div>'
         f'<p style="font-size:0.86rem">{t.thesis_kill_switch or "—"} '
@@ -68,37 +68,19 @@ def _thesis_block(idea: Idea):
         f'elle tue l\'idée même si le prix ne touche pas ton stop.</div>'
         f'</div>', unsafe_allow_html=True)
 
-
-def _declarer_ouverture(store: Store, idea: Idea):
-    """
-    « Je viens d'entrer. » La déclaration du ticket, au moment vrai : quand tu
-    entres réellement, pas quand tu écris l'idée. L'idée passe « en cours », le
-    stop réel est enregistré avant que le broker ne l'écrase, et le numéro de
-    ticket devient la clé qui clôturera ce trade à l'import — sans doublon.
-    """
-    t = idea.thesis
-    ui.eyebrow("je viens d'entrer")
-    st.markdown(
-        '<div class="note">Déclare le numéro de ticket que t\'affiche ton '
-        'terminal : l\'idée passe <b>en cours</b>, et ton prochain import '
-        'clôturera ce trade tout seul. Le volume et l\'entrée réelle viendront de '
-        'l\'export — rien d\'autre à saisir.</div>', unsafe_allow_html=True)
-    with st.form(f"declare_{idea.id}"):
-        ticket = st.text_input("N° de ticket",
-                               placeholder="celui affiché par ton terminal")
-        if st.form_submit_button("Déclarer le ticket ouvert", type="primary"):
-            if not ticket.strip():
-                st.error("Le numéro de ticket est indispensable : c'est la clé "
-                         "qui permettra à l'import de clôturer ce trade.")
-            else:
-                store.open_trade(idea.id, OpenTrade(
-                    ticket=ticket.strip(), symbol=t.instrument,
-                    direction=t.direction, volume=Decimal("0"),
-                    open_time=clock.server_now(),
-                    open_price=t.entry_planned or Decimal("0"),
-                    account_id=idea.account_id, stop=t.stop_initial))
-                st.rerun()
-    ui.rule()
+    # Le DÉVELOPPEMENT, en blocs (texte/image façon Notion). Une ancienne idée
+    # sans blocs retombe sur ses textes (macro + technique).
+    blocs = t.blocks
+    if not blocs:
+        blocs = []
+        if t.macro_note:
+            blocs.append({"type": "text", "text": t.macro_note})
+        if t.technical_note:
+            blocs.append({"type": "text", "text": t.technical_note})
+    if blocs:
+        st.markdown('<div style="height:8px"></div>', unsafe_allow_html=True)
+        ui.eyebrow("le développement")
+        B.render(blocs, data_dir)
 
 
 def _open_block(store: Store, idea: Idea, spec_book):
@@ -108,13 +90,12 @@ def _open_block(store: Store, idea: Idea, spec_book):
     Trois choses seulement, parce que trois choses seulement se font pendant un
     trade : constater où on en est, déplacer le stop, joindre une capture.
     Aucune review ici — juger un trade en cours, c'est juger le hasard.
+
+    La DÉCLARATION du ticket, elle, ne se fait plus ici : elle vit dans le
+    formulaire de l'idée (création/modification) — champ « N° de ticket ». On
+    entre le ticket là où l'on écrit l'idée, pas sur un écran séparé (#182).
     """
     if not idea.open_trades:
-        # Idée armée, aucun ticket encore déclaré : c'est ICI qu'on déclare
-        # l'entrée (déplacé depuis le formulaire de création). Uniquement si rien
-        # n'est encore clôturé — un trade clos ne se « rouvre » pas.
-        if not idea.is_executed and idea.thesis:
-            _declarer_ouverture(store, idea)
         return
 
     ui.eyebrow(f"{len(idea.open_trades)} ticket(s) en cours")
@@ -180,44 +161,6 @@ def _open_block(store: Store, idea: Idea, spec_book):
         'prochain import : le numéro de ticket sert de clé, les données réelles '
         '(sortie, P&L, durée) viendront de l\'export. Rien à ressaisir.</div>',
         unsafe_allow_html=True)
-
-
-def _captures_block(store: Store, idea: Idea, data_dir):
-    ui.eyebrow("captures du trade")
-    st.markdown(
-        '<div class="note">Le graphique à l\'entrée, le ticket d\'ordre, la sortie. '
-        'Une capture jointe au moment du trade est une donnée <b>pré-engagée</b> : '
-        'l\'image horodate ce que tu voyais.</div>', unsafe_allow_html=True)
-
-    ui.gallery(data_dir, idea.attachments, per_row=3,
-               on_remove=lambda aid: (store.remove_capture(aid), st.rerun()),
-               key_prefix=idea.id)
-
-    with st.expander("Ajouter des captures"):
-        fichiers = st.file_uploader(
-            "Images", type=["png", "jpg", "jpeg", "webp", "gif"],
-            accept_multiple_files=True, key=f"add_shots_{idea.id}")
-        c1, c2 = st.columns([1, 2])
-        moment = c1.selectbox("Moment", [k.value for k in CaptureKind],
-                              format_func=lambda v: ui.KIND_LABELS.get(v, v),
-                              key=f"kind_{idea.id}")
-        legende = c2.text_input("Légende", key=f"cap_{idea.id}",
-                                placeholder="H4 · cassure de 71.10 sur volume")
-        if st.button("Joindre", key=f"join_{idea.id}", type="primary"):
-            n = 0
-            for f in fichiers or []:
-                try:
-                    att = CAP.save(data_dir, "idea", idea.id, f.name, f.getvalue(),
-                                   kind=CaptureKind(moment), caption=legende)
-                except CAP.CaptureError as e:
-                    st.error(f"{f.name} : {e}")
-                    continue
-                store.add_capture(att)
-                n += 1
-            if n:
-                st.rerun()
-            else:
-                st.error("Aucune image à joindre.")
 
 
 def _quadrant_block(idea: Idea):
@@ -620,6 +563,11 @@ def _tickets_block(idea: Idea):
 
 def _review_form(store: Store, idea: Idea):
     r = idea.review
+    # #176 — une idée DÉJÀ revue ne montre plus la section review : le verdict
+    # est acquis, il se relit dans « qualité d'exécution ». Ré-ouvrir un
+    # formulaire pré-rempli inviterait à refaire une review terminée.
+    if r is not None:
+        return
     if idea.is_running:
         st.markdown(
             f'<div class="card" style="border-left:3px solid {T.ACCENT}">'
@@ -724,8 +672,7 @@ def render(store: Store, idea: Idea, spec_book, equity_ref: Decimal,
 
     gauche, droite = st.columns([1.5, 1])
     with gauche:
-        _thesis_block(idea)
-        _captures_block(store, idea, data_dir)
+        _thesis_block(idea, data_dir)
     with droite:
         _quadrant_block(idea)
         _execution_block(idea, spec_book, equity_ref)

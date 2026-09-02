@@ -15,14 +15,15 @@ agrège par-dessus, en devise du compte.
 """
 from __future__ import annotations
 
+import uuid
 from decimal import Decimal
 from typing import Optional
 
 import streamlit as st
 
-from core import captures as CAP
-from core.models import Campaign, CaptureKind, Idea
+from core.models import Campaign, Idea
 from core.store import Store
+from .. import blocks as B
 from .. import theme as T
 from .. import ui
 
@@ -35,7 +36,13 @@ THEMES = [
 
 
 def _form(store: Store, existing: Optional[Campaign] = None,
-          account_id: str = ""):
+          account_id: str = "", data_dir=None):
+    key = existing.id if existing else "new"
+    # Pour une NOUVELLE thèse, on fige un id dès le départ : il sert de dossier
+    # aux images insérées pendant la composition, avant même l'enregistrement.
+    cid = existing.id if existing else st.session_state.setdefault(
+        "new_camp_id", uuid.uuid4().hex[:12])
+
     if existing is None:
         st.markdown("## Écrire une thèse macro")
         st.markdown(
@@ -44,120 +51,140 @@ def _form(store: Store, existing: Optional[Campaign] = None,
             'Pour un trade sur un seul symbole, l\'idée suffit.</div>',
             unsafe_allow_html=True)
 
-    with st.form(f"campaign_{existing.id if existing else 'new'}",
-                 clear_on_submit=not existing):
-        name = st.text_input("Nom", value=existing.name if existing else "",
-                             placeholder="Dollar fort — Fed hawkish")
+    name = st.text_input("Nom", value=existing.name if existing else "",
+                         key=f"camp_name_{key}",
+                         placeholder="Dollar fort — Fed hawkish")
 
-        c1, c2 = st.columns([2, 1])
-        theme = c1.text_input("Thème", value=existing.macro_theme if existing else "",
-                              placeholder="ex. Fed / taux US, dollar fort…",
-                              help="Écris-le librement — réutilise les mêmes mots d'une "
-                                   "thèse à l'autre pour les regrouper.")
-        conviction = c2.slider("Conviction", 1, 5,
-                               existing.conviction if existing and existing.conviction else 3)
+    c1, c2 = st.columns([2, 1])
+    theme = c1.text_input(
+        "Thème", value=existing.macro_theme if existing else "",
+        key=f"camp_theme_{key}", placeholder="ex. Fed / taux US, dollar fort…",
+        help="Écris-le librement — réutilise les mêmes mots d'une thèse à "
+             "l'autre pour les regrouper.")
+    conviction = c2.slider(
+        "Conviction", 1, 5,
+        existing.conviction if existing and existing.conviction else 3,
+        key=f"camp_conv_{key}")
 
-        catalyst = st.text_input("Catalyseur attendu",
-                                 value=existing.catalyst if existing else "",
-                                 placeholder="FOMC du 30/07")
-        note = st.text_area("La thèse", value=existing.note if existing else "",
-                            height=90, placeholder="Pourquoi le marché a tort.")
-        kill = st.text_area(
-            "Ce qui tue la thèse", value=existing.kill_switch if existing else "",
-            height=68, placeholder="Un pivot dovish. Un NFP qui s'effondre.",
-            help="L'invalidation de la CONVICTION, pas d'un trade en particulier.")
+    catalyst = st.text_input(
+        "Catalyseur attendu", value=existing.catalyst if existing else "",
+        key=f"camp_cat_{key}", placeholder="FOMC du 30/07")
 
-        submit = st.form_submit_button(
-            "Enregistrer" if existing else "Créer la thèse macro", type="primary")
+    # --- LE CORPS DE LA THÈSE, EN BLOCS (#184)
+    ui.rule()
+    ui.eyebrow("la thèse — écris, ajoute des visuels au fil",
+               aide="Écris un paragraphe, insère une image à sa suite, continue. "
+                    "Chaque bloc se déplace (↑↓) et se retire (✕).")
+    bkey = f"camp_blocks_{key}"
+    if bkey not in st.session_state:
+        st.session_state[bkey] = B.init(
+            existing.blocks if existing else [],
+            existing.note if existing else "",
+            existing.captures if existing else [])
+    B.editor(bkey, "campaign", cid, data_dir)
 
-    if not submit:
+    kill = st.text_area(
+        "Ce qui tue la thèse", value=existing.kill_switch if existing else "",
+        key=f"camp_kill_{key}", height=68,
+        placeholder="Un pivot dovish. Un NFP qui s'effondre.",
+        help="L'invalidation de la CONVICTION, pas d'un trade en particulier.")
+
+    ui.rule()
+    if not st.button("Enregistrer" if existing else "Créer la thèse macro",
+                     type="primary", key=f"camp_save_{key}"):
         return
     if not name.strip():
         st.error("Un nom est nécessaire pour pouvoir y rattacher des idées.")
         return
 
+    blocs = [dict(b) for b in st.session_state[bkey]]
+    note = B.to_note(blocs)
+
     if existing:
         store.update_campaign(Campaign(
             id=existing.id, created_at=existing.created_at,
             name=name.strip(), macro_theme=theme, catalyst=catalyst,
-            note=note, conviction=conviction, kill_switch=kill,
+            note=note, blocks=blocs, conviction=conviction, kill_switch=kill,
             closed=existing.closed, abandoned=existing.abandoned,
             abandon_correct=existing.abandon_correct,
             account_id=existing.account_id))
         st.success("Thèse modifiée.")
     else:
         store.create_campaign(Campaign(
-            name=name.strip(), macro_theme=theme, catalyst=catalyst,
-            note=note, conviction=conviction, kill_switch=kill,
+            id=cid, name=name.strip(), macro_theme=theme, catalyst=catalyst,
+            note=note, blocks=blocs, conviction=conviction, kill_switch=kill,
             account_id=account_id))
         st.success("Thèse macro créée. Rattache-lui des idées depuis leur détail.")
+        # On repart d'une page vierge : les clés de composition sont libérées.
+        for k in list(st.session_state):
+            if k.endswith("_new") or k == "new_camp_id" or "_new_" in k \
+                    or k == bkey:
+                st.session_state.pop(k, None)
     st.rerun()
 
 
-# Les captures reviennent au niveau THÈSE, mais sous une forme structurée : des
-# « blocs visuels » (image + légende), pas une galerie décorative. Une thèse
-# macro a ses propres pièces — un diagramme du dollar, un COT, une structure
-# macro — qui ne sont pas celles d'une jambe précise. Voir _blocs_visuels.
-
-
-def _blocs_visuels(store: Store, camp: Campaign, data_dir):
+def _lecture(camp: Campaign, data_dir):
     """
-    Les blocs visuels d'une thèse : une image (diagramme, graphique, COT…) avec
-    sa légende à gauche, empilables. Donnée STRUCTURÉE — le journal ne stocke que
-    le chemin et la légende, jamais du HTML libre : la thèse reste auditable et
-    exportable, comme le reste de l'outil.
+    « Relire la thèse » — une page de LECTURE, pas un formulaire grisé.
+
+    Le texte s'y lit comme un article : aucun widget désactivé (donc aucun
+    curseur « interdit » sur le texte), les images intégrées à leur légende. On
+    reprend l'ordre de l'écran d'écriture pour que l'œil retrouve ses repères,
+    mais tout est du HTML — le curseur reste normal, sélectionnable.
     """
-    if data_dir is None:
-        return
-    n = len(camp.captures)
-    with st.expander(f"Blocs visuels — {n} bloc(s)"):
+    st.markdown(f"## {camp.display_name}")
+    conv = (f'<span class="chip">conviction {camp.conviction}/5</span>'
+            if camp.conviction else "")
+    st.markdown(
+        f'<div class="note" style="margin-bottom:14px">'
+        f'{camp.macro_theme or "thèse macro"}'
+        f'{" · catalyseur : " + camp.catalyst if camp.catalyst else ""} {conv}'
+        f'</div>', unsafe_allow_html=True)
+
+    # La thèse se relit dans l'ordre où elle a été écrite : blocs texte et image
+    # entremêlés (#184). Une ancienne thèse sans blocs retombe sur note+captures.
+    ui.eyebrow("la thèse")
+    B.render(camp.blocks or B.init([], camp.note, camp.captures), data_dir)
+
+    if camp.kill_switch:
         st.markdown(
-            '<div class="note">Une image + sa légende. Un diagramme de ta thèse, '
-            'un graphique macro, une capture du COT — chacun décrit par un mot. '
-            'Empile-en autant que tu veux.</div>', unsafe_allow_html=True)
+            f'<div class="card" style="margin-top:8px">'
+            f'<div class="eyebrow">ce qui tue la thèse</div>'
+            f'<p style="font-size:0.95rem;line-height:1.6;margin-top:8px;'
+            f'white-space:pre-wrap">{camp.kill_switch}</p></div>',
+            unsafe_allow_html=True)
 
-        for a in camp.captures:
-            ui.rule()
-            g, d = st.columns([1, 1])
-            with g:
-                st.markdown(
-                    f'<div class="eyebrow bar">légende</div>'
-                    f'<div class="note">{a.caption or "—"}</div>'
-                    + (f'<div class="note mono" style="opacity:.6;margin-top:6px">'
-                       f'joint le {a.added_at:%d/%m %H:%M}</div>' if a.added_at else ""),
+
+def _menu_these(store: Store, c: Campaign):
+    """
+    Les 3 points verticaux du conteneur d'une thèse : relire / modifier /
+    abandonner. Un popover natif (bien positionné, jamais un saut de page), pas
+    trois accordéons empilés.
+    """
+    with st.popover("⋮", use_container_width=False):
+        st.markdown('<div class="eyebrow bar">cette thèse</div>',
                     unsafe_allow_html=True)
-                if st.button("Retirer ce bloc", key=f"rmbloc_{camp.id}_{a.id}"):
-                    store.remove_capture(a.id)
-                    st.rerun()
-            with d:
-                p = CAP.resolve(data_dir, a)
-                if p is not None:
-                    st.image(str(p), use_container_width=True)
-                else:
-                    st.markdown('<div class="note">image introuvable sur le disque</div>',
-                                unsafe_allow_html=True)
-
+        if st.button("Relire la thèse", key=f"read_{c.id}",
+                     use_container_width=True):
+            st.session_state["camp_view"] = (c.id, "read")
+            st.rerun()
+        if st.button("Modifier", key=f"editc_{c.id}", use_container_width=True):
+            st.session_state["camp_view"] = (c.id, "edit")
+            st.rerun()
         ui.rule()
-        ui.eyebrow("＋ nouveau bloc")
-        legende = st.text_area("Légende", key=f"leg_{camp.id}", height=68,
-                               placeholder="Ce que cette image montre, en une phrase.")
-        img = st.file_uploader("Image (PNG, JPG, WEBP)", key=f"img_{camp.id}",
-                               type=["png", "jpg", "jpeg", "webp", "gif"])
-        if st.button("Ajouter ce bloc", key=f"addbloc_{camp.id}", type="primary"):
-            if img is None:
-                st.error("Choisis une image d'abord.")
-            else:
-                try:
-                    att = CAP.save(data_dir, "campaign", camp.id, img.name,
-                                   img.getvalue(), kind=CaptureKind.THESIS,
-                                   caption=legende.strip())
-                    store.add_capture(att)
-                    st.rerun()
-                except CAP.CaptureError as e:
-                    st.error(str(e))
+        st.markdown(
+            '<div class="note">L\'abandon sort la thèse des vues et des stats. '
+            'Ses idées redeviennent autonomes. Rien n\'est effacé.</div>',
+            unsafe_allow_html=True)
+        ok = st.checkbox("Je confirme l'abandon", key=f"abdok_{c.id}")
+        if st.button("Abandonner la thèse", key=f"abd_{c.id}",
+                     disabled=not ok, use_container_width=True):
+            store.abandon_campaign(c.id)
+            st.session_state.pop("camp_view", None)
+            st.rerun()
 
 
-def _card(c: Campaign, spec_book):
+def _card(store: Store, c: Campaign, spec_book):
     executed = c.executed_ideas
     r_tot = c.r_total(spec_book) if executed else None
     r_w = c.r_weighted(spec_book) if executed else None
@@ -165,13 +192,23 @@ def _card(c: Campaign, spec_book):
 
     instruments = " · ".join(c.instruments) if c.instruments else "aucune idée exécutée"
 
-    st.markdown(
-        f'<div class="card">'
-        f'<div class="eyebrow">{c.macro_theme or "thèse macro"}</div>'
-        f'<b style="font-size:1.05rem">{c.display_name}</b>'
-        f'{" <span class=\'chip\'>conv " + str(c.conviction) + "/5</span>" if c.conviction else ""}'
-        f'<div class="note mono">{len(c.ideas)} idée(s) · {instruments}</div>'
-        f'</div>', unsafe_allow_html=True)
+    # En-tête : le résumé à gauche, les 3 points alignés à droite dans le MÊME
+    # conteneur (la conviction et le menu sur la même ligne, comme demandé).
+    hg, hd = st.columns([8, 1])
+    with hg:
+        st.markdown(
+            f'<div class="card" style="margin-bottom:0">'
+            f'<div class="eyebrow">{c.macro_theme or "thèse macro"}</div>'
+            f'<b style="font-size:1.05rem">{c.display_name}</b>'
+            f'{" <span class=\'chip\'>conv " + str(c.conviction) + "/5</span>" if c.conviction else ""}'
+            f'<div class="note mono">{len(c.ideas)} idée(s) · {instruments}</div>'
+            f'</div>', unsafe_allow_html=True)
+    with hd:
+        _menu_these(store, c)
+
+    # Une respiration entre l'en-tête (conviction, instruments) et les chiffres :
+    # collés, le conteneur et son P&L se lisaient comme un seul bloc dense.
+    st.markdown('<div style="height:16px"></div>', unsafe_allow_html=True)
 
     if not executed:
         st.markdown('<div class="note">Aucune idée exécutée pour l\'instant.</div>',
@@ -226,7 +263,7 @@ def render(store: Store, campaigns: dict, spec_book, data_dir=None,
     tab_list, tab_new = st.tabs(["Toutes les thèses macro", "Écrire une thèse macro"])
 
     with tab_new:
-        _form(store, account_id=account_id)
+        _form(store, account_id=account_id, data_dir=data_dir)
 
     with tab_list:
         if not campaigns:
@@ -240,41 +277,29 @@ def render(store: Store, campaigns: dict, spec_book, data_dir=None,
         vivantes = {cid: c for cid, c in campaigns.items()
                     if not getattr(c, "abandoned", False)}
 
+        # --- sous-vue « relire » ou « modifier » (ouverte depuis les 3 points).
+        # Une page à part entière, avec un retour — pas un accordéon qui pousse
+        # le reste de la liste vers le bas.
+        cv = st.session_state.get("camp_view")
+        if cv and cv[0] in vivantes:
+            cid, mode = cv
+            camp = vivantes[cid]
+            if st.button("← Retour", key="camp_back"):
+                st.session_state.pop("camp_view", None)
+                st.rerun()
+            if mode == "edit":
+                # Modifier = retour à l'écran de création, PRÉ-REMPLI. L'ajout
+                # d'images se fait dans l'éditeur par blocs, au fil du texte
+                # (#184/#189) — plus de gestion des visuels à part.
+                _form(store, existing=camp, account_id=account_id,
+                      data_dir=data_dir)
+            else:
+                _lecture(camp, data_dir)
+            return
+
         for c in sorted(vivantes.values(), key=lambda x: x.created_at, reverse=True):
-            _card(c, spec_book)
-            _blocs_visuels(store, c, data_dir)
+            _card(store, c, spec_book)
             ui.rule()
-
-        # --- modifier une thèse (modification totale, sans marquage)
-        if vivantes:
-            with st.expander("Modifier une thèse"):
-                noms = {c.display_name: cid for cid, c in vivantes.items()}
-                cible = st.selectbox("Thèse à modifier", ["— aucune —"] + list(noms),
-                                     key="edit_camp_pick")
-                if cible != "— aucune —":
-                    _form(store, existing=vivantes[noms[cible]])
-
-        # --- abandonner une thèse
-        # Marquée, jamais effacée : le journal est append-only. Une thèse
-        # abandonnée disparaît des vues et des statistiques, mais la donnée reste.
-        if vivantes:
-            with st.expander("Abandonner une thèse"):
-                st.markdown(
-                    '<div class="note">La thèse sort des vues et des statistiques. '
-                    'Ses idées, elles, ne sont pas touchées : elles redeviennent '
-                    'simplement autonomes et comptent pour elles-mêmes.</div>',
-                    unsafe_allow_html=True)
-                noms = {c.display_name: cid for cid, c in vivantes.items()}
-                cible = st.selectbox("Thèse à abandonner",
-                                     ["— aucune —"] + list(noms),
-                                     key="abandon_camp_pick")
-                if cible != "— aucune —":
-                    ok = st.checkbox(f"Je confirme l'abandon de « {cible} »",
-                                     key="abandon_camp_ok")
-                    if st.button("Abandonner", key="abandon_camp_btn",
-                                 disabled=not ok):
-                        store.abandon_campaign(noms[cible])
-                        st.rerun()
 
         abandonnees = [c for c in campaigns.values()
                        if getattr(c, "abandoned", False)]

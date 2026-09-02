@@ -25,6 +25,7 @@ from core import challenge as C               # noqa: E402
 from core import onboarding as O              # noqa: E402
 from core import paths                        # noqa: E402
 from core import prop as P                    # noqa: E402
+from core import settings as SET              # noqa: E402
 from app import theme as T                    # noqa: E402
 from app import ui                            # noqa: E402
 from app.views import (                       # noqa: E402
@@ -106,33 +107,51 @@ comptes = P.accounts()
 # déclenche un rerun, et ce rerun repasse par cette ligne avec la bonne valeur.
 _libelles = {f"{c.label}" + (f" · {c.account_id}" if c.account_id else ""): c
              for c in comptes}
+# MÉMOIRE DU DERNIER COMPTE : à la toute première passe d'une session (le
+# sélecteur n'a pas encore de valeur), on rouvre sur le compte de la session
+# précédente, retrouvé par son uid stable dans settings.json. Un compte renommé
+# depuis garde son uid ; un compte supprimé retombe proprement sur le premier.
+if "compte_pick" not in st.session_state:
+    _dernier = SET.get("last_account_uid")
+    if _dernier:
+        _lbl = next((lbl for lbl, c in _libelles.items() if c.uid == _dernier),
+                    None)
+        if _lbl:
+            st.session_state["compte_pick"] = _lbl
 # Un compte renommé ou supprimé dans les Réglages laisserait dans l'état une
 # valeur qui n'est plus une option — Streamlit lève alors une exception au
 # rendu du menu. On nettoie AVANT que le menu n'existe.
 if st.session_state.get("compte_pick") not in _libelles:
     st.session_state.pop("compte_pick", None)
 compte = _libelles.get(st.session_state.get("compte_pick"), comptes[0])
+# uid interne du compte actif : c'est LUI qui tague et cloisonne, pas le n° broker
+# (vide ou partagé chez Paul → fuite entre comptes). Le n° broker reste dispo pour
+# le rapprochement des tickets.
+OWNER = compte.uid
 st.session_state["account_id"] = compte.account_id
+# On retient ce compte pour la PROCHAINE ouverture : écrit seulement quand il
+# change, pour ne pas réécrire settings.json à chaque rerun.
+if SET.get("last_account_uid") != compte.uid:
+    SET.set("last_account_uid", compte.uid)
+# La devise du compte actif, propagée à TOUT l'affichage monétaire en un point
+# (matrice, calendriers, KPI, détail) : $, € ou £ selon la création du compte.
+ui.set_currency(compte.symbol)
 
-# --- cloisonnement par compte (règle testée : core.prop.belongs_to)
-# Idées ET thèses : deux challenges ne partagent RIEN. Une thèse sans compte
-# (journal d'avant le multi-comptes) reste rattachée au premier, comme les idées.
-_defaut = comptes[0].account_id
-all_ideas = sorted(
-    (i for i in ideas_map.values()
-     if len(comptes) == 1 or P.belongs_to(i, compte.account_id, _defaut)),
-    key=lambda i: i.created_at, reverse=True)
-campaigns_map = {
-    cid: c for cid, c in campaigns_all.items()
-    if len(comptes) == 1 or P.belongs_to(c, compte.account_id, _defaut)}
-# Les transactions du broker (courbe de solde MESURÉE, Sharpe, calendrier) : elles
-# aussi cloisonnées, sinon la compliance d'un compte lirait le solde d'un autre.
-deals_view = [d for d in deals
-              if len(comptes) == 1 or P.belongs_to(d, compte.account_id, _defaut)]
+# --- cloisonnement par compte (idées, thèses, transactions) --------------
+# Deux challenges ne partagent RIEN. Tout objet dont le tag ne correspond à aucun
+# compte connu (données d'avant l'uid, ou compte supprimé) retombe sur le premier
+# — rien ne disparaît. Les objets créés SUR un compte portent son uid : isolés.
+_uids = {c.uid for c in comptes}
+_defaut = comptes[0].uid
+_mine = lambda o: len(comptes) == 1 or P.owner_uid(o, _uids, _defaut) == OWNER  # noqa: E731
+all_ideas = sorted((i for i in ideas_map.values() if _mine(i)),
+                   key=lambda i: i.created_at, reverse=True)
+campaigns_map = {cid: c for cid, c in campaigns_all.items() if _mine(c)}
+deals_view = [d for d in deals if _mine(d)]
 
 # Version affichée dans le rail : quand un testeur remonte un bug, elle dit sur
 # QUELLE build il était. À incrémenter à chaque envoi.
-VERSION = "27 juillet 2026"
+VERSION = "13 août 2026"
 
 # ------------------------------------------------------------------- sidebar
 
@@ -168,8 +187,7 @@ with st.sidebar:
 
     ui.rule()
 
-    orphans = [p for p in store.orphans()
-               if len(comptes) == 1 or P.belongs_to(p, compte.account_id, _defaut)]
+    orphans = [p for p in store.orphans() if _mine(p)]
     running = [i for i in all_ideas if i.is_running]
     to_review = [i for i in all_ideas
                  if i.is_executed and not i.is_running and i.review is None]
@@ -270,6 +288,26 @@ EQUITY_REF = compte.start_balance    # capital de référence du compte actif
 _view = st.session_state.get("view_idea")
 _idea_obj = ideas_map.get(_view) if _view else None
 
+# #180 — depuis une sous-page (la fiche d'une idée), un clic sur une AUTRE
+# section du rail doit QUITTER la fiche et naviguer, pas seulement le bouton
+# « retour ». Le rail garde toujours sa valeur ; à l'entrée dans la fiche elle
+# vaut la section d'origine. Si elle ne correspond plus, c'est que l'utilisateur
+# a cliqué le menu de gauche → on ferme la fiche et on honore la navigation.
+if _idea_obj is not None and nav != st.session_state.get("view_origin"):
+    st.session_state.pop("view_idea", None)
+    st.session_state.pop("view_anchor", None)
+    _view = None
+    _idea_obj = None
+
+# Même logique pour les sous-vues de thèse (relire / modifier) : dès qu'on quitte
+# la section Thèses par le rail, on ferme la sous-vue pour ne pas y retomber au
+# retour.
+if nav != "Thèses" and nav != st.session_state.get("_last_nav"):
+    st.session_state.pop("camp_view", None)
+if nav != "Idée" and nav != st.session_state.get("_last_nav"):
+    st.session_state.pop("idea_edit", None)
+    st.session_state.pop("focus_ticket", None)
+
 if _idea_obj is not None:
     _origin = st.session_state.get("view_origin", "Tableau de bord")
     if st.button("← Retour", key="back_from_idea"):
@@ -290,17 +328,17 @@ elif nav == "Tableau de bord":
 
 elif nav == "Idée":
     ideas.render(store, all_ideas, spec_book, data_dir=DATA,
-                 account_id=compte.account_id, campaigns=campaigns_map)
+                 account_id=OWNER, campaigns=campaigns_map)
 
 elif nav == "Thèses":
     campaigns.render(store, campaigns_map, spec_book, data_dir=DATA,
-                     account_id=compte.account_id)
+                     account_id=OWNER)
 
 elif nav == "Compliance prop":
     compliance.render(all_ideas, deals_view, compte, spec_book)
 
 elif nav == "Import":
-    importer.render(store, all_ideas, account_id=compte.account_id)
+    importer.render(store, all_ideas, account_id=OWNER)
 
 elif nav == "Réglages":
     settings.render(store, DATA)

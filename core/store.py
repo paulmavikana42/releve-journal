@@ -337,23 +337,33 @@ class Store:
         closed_uids = set(positions)
         # ticket -> comptes sur lesquels ce ticket a été importé
         closed_tickets: dict[str, set[str]] = {}
-        for p in positions.values():
+        # ticket -> uids des positions portant ce ticket (pour le rattachement)
+        positions_by_ticket: dict[str, list[str]] = {}
+        for uid_p, p in positions.items():
             closed_tickets.setdefault(p.position_id, set()).add(p.account_id)
+            positions_by_ticket.setdefault(p.position_id, []).append(uid_p)
 
         still_open: dict[str, list[OpenTrade]] = {}
+        # idée -> uids des positions à rattacher parce qu'elles CLÔTURENT un trade
+        # déclaré (même ticket), même si l'import ne les a pas liées explicitement
+        # (numéro de compte divergent, ordre des opérations). Le ticket est LA clé.
+        autolink: dict[str, set[str]] = {}
         for uid, (idea_id, tr) in opens.items():
             comptes = closed_tickets.get(tr.ticket)
             # Le cas nominal : même compte, même ticket.
             ferme = uid in closed_uids
-            # Le cas réel : l'un des deux côtés ignore le numéro de compte. Un
-            # CSV n'a presque jamais de colonne « compte », et personne ne le
-            # ressaisit à 2 h du matin sur un téléphone. Quand un seul côté le
-            # connaît, le ticket seul tranche — la collision inter-comptes ne
-            # peut se produire que si les DEUX côtés sont renseignés, et là on
-            # ne se rabat pas.
+            # Le compte du trade déclaré ne sert QU'À éviter une collision de
+            # ticket entre deux comptes BROKER distincts. Il ne compte donc que
+            # si c'en est vraiment un — une suite de chiffres. Un identifiant
+            # interne (uid alphanumérique, écrit par erreur) ou un champ vide ne
+            # peut pas collisionner : le ticket, unique, referme seul.
             if not ferme and comptes:
-                ferme = not tr.account_id or "" in comptes
+                tr_acct = tr.account_id if tr.account_id.isdigit() else ""
+                ferme = (not tr_acct) or ("" in comptes) or (tr_acct in comptes)
             if ferme:
+                # La position clôturante appartient à cette idée (par le ticket).
+                for u in positions_by_ticket.get(tr.ticket, []):
+                    autolink.setdefault(idea_id, set()).add(u)
                 continue
             still_open.setdefault(idea_id, []).append(tr)
 
@@ -368,7 +378,14 @@ class Store:
 
         # résolution des positions + recalcul des statuts
         for idea in ideas.values():
-            idea.positions = [positions[u] for u in idea.position_uids if u in positions]
+            uids = list(idea.position_uids)
+            # Rattachement par ticket des positions qui clôturent un trade déclaré
+            # (voir autolink) : sans lui, la position resterait orpheline et l'idée
+            # ne passerait jamais « clôturée » (donc jamais relisible).
+            for u in autolink.get(idea.id, ()):
+                if u not in uids:
+                    uids.append(u)
+            idea.positions = [positions[u] for u in uids if u in positions]
             idea.open_trades = sorted(still_open.get(idea.id, []),
                                       key=lambda o: o.open_time)
             idea.attachments = by_owner.get(idea.id, [])
@@ -588,8 +605,12 @@ class Store:
     def orphans(self) -> list[Position]:
         """Positions importées, rattachées à aucune idée. À traiter."""
         ideas, positions, _ = self.load()
-        linked = {u for i in ideas.values() for u in i.position_uids}
-        return [p for uid, p in positions.items() if uid not in linked]
+        # Les positions RÉSOLUES d'une idée (pas seulement position_uids) : inclut
+        # celles rattachées par ticket au chargement (un trade déclaré que le
+        # ticket referme). Sans ça, une position clôturante resterait « orpheline »
+        # tout en étant déjà attachée à son idée.
+        linked = {p.uid for i in ideas.values() for p in i.positions}
+        return [p for uid, p in positions.items() if p.uid not in linked]
 
     def backup(self) -> Path:
         stamp = datetime.now().strftime("%Y%m%d-%H%M%S")

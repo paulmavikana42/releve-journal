@@ -29,6 +29,7 @@ DEUX HONNÊTETÉS À NE PAS PERDRE
 """
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from decimal import Decimal
@@ -63,7 +64,12 @@ class PropRules:
     compte n'est figé (le contraire produisait des jauges fausses qu'on ne
     pouvait plus corriger).
     """
-    account_id: str = ""
+    # uid : identifiant INTERNE stable, la vraie clé de cloisonnement. Le numéro
+    # de compte broker (account_id) peut être vide ou partagé (deux challenges
+    # « 0 » chez la même firme) — s'en servir pour isoler faisait fuiter les
+    # données d'un compte à l'autre. L'uid, lui, est unique par compte.
+    uid: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
+    account_id: str = ""                              # numéro broker (rapprochement)
     label: str = "FundedNext"
     broker: str = ""
     currency: str = "USD"                             # USD | EUR | GBP
@@ -139,6 +145,7 @@ class PropRules:
 
     def to_dict(self) -> dict:
         return {
+            "uid": self.uid,
             "account_id": self.account_id, "label": self.label,
             "broker": self.broker, "currency": self.currency,
             "start_balance": str(self.start_balance), "is_prop": self.is_prop,
@@ -168,6 +175,11 @@ def accounts() -> list[PropRules]:
     """Les comptes déclarés. Toujours au moins un : cloisonner viendra après."""
     raw = settings.get("accounts") or []
     out = [PropRules.from_dict(a) for a in raw]
+    # Rétrocompat : les comptes d'avant l'uid n'en ont pas. from_dict en a généré
+    # un (default_factory) ; on le PERSISTE une fois pour qu'il soit stable — sans
+    # ça, il changerait à chaque lecture et le cloisonnement sauterait.
+    if out and any(not a.get("uid") for a in raw):
+        save_accounts(out)
     return out or [DEFAULT_ACCOUNT]
 
 
@@ -180,6 +192,20 @@ def rules_for(account_id: str) -> PropRules:
         if a.account_id == (account_id or ""):
             return a
     return accounts()[0]
+
+
+def owner_uid(obj, known_uids, default_uid: str) -> str:
+    """
+    L'uid du compte PROPRIÉTAIRE d'un objet (idée, thèse, deal, position).
+
+    Le tag s'il correspond à un compte connu ; sinon le premier compte. Ce
+    « sinon » couvre tout : les données d'avant l'uid (taguées « » ou par numéro
+    broker), et les objets d'un compte supprimé. Résultat : rien ne disparaît, et
+    seuls les objets créés SUR un compte donné (tagués par son uid) lui restent
+    propres.
+    """
+    aid = getattr(obj, "account_id", "") or ""
+    return aid if aid in known_uids else default_uid
 
 
 def belongs_to(idea, account_id: str, default_account_id: str = "") -> bool:

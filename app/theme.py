@@ -476,6 +476,47 @@ section[data-testid="stMain"] button[data-testid*="primary"]:hover {{
   border-color: {WARN} !important;
 }}
 
+/* --- RIEN DE « ROND BARRÉ » -----------------------------------------
+   Le curseur `not-allowed` (le rond barré) sur un widget désactivé fait peu
+   pro. Partout où un contrôle est momentanément grisé (bouton de confirmation
+   en attente d'une case cochée), on garde un curseur normal et un simple
+   affaiblissement — jamais l'icône d'interdiction. Les vraies zones sans objet,
+   elles, ne sont plus rendues du tout mais remplacées par une carte cadenassée. */
+section[data-testid="stMain"] :disabled,
+section[data-testid="stMain"] [aria-disabled="true"] {{
+  cursor: default !important;
+}}
+section[data-testid="stMain"] button:disabled {{
+  opacity: 0.45 !important;
+}}
+
+/* --- LES 3 POINTS (popover) -----------------------------------------
+   Le déclencheur « ⋮ » d'un conteneur : discret, carré, sans le remplissage
+   d'un vrai bouton — un point de menu, pas une action. Le panneau, lui, reprend
+   la couleur d'une carte pour ne pas flotter en gris Streamlit. */
+section[data-testid="stMain"] [data-testid="stPopover"] button {{
+  border: 1px solid {RULE_SOFT} !important;
+  background: transparent !important;
+  color: {MUTED} !important;
+  -webkit-text-fill-color: {MUTED} !important;
+  font-size: 1.15rem !important;
+  line-height: 1 !important;
+  padding: 2px 8px !important;
+  min-height: 0 !important;
+}}
+section[data-testid="stMain"] [data-testid="stPopover"] button:hover {{
+  color: {INK} !important;
+  -webkit-text-fill-color: {INK} !important;
+  border-color: {ACCENT} !important;
+  background: {CARD_HI} !important;
+}}
+[data-testid="stPopoverBody"] {{
+  background: {CARD} !important;
+  border: 1px solid {RULE} !important;
+  border-radius: 10px !important;
+}}
+[data-testid="stPopoverBody"] * {{ color: {INK} !important; }}
+
 /* --- CASES À COCHER, RADIOS, DÉPÔT DE FICHIER ------------------------ */
 section[data-testid="stMain"] [data-testid="stCheckbox"] *,
 section[data-testid="stMain"] [data-testid="stRadio"] *,

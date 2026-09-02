@@ -390,6 +390,10 @@ class Cell:
     n: int
     expectancy_r: float
     total_r: float
+    # La même case, mesurée en DEVISE du compte : c'est ce que la matrice affiche
+    # désormais à l'écran (le R restant utile pour le coût d'indiscipline).
+    expectancy_money: float = 0.0
+    total_money: float = 0.0
 
 
 @dataclass
@@ -420,7 +424,9 @@ def thesis_execution_matrix(ideas: Sequence[Idea],
     C'est la métrique qui répond à la seule question qui vaille : est-ce que ce
     qui me coûte de l'argent, c'est mon analyse, ou c'est moi ?
     """
-    buckets: dict[tuple[bool, bool], list[float]] = {
+    # Chaque case retient (R, P&L en devise) : le R sert au coût d'indiscipline,
+    # le P&L à l'affichage de la matrice (demande de Paul — la devise plutôt que R).
+    buckets: dict[tuple[bool, bool], list[tuple[float, float]]] = {
         (True, True): [], (False, True): [],
         (True, False): [], (False, False): [],
     }
@@ -438,16 +444,20 @@ def thesis_execution_matrix(ideas: Sequence[Idea],
         if not (clean or dirty):
             continue  # score 4 : zone grise, on ne force pas
         correct = i.review.thesis_outcome == ThesisOutcome.CORRECT
-        buckets[(clean, correct)].append(float(r))
+        buckets[(clean, correct)].append((float(r), float(i.pnl_net)))
 
     if not any(buckets.values()):
         return None
 
     def cell(key, label) -> Cell:
         xs = buckets[key]
+        rs = [r for r, _ in xs]
+        ms = [m for _, m in xs]
         return Cell(label=label, n=len(xs),
-                    expectancy_r=mean(xs) if xs else 0.0,
-                    total_r=sum(xs))
+                    expectancy_r=mean(rs) if rs else 0.0,
+                    total_r=sum(rs),
+                    expectancy_money=mean(ms) if ms else 0.0,
+                    total_money=sum(ms))
 
     cc = cell((True, True), "Thèse correcte · exécution propre")
     dc = cell((False, True), "Thèse correcte · exécution dégradée")
@@ -800,87 +810,3 @@ def conviction_calibration(ideas: Sequence[Idea]) -> list[CalibrationPoint]:
 
     return [CalibrationPoint(conviction=c, n=len(v), expectancy_r=mean(v))
             for c, v in sorted(by_conv.items())]
-
-
-# --------------------------------------------------------- plan vs hors-plan
-
-@dataclass
-class PlanComparison:
-    planned: Optional[Expectancy]
-    off_plan: Optional[Expectancy]
-    off_plan_ratio: float
-
-
-def plan_vs_offplan(ideas: Sequence[Idea]) -> PlanComparison:
-    """
-    Le chiffre le plus dur que produira cet outil.
-
-    Il tombe gratuitement de l'architecture : puisque la thèse précède l'import,
-    une position sans thèse est, par construction, un trade que tu n'avais pas
-    prévu.
-    """
-    executed = [i for i in ideas if i.is_executed]
-    # Seul compte le fait qu'une idée ait été ÉCRITE ou non. Le moment où on l'a
-    # saisie (le matin avant d'entrer, ou le soir en journalisant) ne change pas
-    # le fait qu'elle existe : ranger les journalisations différées avec les
-    # trades improvisés vidait la comparaison de son sens.
-    planned = [i for i in executed if not i.off_plan]
-    offplan = [i for i in executed if i.off_plan]
-    return PlanComparison(
-        planned=Expectancy.of(r_multiples(planned, only_reliable=False)),
-        off_plan=Expectancy.of(r_multiples(offplan, only_reliable=False)),
-        off_plan_ratio=len(offplan) / len(executed) if executed else 0.0,
-    )
-
-
-# ------------------------------------------------------ qualité du pyramidage
-
-@dataclass
-class AddsAnalysis:
-    n_ideas_with_adds: int
-    pnl_initial: float      # P&L des tickets initiaux seuls
-    pnl_adds: float         # P&L des renforcements seuls
-    verdict: str
-
-
-def adds_analysis(ideas: Sequence[Idea]) -> Optional[AddsAnalysis]:
-    """
-    Tes renforcements te rapportent-ils, ou te coûtent-ils ?
-
-    Question posable uniquement parce qu'on a séparé Idée et Ticket. Sur une
-    seule idée, le calcul est anecdotique ; sur cinquante, il tranche.
-    """
-    with_adds = [i for i in ideas if i.is_executed and i.adds]
-    if not with_adds:
-        return None
-
-    pnl_init = float(sum(i.pnl_initial for i in with_adds))
-    pnl_adds = float(sum(i.pnl_adds for i in with_adds))
-
-    if pnl_adds > 0:
-        verdict = "Tes renforcements ajoutent de la performance."
-    elif pnl_init > 0 > pnl_init + pnl_adds:
-        verdict = ("Tes renforcements transforment des idées gagnantes en "
-                   "idées perdantes. C'est le signal le plus coûteux du tableau.")
-    else:
-        verdict = "Tes renforcements dégradent la performance."
-
-    return AddsAnalysis(len(with_adds), pnl_init, pnl_adds, verdict)
-
-
-# ------------------------------------------------------------------ conformité
-
-def size_conformity_stats(ideas: Sequence[Idea],
-                          equity_ref: Decimal) -> Optional[Distribution]:
-    """
-    Risque réellement engagé / risque annoncé dans la thèse.
-    1.0 = conforme. Mesuré, jamais auto-déclaré.
-    """
-    xs = []
-    for i in ideas:
-        if not i.is_executed:
-            continue
-        c = i.size_conformity(equity_ref)
-        if c is not None:
-            xs.append(float(c))
-    return Distribution.of(xs)

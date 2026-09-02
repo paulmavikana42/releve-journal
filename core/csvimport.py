@@ -287,7 +287,9 @@ class CsvRow:
     def to_position(self, account_id: str = "") -> Position:
         return Position(
             position_id=self.ticket,
-            account_id=self.account_id or account_id,
+            # account_id = le compte PROPRIÉTAIRE (uid), passé par l'appelant. Le
+            # n° broker du fichier (self.account_id) ne range pas le trade.
+            account_id=account_id or self.account_id,
             symbol=self.symbol,
             direction=self.direction,
             volume=self.volume,
@@ -315,7 +317,7 @@ class CsvRow:
             volume=self.volume,
             open_time=self.open_time,
             open_price=self.open_price,
-            account_id=self.account_id or account_id,
+            account_id=account_id or self.account_id,
             stop=self.sl,
             take_profit=self.tp,
             note=self.comment,
@@ -540,6 +542,6 @@ def balance_deals(csvfile: CsvFile, account_id: str = "") -> list[Deal]:
             profit=r.profit or Decimal(0),
             balance=r.balance,
             comment=r.comment,
-            account_id=r.account_id or account_id,
+            account_id=account_id or r.account_id,
         ))
     return out

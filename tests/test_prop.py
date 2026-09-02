@@ -314,6 +314,26 @@ def test_deux_comptes_ne_partagent_pas_leurs_idees():
     assert P.belongs_to(b, "55501", "14124899")
 
 
+def test_uid_isole_meme_quand_le_numero_broker_est_vide():
+    """Le vrai bug : deux comptes sans n° broker (« ») se confondaient. L'uid,
+    lui, est unique — et un tag inconnu retombe sur le premier compte."""
+    a = P.PropRules(account_id="")          # uid généré automatiquement
+    b = P.PropRules(account_id="")          # uid généré, forcément différent
+    assert a.uid and b.uid and a.uid != b.uid
+    uids = {a.uid, b.uid}
+
+    assert P.owner_uid(Idea(account_id=a.uid), uids, a.uid) == a.uid
+    assert P.owner_uid(Idea(account_id=b.uid), uids, a.uid) == b.uid
+    # données d'avant l'uid («») ou d'un compte supprimé → premier compte
+    assert P.owner_uid(Idea(account_id=""), uids, a.uid) == a.uid
+    assert P.owner_uid(Idea(account_id="5794836"), uids, a.uid) == a.uid
+
+
+def test_l_uid_persiste_dans_le_json():
+    r = P.PropRules(account_id="X")
+    assert P.PropRules.from_dict(r.to_dict()).uid == r.uid
+
+
 def test_une_idee_sans_compte_reste_visible_sur_le_premier():
     """
     Tout le journal écrit avant l'existence des comptes multiples n'a pas de

@@ -238,41 +238,53 @@ _QUAD = {
 }
 
 
-def _quad_card(cell, kind: str):
+def _quad_cell_html(cell, kind: str) -> str:
+    """Le contenu HTML d'une case de la matrice — pour l'insérer dans la grille."""
     bg, col, tag, verdict = _QUAD[kind]
     if cell.n == 0:
         r_html = '<div class="stat none big">—</div>'
         sub = "aucune donnée sur cette portée"
     else:
+        # La devise du compte plutôt que le R : « en moyenne par idée » se lit
+        # directement en argent. Le total en note, pour l'ordre de grandeur.
         r_html = (f'<div class="stat big" style="color:{col}">'
-                  f'{cell.expectancy_r:+.2f} R</div>')
-        sub = f'n = {cell.n} idée(s) · {verdict}'
-    st.markdown(
-        f'<div class="card" style="background:{bg};min-height:152px">'
-        f'<div class="eyebrow" style="margin:0;color:{col}">{tag}</div>'
-        f'{r_html}<div class="note" style="margin-top:6px">{sub}</div></div>',
-        unsafe_allow_html=True)
+                  f'{ui.fmt_money(cell.expectancy_money)}</div>')
+        sub = (f'moy./idée · n = {cell.n} · total '
+               f'{ui.fmt_money(cell.total_money)} · {verdict}')
+    return (f'<div class="card" style="background:{bg};min-height:150px;'
+            f'display:flex;flex-direction:column;margin:0">'
+            f'<div class="eyebrow" style="margin:0;color:{col}">{tag}</div>'
+            f'{r_html}<div class="note" style="margin-top:6px">{sub}</div></div>')
 
 
 def _matrix(m: M.Matrix):
     """La matrice thèse × exécution, façon maquette : 4 quadrants lisibles d'un
     coup d'œil. La seule question qui vaille : est-ce mon analyse, ou moi ?"""
-    h0, h1, h2 = st.columns([0.5, 1, 1])
-    h1.markdown('<div class="eyebrow bar" style="justify-content:center">'
-                'exécution propre · 5/5</div>', unsafe_allow_html=True)
-    h2.markdown('<div class="eyebrow bar" style="justify-content:center">'
-                'exécution dégradée · ≤3/5</div>', unsafe_allow_html=True)
+    # UNE SEULE grille CSS : label de ligne + deux cases, en-têtes de colonnes
+    # au-dessus. st.columns laissait le label et les cartes sur des grilles
+    # séparées — d'où des hauteurs qui ne tombaient jamais juste. Ici tout partage
+    # la même grille : l'alignement est garanti par construction (#191).
+    def _colhead(txt):
+        return (f'<div class="eyebrow bar" style="justify-content:center;'
+                f'align-self:end;margin:0">{txt}</div>')
 
-    lignes = [("idée<br>correcte", ("clean_correct", "edge"), ("dirty_correct", "leak")),
-              ("idée<br>fausse", ("clean_wrong", "cost"), ("dirty_wrong", "red"))]
-    for label, gauche, droite in lignes:
-        c0, c1, c2 = st.columns([0.5, 1, 1])
-        c0.markdown(f'<div class="eyebrow" style="margin-top:34px;color:{T.INK}">'
-                    f'{label}</div>', unsafe_allow_html=True)
-        with c1:
-            _quad_card(getattr(m, gauche[0]), gauche[1])
-        with c2:
-            _quad_card(getattr(m, droite[0]), droite[1])
+    def _rowlabel(txt):
+        return (f'<div class="eyebrow" style="margin:0;color:{T.INK};'
+                f'align-self:center;text-align:right">{txt}</div>')
+
+    grid = (
+        '<div style="display:grid;grid-template-columns:0.55fr 1fr 1fr;'
+        'gap:10px;align-items:stretch">'
+        + '<div></div>' + _colhead("exécution propre · 5/5")
+        + _colhead("exécution dégradée · ≤3/5")
+        + _rowlabel("idée<br>correcte")
+        + _quad_cell_html(m.clean_correct, "edge")
+        + _quad_cell_html(m.dirty_correct, "leak")
+        + _rowlabel("idée<br>fausse")
+        + _quad_cell_html(m.clean_wrong, "cost")
+        + _quad_cell_html(m.dirty_wrong, "red")
+        + '</div>')
+    st.markdown(grid, unsafe_allow_html=True)
 
     if m.cost_of_indiscipline is not None:
         st.markdown(
@@ -692,20 +704,22 @@ def _justesse_block(ideas):
 
     ui.eyebrow("justesse — le marché t'a-t-il donné raison ?")
     taux = b.correct_rate
+    # Trois cartes KPI à hauteur égale (comme la matrice) : les notes n'ont pas
+    # la même longueur, des ui.stat nus se décalaient — la carte .kpi les cale.
     c1, c2, c3 = st.columns(3)
     with c1:
-        ui.stat("Idées correctes",
-                f"{taux * 100:.0f} %" if taux is not None else "—",
-                ("gain" if taux >= 0.5 else "loss") if taux is not None else "",
-                note=(f"{b.correct}/{b.judged} idée(s) tranchée(s) par le marché"
-                      if b.judged else "aucune idée encore tranchée"))
+        ui.kpi("Idées correctes",
+               f"{taux * 100:.0f} %" if taux is not None else "—",
+               ("gain" if taux >= 0.5 else "loss") if taux is not None else "",
+               note=(f"{b.correct}/{b.judged} idée(s) tranchée(s) par le marché"
+                     if b.judged else "aucune idée encore tranchée"))
     with c2:
-        ui.stat("Idées fausses", str(b.wrong),
-                "loss" if b.wrong else "",
-                note="le marché est parti contre ta lecture")
+        ui.kpi("Idées fausses", str(b.wrong),
+               "loss" if b.wrong else "",
+               note="le marché est parti contre ta lecture")
     with c3:
-        ui.stat("Idées non testées", str(b.untested),
-                note="sorti avant que le marché tranche — ni raison, ni tort")
+        ui.kpi("Idées non testées", str(b.untested),
+               note="sorti avant que le marché tranche — ni raison, ni tort")
 
     st.markdown(
         '<div class="note" style="margin-top:6px">'
@@ -838,17 +852,6 @@ def _analysis_block(ideas, spec_book, portee: str = ""):
         m = M.thesis_execution_matrix(ideas)
         if m:
             _matrix(m)
-        st.markdown("### Plan vs hors-plan")
-        pc = M.plan_vs_offplan(ideas)
-        if pc.planned and pc.off_plan:
-            a, b = st.columns(2)
-            with a:
-                ui.stat("Planifiées", f"{pc.planned.expectancy_r:+.2f} R",
-                        ui.tone_of(pc.planned.expectancy_r), note=f"n={pc.planned.n}")
-            with b:
-                ui.stat("Hors-plan", f"{pc.off_plan.expectancy_r:+.2f} R",
-                        ui.tone_of(pc.off_plan.expectancy_r),
-                        note=f"n={pc.off_plan.n} · {pc.off_plan_ratio*100:.0f} %")
     with right:
         st.markdown("### Calibration")
         cal = M.conviction_calibration(ideas)

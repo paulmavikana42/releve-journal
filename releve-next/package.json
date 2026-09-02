@@ -1,0 +1,20 @@
+{
+  "name": "releve-next",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Bascule de Relevé vers Next.js/TypeScript. Phase 0 : échafaudage. Le moteur (packages/core) se porte avant toute UI.",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -b"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.8"
+  }
+}

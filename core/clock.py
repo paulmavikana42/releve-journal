@@ -101,53 +101,6 @@ def to_server_naive(dt: datetime) -> datetime:
 
 # --------------------------------------------------------- jours ouvrés
 
-# Tu ne portes jamais une position sur le week-end : le potentiel d'une thèse
-# est donc plafonné à 5 jours ouvrés, quel que soit son timeframe. Une thèse D1
-# n'a pas trois semaines pour se réaliser — elle a la semaine.
-THESIS_WINDOW_DAYS = 5
-
-
-def add_business_days(start: datetime, days: int) -> datetime:
-    """
-    Ajoute N jours OUVRÉS. Samedi et dimanche sont sautés.
-
-    5 jours calendaires depuis un mercredi tomberaient un lundi en comptant le
-    week-end comme du temps de marché — alors qu'il ne s'y passe rien.
-    """
-    d = start
-    restants = days
-    while restants > 0:
-        d += timedelta(days=1)
-        if d.weekday() < 5:          # 0=lundi … 4=vendredi
-            restants -= 1
-    return d
-
-
-def business_days_between(a: datetime, b: datetime) -> int:
-    """Nombre de jours ouvrés écoulés entre deux instants (négatif si b < a)."""
-    if b < a:
-        return -business_days_between(b, a)
-    n, d = 0, a
-    while d.date() < b.date():
-        d += timedelta(days=1)
-        if d.weekday() < 5:
-            n += 1
-    return n
-
-
-def thesis_deadline(created_at: datetime,
-                    days: int = THESIS_WINDOW_DAYS) -> datetime:
-    """L'échéance au-delà de laquelle une thèse armée doit être tranchée."""
-    return add_business_days(created_at, days)
-
-
-def is_expired(created_at: datetime, now: datetime = None,
-               days: int = THESIS_WINDOW_DAYS) -> bool:
-    return (now or server_now()) >= thesis_deadline(created_at, days)
-
-
-# --------------------------------------------------------- jours ouvrés
-
 # Aucune position n'est portée sur le week-end : une idée armée a donc au plus
 # 5 JOURS OUVRÉS pour se réaliser. Cette contrainte est plus forte que l'horizon
 # du timeframe — une thèse D1 n'a pas trois semaines, elle a la semaine.
@@ -160,6 +113,13 @@ def business_days_between(start: datetime, end: datetime) -> int:
 
     Compter en jours calendaires ferait expirer une idée armée le jeudi en plein
     week-end, alors qu'elle n'a eu que deux séances pour se réaliser.
+
+    Le résultat est TOUJOURS >= 0 : si ``end <= start``, on renvoie 0 — jamais
+    un négatif. C'est exactement ce que supposent les deux seuls appelants,
+    ``review_due`` (comparaison à un seuil) et ``business_days_left``
+    (``max(0, WINDOW - used)``) : une idée horodatée dans le futur (décalage
+    d'horloge, saisie anticipée) ne doit ni paraître « déjà expirée » ni
+    consommer des jours qu'elle n'a pas vécus. Un test verrouille ce choix.
     """
     if end <= start:
         return 0
@@ -171,17 +131,6 @@ def business_days_between(start: datetime, end: datetime) -> int:
         if cur.weekday() < 5:          # 0-4 = lundi..vendredi
             days += 1
     return days
-
-
-def add_business_days(start: datetime, n: int) -> datetime:
-    """L'instant situé n jours ouvrés après start."""
-    cur = start
-    left = n
-    while left > 0:
-        cur += timedelta(days=1)
-        if cur.weekday() < 5:
-            left -= 1
-    return cur
 
 
 def review_due(armed_at: datetime, now: Optional[datetime] = None) -> bool:

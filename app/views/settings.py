@@ -36,10 +36,16 @@ def _compte_form(rules: prop.PropRules, index: int, total: int):
     with st.expander(titre, expanded=(total == 1 or index == 0)):
         acct = st.text_input(
             "N° de compte (broker)", value=rules.account_id, key=f"acc_{index}",
-            help="Il cloisonne les idées et rapproche les tickets d'un export "
-                 "multi-comptes. C'est le numéro exact du broker.")
-        saisi = rules_form(f"set{index}", existing=rules)
-        return replace(saisi, account_id=acct.strip())
+            help="Il rapproche les tickets d'un export multi-comptes. C'est le "
+                 "numéro exact du broker. (Le cloisonnement, lui, ne dépend pas "
+                 "de ce champ : il repose sur un identifiant interne stable.)")
+        saisi = replace(rules_form(f"set{index}", existing=rules),
+                        account_id=acct.strip())
+        # Le bouton d'enregistrement vit DANS le conteneur du compte qu'on
+        # modifie — pas dans une barre commune en bas (#203).
+        clic = st.button("Enregistrer les règles", type="primary",
+                         key=f"save_{index}")
+        return saisi, clic
 
 
 def render(store: Store, data_dir):
@@ -57,14 +63,15 @@ def render(store: Store, data_dir):
         'chiffre en dur qui ne correspond pas à ton contrat est pire que pas de '
         'chiffre du tout.</div>', unsafe_allow_html=True)
 
-    saisis = [_compte_form(r, n, len(comptes)) for n, r in enumerate(comptes)]
-
-    c1, c2 = st.columns([1, 1])
-    if c1.button("Enregistrer les règles", type="primary"):
+    resultats = [_compte_form(r, n, len(comptes)) for n, r in enumerate(comptes)]
+    saisis = [x[0] for x in resultats]
+    if any(x[1] for x in resultats):
         prop.save_accounts(saisis)
         st.success("Règles enregistrées.")
         st.rerun()
-    if c2.button("Ajouter un compte"):
+
+    # Ajouter / Supprimer restent SOUS les comptes, position inchangée (#203).
+    if st.button("Ajouter un compte"):
         prop.save_accounts(list(saisis) + [prop.PropRules(label="Nouveau compte")])
         st.rerun()
 

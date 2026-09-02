@@ -12,8 +12,8 @@ from pathlib import Path
 import pytest
 
 from core.metrics import (
-    Expectancy, adds_analysis, conviction_calibration, daily_returns,
-    drawdown, equity_curve, plan_vs_offplan, sharpe, sortino,
+    Expectancy, conviction_calibration, daily_returns,
+    drawdown, equity_curve, sharpe, sortino,
     thesis_execution_matrix,
 )
 from core.models import (
@@ -252,10 +252,6 @@ def test_les_adds_ont_transforme_un_gagnant_en_perdant():
     assert idea.pnl_adds == Decimal("-969.10")       # les adds ont tout mangé
     assert idea.pnl_initial + idea.pnl_adds == idea.pnl_net
 
-    a = adds_analysis([idea])
-    assert a.n_ideas_with_adds == 1
-    assert "perdantes" in a.verdict
-
 
 # ------------------------------------------------------------------- ratios
 
@@ -365,19 +361,6 @@ def test_calibration_detecte_une_conviction_qui_ne_dit_rien():
     c2 = next(c for c in cal if c.conviction == 2)
     c5 = next(c for c in cal if c.conviction == 5)
     assert c2.expectancy_r > c5.expectancy_r      # conviction inversée : signal fort
-
-
-def test_hors_plan_vs_planifie():
-    ideas = [
-        _reviewed(1.2, 5, ThesisOutcome.CORRECT),
-        _reviewed(0.8, 5, ThesisOutcome.CORRECT),
-        _reviewed(-1.0, 2, ThesisOutcome.WRONG, off_plan=True),
-        _reviewed(-0.6, 1, ThesisOutcome.WRONG, off_plan=True),
-    ]
-    c = plan_vs_offplan(ideas)
-    assert c.planned.expectancy_r == pytest.approx(1.0)
-    assert c.off_plan.expectancy_r == pytest.approx(-0.8)
-    assert c.off_plan_ratio == pytest.approx(0.5)
 
 
 # ------------------------------------------------------------------- traçabilité

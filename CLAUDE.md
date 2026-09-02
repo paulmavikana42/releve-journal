@@ -170,6 +170,25 @@ perdu au premier breakeven. En déclarant le ticket à l'entrée (30 s sur mobil
 l'idée passe **en cours**, le stop réel est enregistré avant que le broker ne
 l'écrase, et le NUMÉRO DE TICKET devient la clé de clôture. (`OpenTrade`)
 
+> **MAJ 14/08 (décision de Paul) — OÙ se déclare le ticket.** Le champ « N° de
+> ticket » vit désormais dans le FORMULAIRE de l'idée (création + modification,
+> `app/views/ideas.py`), plus sur un écran séparé « je viens d'entrer » du
+> détail (retiré). Le mécanisme [N] est INCHANGÉ — dès qu'un ticket est saisi,
+> `store.open_trade()` est appelé, l'idée passe « en cours », le stop de l'idée
+> est enregistré : seul l'ENDROIT de la saisie change. Facultatif à l'écriture
+> (idée écrite avant d'entrer), à remplir dès l'entrée. Une invitation « idée
+> incomplète » sur le journal emmène vers la modif, au champ ticket
+> (`focus_ticket`). L'ancien garde-fou d'import `_completer_tickets` reste en
+> place. Les 3 points d'une idée/thèse (popover) portent ouvrir/relire, modifier,
+> abandonner ; une idée clôturée ET revue n'est plus modifiable et ne montre plus
+> sa review. La devise du compte ($/€/£) est propagée partout via
+> `ui.set_currency()`. La thèse macro ET l'idée s'écrivent avec le MÊME éditeur
+> par BLOCS ordonnés texte/image (`app/blocks.py`, façon Notion) — `Campaign.blocks`
+> et `Thesis.blocks`. L'image s'y redimensionne en % (proportions gardées) ; le
+> journal ne stocke que le chemin. `macro_note`/`note` restent le reflet à plat
+> des blocs (recherche, rétrocompat). Le compte actif est mémorisé d'une session
+> à l'autre (`settings.last_account_uid`).
+
 **[O] Le rapprochement se fait par NUMÉRO DE TICKET, jamais par ressemblance.**
 Comparer symbole + heure + prix, c'est deviner ; deux entrées à 30 secondes
 d'écart et l'heuristique se trompe. Le ticket sort du terminal, il est unique.

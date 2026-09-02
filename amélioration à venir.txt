@@ -159,6 +159,50 @@ je veux que tu rajoutes sur l'ecriture d'une these la possibilité de rajouter d
 
 
 
+
+
+
+
+
+
+
+
+Update 13/08/2026
+
+tu vois comment tu as proposé le grisage propre des conteneurs avec cadena fais pareil à tout les endroits dans le code ou tu as mis le rond avec barre (car ça ne fait pas pro) 
+
+pour une idée déjà cloturée et revue on ne peut plus la modifier 
+
+pour une idée revue je ne dois plus voir la section review 
+
+le cloisonnement n'est tjr pas bon je viens de basculer sur un compte que je viens de créer et je vois encore les data de l'autre compte 
+
+quand on se situe quelques part (une sous page) la navigation par le menu de gauche doit tjr se faire en plus du bouton retour là j'ai beau changer de section dans le menu de gauche mais je change pas d'endroit  
+
+dans idée fait machine arrière sur le numero de ticket ramene le numero de ticket qu'on remplit (supprime la position ou tu l'avais déjà placé) si le user n'a pas rempli ce champ lors de l'import ramene le sur la page de modification de ce trade précisément au niveau ou on met le numero de ticket (juste apres l'arrivé du ticket dans l'appli fais un pop up propre avec un bouton lui proposant de l'emmener vers l'idée imcomplete insere ça proprement c'est toi le pro en ux/ui) et force le à entrer ce champ avec un petit message sympathique à chaque fois 
+
+pour le rajout des blocs visuels je les veut pendant l'ecriture de la thèse et non en dessous des thèses ecrites, on va faire simple oublie la position du bloc visuel coté droit, permet qu'à la suite d'un paragraphe le user puisse add un visuel puis de continuer à ecrire comme notion (pour l'integration de comment le user va ajouter en gros avec quel bouton et situer ou revient vers moi et fais moi des suggestions sache que tu es un ux/ui designer moi je suggere un drag and drop et l'img se pose à la suite du paragraphe en bas il peut remplir le champ legende ou pas considere un ecart d'une ligne en haut et en bas de la legende pour que le bloc img+legende ne frotte pas les paragraphes de haut en bas) 
+
+
+au lieu de bandes déroulantes pour modifier/abandonner une thèse supprime les je prefere les 3 petites points à la verticale dans le conteneur (contenant la conviction et autres aligne ça proprement) et dans ces 3 petits point remet les 2 elements supprimé plus un troisieme qui est relire la thèse (car le user ne peut pas jusqu'à present relire une thèse ancienne) gere bien le pop up de sorte à ce que ça soit fluide et surtout bien positionné de sorte à ce que ça ne fasse pas chip, je veux que lors de l'affichage on arrive dans une page qui va afficher notre thèse proche de la page d'ecriture de notre thèse mais sans que le user ne puisse interagir avec le texte le rond avec barre oblique oublie ce n'est pas pro garde la souris du user et s'il passe du texte le curseur (fais une page qui donne envie de lire avec une bonne integration des images), pour la modif de la thèse je veux que tu ramenes dans l'ecran de creation de la thèse 
+
+dans modifier une thèse là tu peux mettre la fonctionnalité d'ajout d'image qu'on aura implementer plus haut vu qu'en faites en passant par 3 petits points -> modifer on me ramene à la reecriture du truc
+
+aligne parfaitement la matrice y'a des conteneurs trop petit par rapport à d'autres fait aussi pareil avec la revue des idées
  
-	
-	
+
+Plan vs hors-plan supprime  cette phrase
+
+dans la matrice je veux la devise choisie à la place des r adapte le calcul, gère les conteneurs ça doit etre nickel, verifie aussi que dans les métriques dans le dash ou les 2 calendriers la devise affiché est bien celle choisie par le user lors de la creation du compte
+
+
+les helpers de type de challeng-objectif phase 1 ça doit dire: tu as déjà passé ta phase 1 avant de te joindre à nous pas grave tu peux sauter cette phase en mettant 0 dans l'objectif si dessous (je suppose qu'en mettant 0 le logciel sait qu'il doit direct commencer en phase 2 puis funded
+
+coherence max le -0=règle absente met ça dans un helper ça emcombre
+
+le bouton enregistrer les regles doit etre dans le conteneur du conteneur qu'on modifie supprime le bouton qui est à coté de lui (ajouter un compte) nouveau et supprimer un compte reste juste en dessous leur positionnement ne bouge pas
+
+dans idée ouvrir une idée fait le degager je veux les 3 points comme pour thèse avec les mm elements que pour thèse en respectant les regles d'affichage de la pop up pour la fluidité et l'alignement  
+
+
+dans compliance prop les couleurs des conteneurs plombe l'exp utilisateurs soit tu trouves un compromis niveau couleurs (pour avoir des teintes moins vive en accord avec banckground sombre du saas soit tu garde la couleur normal des conteneur du saas)

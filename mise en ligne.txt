@@ -1,0 +1,9 @@
+choix technique:
+
+-landing page, blog, faq et support sur vercel avec g4 (pour l'analyse)
+-db et auth sur supabase
+-saas sur fly (posthog pour l'analyse)
+-paiement utilisé paddle (utilise les cartes virtuels fournis pour garantir la fonctionnalité) 
+
+
+

@@ -308,6 +308,29 @@ def test_un_ticket_sans_compte_ferme_quand_meme_le_trade_declare(store):
     assert not ideas[idee.id].is_running
 
 
+def test_un_trade_declare_avec_un_uid_interne_se_ferme_par_ticket(store):
+    """
+    Régression : le champ « compte » du trade déclaré doit être un NUMÉRO broker,
+    jamais un identifiant interne (uid alphanumérique). Quand c'en est un — cas
+    d'un ancien journal —, il ne peut pas entrer en collision : le ticket seul
+    referme, et la position importée (numéro broker) est rattachée à l'idée, qui
+    devient clôturée ET relisible plutôt que de rester « en cours » à jamais.
+    """
+    idee = _idee(store)
+    store.open_trade(idee.id, _ticket(account="89a44220cca6"))   # uid interne
+
+    cf = CSV.parse(CSV_CLOTURE.encode("utf-8"))
+    pos = cf.rows[0].to_position("81714841")     # un vrai numéro de compte broker
+    store.import_report([pos], [])               # importée SANS lien explicite
+
+    ideas, _, _ = store.load()
+    idee_r = ideas[idee.id]
+    assert not idee_r.is_running, "un uid interne ne doit pas empêcher la clôture"
+    assert idee_r.is_executed, "la position clôturante est rattachée par le ticket"
+    assert idee_r.status == IdeaStatus.CLOSED
+    assert store.orphans() == [], "la position n'est plus orpheline"
+
+
 def test_deux_comptes_renseignes_ne_se_melangent_pas(store):
     """
     La contrepartie : quand les DEUX côtés portent un numéro et qu'ils
@@ -395,6 +418,57 @@ def test_blocs_visuels_sur_une_these(tmp_path, store):
     store.remove_capture(att.id)
     assert store.campaigns()[camp.id].captures == []
     assert CAP.resolve(tmp_path, att) is not None
+
+
+def test_les_blocs_d_une_idee_font_l_aller_retour(store):
+    """
+    L'idée s'écrit avec le MÊME éditeur par blocs que la thèse macro : son corps
+    (texte/image entremêlés) se persiste dans Thesis.blocks et se relit fidèle.
+    Une idée sans blocs (ancien journal) reste lisible via macro_note.
+    """
+    from core.models import Thesis, Direction
+    blocs = [
+        {"type": "text", "text": "Cassure H4 sur volume.", "bid": "a1"},
+        {"type": "image", "path": "captures/x/y.png", "caption": "H4", "bid": "b2"},
+    ]
+    idea = store.create_thesis(Thesis(
+        instrument="UKOUSD", direction=Direction.BUY,
+        entry_planned=Decimal("71.40"), stop_initial=Decimal("70.20"),
+        macro_note="Cassure H4 sur volume.", blocks=blocs))
+
+    ideas, _, _ = store.load()
+    t = ideas[idea.id].thesis
+    assert t.blocks == blocs
+    assert t.blocks[1]["type"] == "image" and t.blocks[1]["caption"] == "H4"
+
+
+def test_les_blocs_d_une_these_font_l_aller_retour(store):
+    """
+    L'éditeur par blocs (#184) : le corps ordonné (texte/image entremêlés) se
+    persiste et se relit à l'identique. Un ancien journal sans blocs reste lisible
+    (champ absent = liste vide), et la note « à plat » reflète les blocs texte.
+    """
+    from core.models import Campaign
+    blocs = [
+        {"type": "text", "text": "Le dollar est cher.", "bid": "a1"},
+        {"type": "image", "path": "captures/x/y.png", "caption": "DXY", "bid": "b2"},
+        {"type": "text", "text": "La Fed reste ferme.", "bid": "c3"},
+    ]
+    camp = store.create_campaign(Campaign(
+        name="Dollar fort", blocks=blocs,
+        note="Le dollar est cher.\n\nLa Fed reste ferme."))
+
+    c = store.campaigns()[camp.id]
+    assert c.blocks == blocs
+    assert c.blocks[1]["type"] == "image" and c.blocks[1]["caption"] == "DXY"
+
+    # modification : réordonner puis relire — l'ordre est fidèle
+    reordered = [blocs[2], blocs[0], blocs[1]]
+    store.update_campaign(Campaign(
+        id=camp.id, created_at=camp.created_at, name="Dollar fort",
+        blocks=reordered, note="La Fed reste ferme.\n\nLe dollar est cher."))
+    c2 = store.campaigns()[camp.id]
+    assert [b["bid"] for b in c2.blocks] == ["c3", "a1", "b2"]
 
 
 # ---------------------------------------------------- le quadrant du trade

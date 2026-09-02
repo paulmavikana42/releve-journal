@@ -394,7 +394,10 @@ def _appliquer(store: Store, cf: CSV.CsvFile, matches: list[CSV.Match],
     etait_demo = O.demo_mode()
     store, repris = _quitter_la_demo(store)
 
-    compte = cf.account_id or account_id
+    # Le PROPRIÉTAIRE est le compte actif (son uid), pas le n° broker du CSV :
+    # c'est lui qui cloisonne. Le n° broker du fichier ne sert qu'au rapprochement
+    # par ticket, jamais à ranger le trade dans un compte.
+    compte = account_id
     positions, liens, ouverts, majs = [], [], 0, 0
 
     for m in matches:

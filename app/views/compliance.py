@@ -46,14 +46,20 @@ def _q(texte: str) -> str:
 # 5 niveaux, du sain au critique. Tints translucides SUR la carte (qui a déjà son
 # fond) — pas de grille derrière, donc pas le piège du compositing de la matrice.
 def _niveau_bg(level: int) -> str:
-    if level == 0:
-        return f"background:{T.rgba(T.GAIN, 0.22)}"
-    if level == 1:
-        return f"background:{T.rgba(T.GAIN, 0.10)}"
-    if level == 3:
-        return f"background:{T.rgba(T.LOSS, 0.11)}"
-    if level == 4:
-        return f"background:{T.rgba(T.LOSS, 0.26)}"
+    # #208 — teintes fortement adoucies : sur le fond sombre du saas, les aplats
+    # vifs « plombaient » la lecture. On garde un simple SOUPÇON de couleur, et le
+    # signal fort (sain / critique) passe par une bordure gauche, pas par un
+    # aplat criard. La carte garde sa couleur normale par défaut.
+    if level == 0:      # très sain
+        return (f"background:{T.rgba(T.GAIN, 0.07)};"
+                f"border-left:3px solid {T.rgba(T.GAIN, 0.55)}")
+    if level == 1:      # sain
+        return f"background:{T.rgba(T.GAIN, 0.04)}"
+    if level == 3:      # proche
+        return f"background:{T.rgba(T.LOSS, 0.05)}"
+    if level == 4:      # critique
+        return (f"background:{T.rgba(T.LOSS, 0.09)};"
+                f"border-left:3px solid {T.rgba(T.LOSS, 0.60)}")
     return ""      # 2 = neutre, fond de carte par défaut
 
 
