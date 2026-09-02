@@ -11,8 +11,18 @@ import {
   type Idea,
   type Position,
 } from "@releve/core";
-import { currentUser, openStore } from "../data";
-import { abandonIdea, cancelTrade, completeReview, openTrade, reviewMissed, unlinkPosition, updateFloating } from "../actions";
+import { currentUser, openStore, signedCaptureUrls } from "../data";
+import {
+  abandonIdea,
+  addCapture,
+  cancelTrade,
+  completeReview,
+  openTrade,
+  removeCapture,
+  reviewMissed,
+  unlinkPosition,
+  updateFloating,
+} from "../actions";
 import SubmitButton from "../../components/SubmitButton";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -83,6 +93,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
   const needStop = idea.tickets_needing_stop();
   const disjoints = idea.tickets_disjoints;
   const rev = idea.review;
+  const captureUrls = await signedCaptureUrls(supabase, idea.captures);
 
   const tickets: Position[] = [...idea.positions].sort(
     (a, b) => a.open_time.getTime() - b.open_time.getTime(),
@@ -272,6 +283,52 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           )}
         </section>
       )}
+
+      {/* Captures (images pré-engagées) */}
+      <section className="card" style={{ marginBottom: 20 }}>
+        <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Captures</h2>
+        {idea.captures.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 10, marginBottom: 12 }}>
+            {idea.captures.map((c) => (
+              <div key={c.id}>
+                {captureUrls.get(c.id) ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={captureUrls.get(c.id)}
+                    alt={c.caption || c.original_name}
+                    style={{ width: "100%", borderRadius: 8, border: "1px solid var(--border)" }}
+                  />
+                ) : (
+                  <div className="card muted" style={{ fontSize: ".8rem" }}>image indisponible</div>
+                )}
+                <div className="between" style={{ marginTop: 4 }}>
+                  <span className="muted" style={{ fontSize: ".78rem" }}>{c.caption || c.kind}</span>
+                  <form action={removeCapture}>
+                    <input type="hidden" name="attachment_id" value={c.id} />
+                    <input type="hidden" name="owner_id" value={idea.id} />
+                    <input type="hidden" name="owner_type" value="idea" />
+                    <SubmitButton className="ghost" pendingLabel="…">Retirer</SubmitButton>
+                  </form>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        <form action={addCapture} className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+          <input type="hidden" name="owner_type" value="idea" />
+          <input type="hidden" name="owner_id" value={idea.id} />
+          <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif" required />
+          <select name="kind" defaultValue="entree">
+            <option value="these">Thèse</option>
+            <option value="entree">Entrée</option>
+            <option value="gestion">Gestion</option>
+            <option value="sortie">Sortie</option>
+            <option value="autre">Autre</option>
+          </select>
+          <input name="caption" placeholder="légende (facultatif)" style={{ flex: 1, minWidth: 160 }} />
+          <SubmitButton pendingLabel="Envoi…">Joindre</SubmitButton>
+        </form>
+      </section>
 
       {/* Les tickets */}
       <section style={{ marginBottom: 20 }}>

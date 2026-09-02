@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+  Attachment,
+  CaptureKind,
   Decimal,
   Direction,
   MissedOutcome,
@@ -229,6 +231,71 @@ export async function openTrade(formData: FormData): Promise<void> {
   await store.flush();
   revalidatePath(`/journal/${ideaId}`);
   revalidatePath("/journal");
+}
+
+const ALLOWED_EXT = new Set(["png", "jpg", "jpeg", "webp", "gif"]);
+const MAX_CAPTURE_BYTES = 12 * 1024 * 1024;
+const KINDS = new Set<string>(["these", "entree", "gestion", "sortie", "autre"]);
+
+/**
+ * Joindre une capture (image pré-engagée, décision [P]) à une idée ou une thèse.
+ * L'image va dans le bucket Storage `captures/<user_id>/<id>.<ext>` ; le journal
+ * ne stocke que le chemin.
+ */
+export async function addCapture(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ownerType = String(formData.get("owner_type") ?? "idea");
+  const ownerId = String(formData.get("owner_id") ?? "");
+  const file = formData.get("file");
+  if (!ownerId || !(file instanceof File) || file.size === 0) return;
+
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (!ALLOWED_EXT.has(ext)) throw new Error(`Format non accepté (${ext || "inconnu"}).`);
+  if (file.size > MAX_CAPTURE_BYTES) throw new Error("Image trop lourde (max 12 Mo).");
+
+  const kindRaw = String(formData.get("kind") ?? "autre");
+  const kind = (KINDS.has(kindRaw) ? kindRaw : "autre") as CaptureKind;
+  const aid = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  const path = `${user.id}/${aid}.${ext}`;
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const { error } = await supabase.storage
+    .from("captures")
+    .upload(path, bytes, { contentType: file.type || `image/${ext}`, upsert: false });
+  if (error) throw new Error(`Upload capture : ${error.message}`);
+
+  const store = await openStore(supabase, user.id);
+  store.add_capture(
+    new Attachment({
+      id: aid,
+      owner_type: ownerType,
+      owner_id: ownerId,
+      path,
+      original_name: file.name,
+      kind,
+      caption: String(formData.get("caption") ?? "").trim(),
+      added_at: serverNow(),
+    }),
+  );
+  await store.flush();
+  if (ownerType === "campaign") revalidatePath(`/campaigns`);
+  else revalidatePath(`/journal/${ownerId}`);
+}
+
+/** Retirer une capture (marquée removed ; le fichier reste — décision [P]). */
+export async function removeCapture(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const attachmentId = String(formData.get("attachment_id") ?? "");
+  const ownerId = String(formData.get("owner_id") ?? "");
+  const ownerType = String(formData.get("owner_type") ?? "idea");
+  if (!attachmentId) return;
+  const store = await openStore(supabase, user.id);
+  store.remove_capture(attachmentId);
+  await store.flush();
+  if (ownerType === "campaign") revalidatePath(`/campaigns`);
+  else revalidatePath(`/journal/${ownerId}`);
 }
 
 /** Détacher un ticket mal rattaché d'une idée (append-only : on ajoute). */
