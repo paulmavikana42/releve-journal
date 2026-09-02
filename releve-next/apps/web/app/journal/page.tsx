@@ -64,25 +64,9 @@ export default async function JournalPage() {
 
   return (
     <main className="wrap">
-      <header className="between" style={{ marginBottom: 20 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>
-            Relev<span style={{ color: "var(--accent)" }}>é</span>{" "}
-            <span className="muted" style={{ fontSize: ".9rem", fontWeight: 400 }}>
-              · journal
-            </span>
-          </h1>
-          <div className="muted" style={{ fontSize: ".85rem" }}>{user.email}</div>
-        </div>
-        <nav className="row" style={{ gap: 14 }}>
-          <Link href="/dashboard" className="muted">Tableau de bord</Link>
-          <Link href="/campaigns" className="muted">Thèses</Link>
-          <Link href="/compliance" className="muted">Conformité</Link>
-          <Link href="/settings" className="muted">Réglages</Link>
-          <form action="/auth/signout" method="post">
-            <button type="submit" className="ghost">Se déconnecter</button>
-          </form>
-        </nav>
+      <header style={{ marginBottom: 20 }}>
+        <h1 style={{ margin: 0 }}>Journal</h1>
+        <div className="subtitle">{user.email}</div>
       </header>
 
       <ImportPanel />

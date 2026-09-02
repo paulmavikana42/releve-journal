@@ -19,6 +19,9 @@
   --accent: #F5A83C;
   --accent-ink: #0B1220;
 
+  --rail: #0E1727;
+  --rail-w: 236px;
+
   --gain-soft: #4FE3A61F;
   --loss-soft: #FF8A7C1F;
   --signal-soft: #8AA9FF1C;
@@ -58,7 +61,47 @@ h3 { font-size: 1.02rem; }
 a { color: var(--accent); text-decoration: none; }
 a:hover { text-decoration: underline; }
 
-.wrap { max-width: 900px; margin: 0 auto; padding: 28px 20px 72px; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 28px 28px 72px; }
+
+/* --- coquille : rail à gauche + contenu --- */
+.shell { display: flex; min-height: 100vh; align-items: stretch; }
+.rail {
+  width: var(--rail-w); flex-shrink: 0; background: var(--rail);
+  border-right: 1px solid var(--rule-soft); padding: 20px 14px;
+  position: sticky; top: 0; height: 100vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.rail .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; padding: 0 8px; }
+.rail .brand .logo {
+  width: 30px; height: 30px; border-radius: 8px; background: var(--accent); color: var(--accent-ink);
+  font-family: var(--font-title); font-weight: 700; display: flex; align-items: center; justify-content: center;
+}
+.rail .brand .name { font-family: var(--font-title); font-weight: 600; font-size: 1.25rem; }
+.rail nav { display: flex; flex-direction: column; gap: 2px; margin-top: 8px; }
+.rail nav a {
+  display: block; padding: 8px 12px; border-radius: 8px; border-left: 2px solid transparent;
+  color: var(--rail-muted, var(--muted)); font-weight: 500; font-size: .95rem; text-decoration: none;
+}
+.rail nav a:hover { background: rgba(233,239,247,.04); text-decoration: none; }
+.rail nav a.on { background: var(--accent-soft); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+.rail .spacer { flex: 1; }
+.rail .foot { border-top: 1px solid var(--rule-soft); padding-top: 12px; margin-top: 8px; }
+.main { flex: 1; min-width: 0; }
+
+@media (max-width: 860px) {
+  .shell { flex-direction: column; }
+  .rail {
+    width: auto; height: auto; position: static; flex-direction: row; align-items: center;
+    gap: 10px; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--rule-soft);
+    padding: 10px 12px;
+  }
+  .rail nav { flex-direction: row; margin-top: 0; gap: 2px; flex-wrap: wrap; }
+  .rail .brand { margin-bottom: 0; }
+  .rail .brand .name { display: none; }
+  .rail .spacer { display: none; }
+  .rail .foot { border-top: none; padding-top: 0; margin-top: 0; margin-left: auto; }
+  .wrap { padding: 20px 16px 56px; }
+}
 
 .mono, code { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
 .num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; white-space: nowrap; }

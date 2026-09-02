@@ -139,18 +139,9 @@ export default async function Dashboard({ searchParams }: { searchParams: Promis
 
   return (
     <main className="wrap">
-      <header className="between" style={{ marginBottom: 8 }}>
-        <div>
-          <h1 style={{ margin: 0 }}>Tableau de bord</h1>
-          <div className="subtitle">{active ? active.label : "aucun compte"} · analyse {unit === Unit.THESIS ? "par thèse" : "par idée"}</div>
-        </div>
-        <nav className="row" style={{ gap: 14, flexWrap: "wrap" }}>
-          <Link href="/journal" className="muted">Journal</Link>
-          <Link href="/campaigns" className="muted">Thèses</Link>
-          <Link href="/compliance" className="muted">Conformité</Link>
-          <Link href="/settings" className="muted">Réglages</Link>
-          <form action="/auth/signout" method="post"><button type="submit" className="ghost">Se déconnecter</button></form>
-        </nav>
+      <header style={{ marginBottom: 8 }}>
+        <h1 style={{ margin: 0 }}>Tableau de bord</h1>
+        <div className="subtitle">{active ? active.label : "aucun compte"} · analyse {unit === Unit.THESIS ? "par thèse" : "par idée"}</div>
       </header>
 
       {/* Unité d'analyse */}

@@ -21,13 +21,8 @@ export default async function CampaignsPage() {
 
   return (
     <main className="wrap">
-      <header className="between" style={{ marginBottom: 16 }}>
+      <header style={{ marginBottom: 16 }}>
         <h1 style={{ margin: 0 }}>Thèses macro</h1>
-        <nav className="row" style={{ gap: 14 }}>
-          <Link href="/journal" className="muted">Journal</Link>
-          <Link href="/dashboard" className="muted">Tableau de bord</Link>
-          <Link href="/settings" className="muted">Réglages</Link>
-        </nav>
       </header>
 
       <p className="muted" style={{ marginTop: 0 }}>

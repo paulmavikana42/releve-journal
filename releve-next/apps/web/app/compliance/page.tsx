@@ -25,13 +25,8 @@ export default async function CompliancePage() {
 
   return (
     <main className="wrap">
-      <header className="between" style={{ marginBottom: 16 }}>
+      <header style={{ marginBottom: 16 }}>
         <h1 style={{ margin: 0 }}>Conformité prop firm</h1>
-        <nav className="row" style={{ gap: 14 }}>
-          <Link href="/journal" className="muted">Journal</Link>
-          <Link href="/dashboard" className="muted">Tableau de bord</Link>
-          <Link href="/settings" className="muted">Réglages</Link>
-        </nav>
       </header>
 
       {!active ? (

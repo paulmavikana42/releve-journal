@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { currentUser } from "@/app/journal/data";
 import { getAccounts, getActiveAccount } from "./data";
@@ -32,13 +31,8 @@ export default async function SettingsPage() {
 
   return (
     <main className="wrap">
-      <header className="between" style={{ marginBottom: 20 }}>
+      <header style={{ marginBottom: 20 }}>
         <h1 style={{ margin: 0 }}>Réglages du compte</h1>
-        <nav className="row" style={{ gap: 14 }}>
-          <Link href="/journal" className="muted">Journal</Link>
-          <Link href="/dashboard" className="muted">Tableau de bord</Link>
-          <Link href="/campaigns" className="muted">Thèses</Link>
-        </nav>
       </header>
 
       <p className="muted" style={{ marginTop: 0 }}>
