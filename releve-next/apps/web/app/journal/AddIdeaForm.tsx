@@ -55,9 +55,20 @@ export default function AddIdeaForm({ symbols }: { symbols: string[] }) {
           <input name="stop" inputMode="decimal" placeholder="20250" style={{ width: "100%" }} />
         </div>
       </div>
-      <div className="between" style={{ marginTop: 12 }}>
-        <input name="label" placeholder="Libellé (ex. Short NDX100 — CPI)" style={{ flex: 1 }} />
-        <button type="submit" className="primary" style={{ marginLeft: 12 }} disabled={pending}>
+      <div className="row" style={{ marginTop: 12, gap: 12, alignItems: "flex-end" }}>
+        <textarea
+          name="label"
+          placeholder="Libellé (ex. Short NDX100 — CPI)"
+          rows={1}
+          className="blk-text"
+          style={{ flex: 1, minHeight: 40 }}
+          onInput={(e) => {
+            const el = e.currentTarget;
+            el.style.height = "auto";
+            el.style.height = el.scrollHeight + "px";
+          }}
+        />
+        <button type="submit" className="primary" disabled={pending} style={{ flexShrink: 0 }}>
           {pending ? "Écriture…" : "Écrire l'idée"}
         </button>
       </div>

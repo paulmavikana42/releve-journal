@@ -285,6 +285,48 @@ input[type="file"]::file-selector-button:hover { border-color: var(--accent); ba
 }
 .ghost:hover, button.ghost:hover { border-color: var(--accent); background: var(--card-hi); text-decoration: none; }
 button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: default; }
+/* bouton d'action destructrice (abandon confirmé, etc.) */
+.danger, button.danger {
+  background: var(--loss); color: var(--paper); border: 1px solid var(--loss);
+  border-radius: 8px; padding: 9px 14px; font-weight: 700; cursor: pointer;
+  font-family: var(--font-ui); display: inline-block; text-align: center;
+}
+.danger:hover, button.danger:hover { filter: brightness(1.08); text-decoration: none; }
+
+/* --- pop-up de confirmation / menu (modale centrée) --- */
+.modal-scrim {
+  position: fixed; inset: 0; z-index: 80; background: rgba(6,10,18,.62);
+  display: flex; align-items: center; justify-content: center; padding: 20px;
+  backdrop-filter: blur(2px);
+}
+.modal {
+  background: var(--card); border: 1px solid var(--rule-soft); border-radius: 12px;
+  padding: 20px; width: 100%; max-width: 400px; box-shadow: 0 18px 50px rgba(0,0,0,.45);
+}
+.modal-title { font-family: var(--font-title); font-weight: 600; font-size: 1.1rem; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+
+/* --- menu popover (3 points) --- */
+.pop { position: relative; display: inline-block; }
+.pop-btn {
+  background: none; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+  font-size: 1.1rem; line-height: 1; padding: 4px 8px; border-radius: 7px;
+}
+.pop-btn:hover, .pop-btn.on { color: var(--ink); background: rgba(233,239,247,.06); border-color: var(--rule-soft); }
+.pop-menu {
+  position: absolute; right: 0; top: calc(100% + 6px); z-index: 70; min-width: 210px;
+  background: var(--card); border: 1px solid var(--rule-soft); border-radius: 10px;
+  padding: 8px; box-shadow: 0 14px 40px rgba(0,0,0,.4); display: flex; flex-direction: column; gap: 2px;
+}
+.pop-item {
+  display: block; width: 100%; text-align: left; background: none; border: none;
+  color: var(--ink); font-family: var(--font-ui); font-size: .9rem; cursor: pointer;
+  padding: 9px 10px; border-radius: 7px; text-decoration: none;
+}
+.pop-item:hover { background: rgba(233,239,247,.06); text-decoration: none; }
+.pop-item.danger-item { color: var(--loss); }
+.pop-item.danger-item:hover { background: var(--loss-soft); }
+.pop-lock { font-size: .8rem; color: var(--muted); opacity: .8; padding: 8px 10px; line-height: 1.45; }
 
 /* --- radios d'option (façon Streamlit : rond + libellé) --- */
 .radios { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
