@@ -281,13 +281,23 @@ export async function addCapture(formData: FormData): Promise<void> {
   const kindRaw = String(formData.get("kind") ?? "autre");
   const kind = (KINDS.has(kindRaw) ? kindRaw : "autre") as CaptureKind;
   const aid = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12);
-  const path = `${user.id}/${aid}.${ext}`;
-
   const bytes = new Uint8Array(await file.arrayBuffer());
-  const { error } = await supabase.storage
-    .from("captures")
-    .upload(path, bytes, { contentType: file.type || `image/${ext}`, upsert: false });
-  if (error) throw new Error(`Upload capture : ${error.message}`);
+
+  // Chemin selon l'environnement : bucket Supabase en prod, disque local en aperçu.
+  let path: string;
+  if (DEV_PREVIEW) {
+    path = `captures/${ownerId}/${aid}.${ext}`;
+    const abs = repoDataResolve(path);
+    if (!abs) throw new Error("Chemin invalide.");
+    await mkdir(dirname(abs), { recursive: true });
+    await writeFile(abs, bytes);
+  } else {
+    path = `${user.id}/${aid}.${ext}`;
+    const { error } = await supabase.storage
+      .from("captures")
+      .upload(path, bytes, { contentType: file.type || `image/${ext}`, upsert: false });
+    if (error) throw new Error(`Upload capture : ${error.message}`);
+  }
 
   const store = await openStore(supabase, user.id);
   store.add_capture(
