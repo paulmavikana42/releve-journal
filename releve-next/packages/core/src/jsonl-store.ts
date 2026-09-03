@@ -28,6 +28,7 @@ export class JsonlStore extends Store {
     };
     if (this.demo) ev.demo = true;
     fs.appendFileSync(this.path, JSON.stringify(ev) + "\n", "utf-8");
+    this._loadCache = null;
     return ev;
   }
 

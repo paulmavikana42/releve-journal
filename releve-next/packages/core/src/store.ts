@@ -227,6 +227,10 @@ export interface LoadResult {
 export class Store {
   protected _events: EventRecord[] = [];
   private _campaigns = new Map<string, Campaign>();
+  // Cache du rejeu : load() est appelé plusieurs fois par requête (load +
+  // campaigns), or les événements ne changent pas entre deux appels. Invalidé
+  // dès qu'un événement est ajouté (voir append + surcharges).
+  protected _loadCache: LoadResult | null = null;
   demo: boolean;
 
   constructor(opts: { demo?: boolean; events?: EventRecord[] } = {}) {
@@ -248,6 +252,7 @@ export class Store {
     };
     if (this.demo) ev.demo = true;
     this._events.push(ev);
+    this._loadCache = null;
     return ev;
   }
 
@@ -256,6 +261,7 @@ export class Store {
   }
 
   load(): LoadResult {
+    if (this._loadCache) return this._loadCache;
     const ideas = new Map<string, Idea>();
     const positions = new Map<string, Position>();
     const deals = new Map<string, Deal>();
@@ -420,7 +426,8 @@ export class Store {
     }
 
     const dealsList = [...deals.values()].sort((a, b) => a.time.getTime() - b.time.getTime());
-    return { ideas, positions, deals: dealsList };
+    this._loadCache = { ideas, positions, deals: dealsList };
+    return this._loadCache;
   }
 
   // --- API haut niveau

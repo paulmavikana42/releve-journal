@@ -40,6 +40,7 @@ export class SupabaseStore extends Store {
     if (this.demo) ev.demo = true;
     this._events.push(ev); // visible immédiatement pour les lectures de cette session
     this._pending.push(ev); // en attente de persistance
+    this._loadCache = null;
     return ev;
   }
 
