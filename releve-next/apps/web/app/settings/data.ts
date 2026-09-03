@@ -1,6 +1,7 @@
 import "server-only";
 import { PropRules } from "@releve/core";
 import { createClient } from "@/lib/supabase/server";
+import { DEV_PREVIEW, devSettings } from "@/lib/devPreview";
 
 type SettingsData = {
   accounts?: Record<string, unknown>[];
@@ -18,6 +19,7 @@ export const DEFAULT_WATCHLIST = [
 type Client = Awaited<ReturnType<typeof createClient>>;
 
 async function readRow(supabase: Client, userId: string): Promise<SettingsData> {
+  if (DEV_PREVIEW) return devSettings() as SettingsData;
   const { data } = await supabase.from("settings").select("data").eq("user_id", userId).maybeSingle();
   return ((data?.data as SettingsData) ?? {}) as SettingsData;
 }

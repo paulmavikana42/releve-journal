@@ -18,6 +18,9 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
   // On garde l'uid du compte existant (clé de cloisonnement stable).
   const existing = await getActiveAccount(supabase, user.id);
 
+  const minDaysOn = formData.get("min_days_on") === "on";
+  const consistencyOn = formData.get("consistency_on") === "on";
+
   const rules = new PropRules({
     uid: existing?.uid, // undefined ⇒ un nouvel uid est généré
     label: String(formData.get("label") ?? "").trim() || "Mon compte",
@@ -26,14 +29,18 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
     start_balance: dec(formData, "start_balance", "100000"),
     challenge_type: String(formData.get("challenge_type") ?? "two_phase"),
     phase: String(formData.get("phase") ?? "p1"),
-    daily_loss_pct: dec(formData, "daily_loss_pct", "5"),
+    daily_loss_pct: new Decimal(0), // règle « perte journalière » retirée du MVP
     max_drawdown_pct: dec(formData, "max_drawdown_pct", "10"),
     drawdown_static: formData.get("drawdown_static") === "on",
     profit_target_pct: dec(formData, "profit_target_pct", "8"),
-    min_trading_days:
-      formData.get("min_trading_days") != null && String(formData.get("min_trading_days")).trim() !== ""
-        ? Math.trunc(Number(formData.get("min_trading_days")))
-        : null,
+    // Jours de trading minimum : optionnel (null = aucune règle).
+    min_trading_days: minDaysOn
+      ? (String(formData.get("min_trading_days") ?? "").trim() ? Math.trunc(Number(formData.get("min_trading_days"))) : 3)
+      : null,
+    trading_day_rule: minDaysOn ? "gain" : "position",
+    trading_day_threshold_pct: minDaysOn ? dec(formData, "trading_day_threshold_pct", "0") : new Decimal(0),
+    // Cohérence (consistency) : optionnel (null = aucune règle).
+    consistency_pct: consistencyOn ? dec(formData, "consistency_pct", "30") : null,
   });
 
   await saveAccount(supabase, user.id, rules);

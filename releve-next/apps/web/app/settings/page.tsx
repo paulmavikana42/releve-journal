@@ -8,6 +8,7 @@ import {
   saveAccountAction,
 } from "./actions";
 import SubmitButton from "../components/SubmitButton";
+import PropRuleToggle from "./PropRuleToggle";
 
 export default async function SettingsPage() {
   const { supabase, user } = await currentUser();
@@ -26,7 +27,11 @@ export default async function SettingsPage() {
     max_drawdown_pct: a ? a.max_drawdown_pct.toString() : "10",
     drawdown_static: a ? a.drawdown_static : true,
     profit_target_pct: a?.profit_target_pct ? a.profit_target_pct.toString() : "8",
+    min_days_on: a ? a.min_trading_days != null : true,
     min_trading_days: a?.min_trading_days != null ? String(a.min_trading_days) : "3",
+    trading_day_threshold_pct: a ? a.trading_day_threshold_pct.toString() : "0",
+    consistency_on: a ? a.consistency_pct != null && !a.consistency_pct.isZero() : false,
+    consistency_pct: a?.consistency_pct ? a.consistency_pct.toString() : "30",
   };
 
   return (
@@ -127,11 +132,7 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-          <div>
-            <label>Perte journalière max (%)</label>
-            <input name="daily_loss_pct" inputMode="decimal" defaultValue={v.daily_loss_pct} style={{ width: "100%" }} />
-          </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <label>Drawdown max (%)</label>
             <input name="max_drawdown_pct" inputMode="decimal" defaultValue={v.max_drawdown_pct} style={{ width: "100%" }} />
@@ -142,20 +143,45 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, alignItems: "center" }}>
-          <label className="row" style={{ gap: 8 }}>
-            <input type="checkbox" name="drawdown_static" defaultChecked={v.drawdown_static} />
-            <span>Drawdown FIXE (base capital de départ)</span>
-          </label>
-          <div>
-            <label>Jours de trading minimum</label>
-            <input name="min_trading_days" inputMode="numeric" defaultValue={v.min_trading_days} style={{ width: "100%" }} />
+        <label className="row" style={{ gap: 8 }}>
+          <input type="checkbox" name="drawdown_static" defaultChecked={v.drawdown_static} />
+          <span>Drawdown FIXE (base capital de départ)</span>
+        </label>
+        <div className="note">
+          Drawdown FIXE : le plancher ne bouge jamais (ex. FundedNext, plancher à capital × (1 − DD %)).
+          Décoché = trailing sur le plus-haut atteint.
+        </div>
+
+        {/* Règles optionnelles selon la firme */}
+        <PropRuleToggle
+          name="min_days_on"
+          label="Jours de trading minimum"
+          hint="Certaines firmes exigent un nombre minimum de journées actives. Active-le seulement si ta firme l'impose."
+          defaultOn={v.min_days_on}
+        >
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label>Nombre de jours requis</label>
+              <input name="min_trading_days" inputMode="numeric" defaultValue={v.min_trading_days} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label>% minimum par jour (un jour compte si gain ≥)</label>
+              <input name="trading_day_threshold_pct" inputMode="decimal" defaultValue={v.trading_day_threshold_pct} style={{ width: "100%" }} />
+            </div>
           </div>
-        </div>
-        <div className="muted" style={{ fontSize: ".82rem" }}>
-          Drawdown FIXE : le plancher ne bouge jamais (ex. FundedNext, plancher à
-          capital × (1 − DD%)). Décoché = trailing sur le plus-haut atteint.
-        </div>
+        </PropRuleToggle>
+
+        <PropRuleToggle
+          name="consistency_on"
+          label="Cohérence (consistency)"
+          hint="Part maximale du profit total qu'un seul jour a le droit de peser. Vérifiée au retrait par beaucoup de firmes."
+          defaultOn={v.consistency_on}
+        >
+          <div style={{ maxWidth: 260 }}>
+            <label>Part max d'un seul jour (%)</label>
+            <input name="consistency_pct" inputMode="decimal" defaultValue={v.consistency_pct} style={{ width: "100%" }} />
+          </div>
+        </PropRuleToggle>
 
         <div>
           <button type="submit" className="primary">Enregistrer</button>
