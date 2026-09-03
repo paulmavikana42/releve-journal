@@ -5,7 +5,7 @@
   "type": "module",
   "description": "App Next.js de Relevé (App Router). UI et I/O ; toute la logique métier vient de @releve/core.",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit"
