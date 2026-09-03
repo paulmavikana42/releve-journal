@@ -44,11 +44,46 @@ export async function createCampaign(formData: FormData): Promise<void> {
       conviction: conv ? Math.trunc(Number(conv)) : null,
       note: toNote(blocks),
       blocks,
+      kill_switch: String(formData.get("kill_switch") ?? "").trim(),
       account_id: "",
     }),
   );
   await s.flush();
   revalidatePath("/campaigns");
+}
+
+// Modifier une thèse (même parcours que Streamlit : écran de création pré-rempli).
+export async function updateCampaign(formData: FormData): Promise<void> {
+  const id = String(formData.get("campaignId") ?? "");
+  const name = String(formData.get("name") ?? "").trim();
+  if (!id || !name) return;
+  const { s } = await store();
+  const existing = s.campaigns().get(id);
+  if (!existing) return;
+  if (existing.closed) return; // une thèse clôturée ne se modifie plus
+  const conv = String(formData.get("conviction") ?? "").trim();
+  const blocks = parseBlocks(formData.get("blocks"));
+  s.update_campaign(
+    new Campaign({
+      id: existing.id,
+      created_at: existing.created_at,
+      name,
+      macro_theme: String(formData.get("macro_theme") ?? "").trim(),
+      catalyst: String(formData.get("catalyst") ?? "").trim(),
+      note: toNote(blocks),
+      blocks,
+      conviction: conv ? Math.trunc(Number(conv)) : null,
+      kill_switch: String(formData.get("kill_switch") ?? "").trim(),
+      closed: existing.closed,
+      abandoned: existing.abandoned,
+      abandon_correct: existing.abandon_correct,
+      account_id: existing.account_id,
+    }),
+  );
+  await s.flush();
+  revalidatePath("/campaigns");
+  revalidatePath(`/campaigns/${id}`);
+  redirect(`/campaigns/${id}`);
 }
 
 export async function attachIdea(formData: FormData): Promise<void> {

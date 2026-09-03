@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Decimal } from "@releve/core";
+import { Decimal, Direction } from "@releve/core";
 import { loadCampaigns } from "./data";
-import { abandonCampaign, attachIdea, createCampaign, detachIdea } from "./actions";
-import { addCapture, removeCapture } from "../journal/actions";
+import { attachIdea, createCampaign, detachIdea } from "./actions";
 import SubmitButton from "../components/SubmitButton";
 import BlockEditor from "../components/BlockEditor";
-import BlockView from "../components/BlockView";
+import ConfirmSubmit from "../components/ConfirmSubmit";
+import CampaignMenu from "../components/CampaignMenu";
 import { initBlocks } from "@/lib/blocks";
 
 function rFmt(x: Decimal | null): string {
@@ -17,175 +17,187 @@ function money(x: Decimal): string {
   return (x.gt(0) ? "+" : "") + x.toFixed(2) + " $";
 }
 
-export default async function CampaignsPage() {
+const VUES = [
+  { key: "list", label: "Toutes les thèses macro" },
+  { key: "ecrire", label: "＋ Écrire une thèse macro" },
+];
+
+export default async function CampaignsPage({ searchParams }: { searchParams: Promise<{ vue?: string }> }) {
   const view = await loadCampaigns();
   if (!view) redirect("/login");
-  const { campaigns, unattached, book, captureUrls, blockUrls } = view;
-  const blockUrlObj = Object.fromEntries(blockUrls);
+  const { campaigns, unattached, book } = view;
+  const sp = await searchParams;
+  const vue = sp.vue === "ecrire" ? "ecrire" : "list";
 
   return (
     <main className="wrap">
-      <header style={{ marginBottom: 16 }}>
+      <header style={{ marginBottom: 14 }}>
         <h1 style={{ margin: 0 }}>Thèses macro</h1>
+        <div className="subtitle">Une conviction jouée sur plusieurs instruments. Facultatif.</div>
       </header>
 
-      <p className="muted" style={{ marginTop: 0 }}>
-        Une thèse macro regroupe plusieurs idées sur des instruments <em>différents</em> en UN seul
-        pari (« dollar fort » joué en short EURUSD <em>et</em> long USDJPY). Son R = somme des R de
-        ses jambes.
-      </p>
+      {/* Deux sections en bulles */}
+      <div className="row" style={{ gap: 6, marginBottom: 18, flexWrap: "wrap" }}>
+        {VUES.map((v) => (
+          <Link key={v.key} href={`/campaigns?vue=${v.key}`} className={`pill ${vue === v.key ? "on" : ""}`}>
+            {v.label}
+          </Link>
+        ))}
+      </div>
 
-      {/* Créer une thèse */}
-      <form action={createCampaign} className="card" style={{ marginBottom: 20, display: "grid", gap: 12 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
-          <div>
-            <label>Nom de la thèse</label>
-            <input name="name" placeholder="Dollar fort — Fed hawkish" required style={{ width: "100%" }} />
+      {vue === "ecrire" && (
+        <form action={createCampaign} className="card" style={{ display: "grid", gap: 14 }}>
+          <div className="note">
+            Le niveau au-dessus de l&apos;idée. À utiliser seulement quand une même conviction se joue
+            sur <b>plusieurs instruments</b>. Pour un trade sur un seul symbole, l&apos;idée suffit.
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+            <div>
+              <label>Nom de la thèse</label>
+              <input name="name" placeholder="Dollar fort — Fed hawkish" required style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label>Conviction (1-5)</label>
+              <input name="conviction" inputMode="numeric" defaultValue="3" style={{ width: "100%" }} />
+            </div>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+            <div>
+              <label>Thème macro</label>
+              <input name="macro_theme" placeholder="Fed / taux US" style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label>Catalyseur attendu</label>
+              <input name="catalyst" placeholder="FOMC du 30/07" style={{ width: "100%" }} />
+            </div>
           </div>
           <div>
-            <label>Conviction (1-5)</label>
-            <input name="conviction" inputMode="numeric" placeholder="4" style={{ width: "100%" }} />
-          </div>
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
-          <div>
-            <label>Thème macro</label>
-            <input name="macro_theme" placeholder="Fed / taux US" style={{ width: "100%" }} />
+            <label>La thèse — écris, ajoute des visuels au fil</label>
+            <BlockEditor initial={initBlocks([], "", [])} />
           </div>
           <div>
-            <label>Catalyseur</label>
-            <input name="catalyst" placeholder="CPI plus chaud que prévu" style={{ width: "100%" }} />
+            <label>Ce qui tue la thèse</label>
+            <input name="kill_switch" placeholder="Un pivot dovish, un NFP qui s'effondre…" style={{ width: "100%" }} />
           </div>
-        </div>
-        <div>
-          <label>Écriture — thèse, contexte, captures</label>
-          <BlockEditor initial={initBlocks([], "", [])} />
-        </div>
-        <div>
-          <SubmitButton pendingLabel="Création…">Créer la thèse</SubmitButton>
-        </div>
-      </form>
+          <div>
+            <SubmitButton pendingLabel="Création…">Créer la thèse macro</SubmitButton>
+          </div>
+        </form>
+      )}
 
-      {campaigns.length === 0 ? (
-        <div className="card muted">Aucune thèse macro. Crée-en une ci-dessus, puis rattache-lui des idées.</div>
-      ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          {campaigns.map((c) => {
-            const legs = c.ideas;
-            return (
-              <div key={c.id} className="card">
-                <div className="between">
-                  <div>
-                    <div className="row">
-                      <strong style={{ fontSize: "1.05rem" }}>{c.name}</strong>
-                      {c.conviction != null && <span className="chip">{c.conviction}/5</span>}
-                    </div>
-                    <div className="muted" style={{ fontSize: ".85rem", marginTop: 2 }}>
-                      {[c.macro_theme, c.catalyst].filter(Boolean).join(" · ") || "—"}
-                    </div>
-                    {(c.blocks?.length || c.note) && (
-                      <div style={{ marginTop: 10 }}>
-                        <BlockView blocks={c.blocks as unknown[] | undefined} note={c.note} urls={blockUrlObj} />
+      {vue === "list" && (
+        campaigns.length === 0 ? (
+          <div className="card muted">
+            Aucune thèse macro. Elles sont facultatives — à créer quand une même conviction se joue sur
+            plusieurs instruments. Passe à « Écrire une thèse macro ».
+          </div>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {campaigns.map((c) => {
+              const executed = c.executed_ideas;
+              const rTot = executed.length ? c.r_total(book) : null;
+              const rW = executed.length ? c.r_weighted(book) : null;
+              const legs = [...c.ideas].sort((a, b) => (a.opened_at?.getTime() ?? 0) - (b.opened_at?.getTime() ?? 0));
+              const canModify = !c.closed;
+              return (
+                <div key={c.id} className="card">
+                  {/* en-tête : résumé à gauche · conviction + 3-points + abandon à droite */}
+                  <div className="between" style={{ alignItems: "flex-start", gap: 12 }}>
+                    <div style={{ minWidth: 0 }}>
+                      <div className="eyebrow" style={{ marginBottom: 2 }}>{c.macro_theme || "thèse macro"}</div>
+                      <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                        <strong style={{ fontSize: "1.05rem" }}>{c.display_name}</strong>
+                        {c.conviction != null && <span className="chip">conv {c.conviction}/5</span>}
                       </div>
-                    )}
+                      <div className="note mono" style={{ marginTop: 4 }}>
+                        {c.ideas.length} idée(s) · {c.instruments.length ? c.instruments.join(" · ") : "aucune idée exécutée"}
+                      </div>
+                    </div>
+                    <div style={{ flexShrink: 0 }}>
+                      <CampaignMenu id={c.id} canModify={canModify} />
+                    </div>
                   </div>
-                  <form action={abandonCampaign}>
-                    <input type="hidden" name="campaignId" value={c.id} />
-                    <SubmitButton className="ghost" pendingLabel="…">Abandonner</SubmitButton>
-                  </form>
-                </div>
 
-                {/* Agrégat */}
-                <div className="row" style={{ gap: 16, marginTop: 10, flexWrap: "wrap" }}>
-                  <span className="muted">Jambes exécutées : <strong style={{ color: "var(--ink)" }}>{c.executed_ideas.length}</strong></span>
-                  <span className="muted">Instruments : <strong style={{ color: "var(--ink)" }}>{c.instruments.join(", ") || "—"}</strong></span>
-                  <span className="muted">
-                    P&L :{" "}
-                    <strong style={{ color: c.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)" }}>{money(c.pnl_net)}</strong>
-                  </span>
-                  <span className="muted">R total : <strong style={{ color: "var(--ink)" }}>{rFmt(c.r_total(book))}</strong></span>
-                  <span className="muted">R pondéré : <strong style={{ color: "var(--ink)" }}>{rFmt(c.r_weighted(book))}</strong></span>
-                </div>
+                  {/* aperçu tronqué de la thèse (quelques lignes) */}
+                  {c.note && (
+                    <Link href={`/campaigns/${c.id}`} className="note clamp3" style={{ display: "-webkit-box", marginTop: 12, whiteSpace: "pre-wrap", textDecoration: "none" }}>
+                      {c.note}
+                    </Link>
+                  )}
 
-                {/* Jambes rattachées */}
-                {legs.length > 0 && (
-                  <div style={{ display: "flex", flexDirection: "column", gap: 6, marginTop: 12 }}>
-                    {legs.map((i) => (
-                      <div key={i.id} className="between" style={{ borderTop: "1px solid var(--border)", paddingTop: 6 }}>
-                        <div className="row">
-                          <Link href={`/journal/${i.id}`} style={{ textDecoration: "none", color: "inherit" }}>
-                            <strong>{i.symbol}</strong>
-                          </Link>
-                          <span className="muted" style={{ fontSize: ".85rem" }}>{i.label || i.display_name}</span>
+                  {executed.length > 0 && (
+                    <>
+                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginTop: 14 }}>
+                        <div className="card kpi" style={{ minHeight: 96 }}>
+                          <div className="eyebrow">R de la thèse</div>
+                          <div className={`stat ${rTot ? (rTot.gt(0) ? "gain" : rTot.lt(0) ? "loss" : "") : ""}`}>{rFmt(rTot)}</div>
+                          <div className="note">somme des R de chaque idée</div>
                         </div>
-                        <div className="row" style={{ gap: 10 }}>
-                          {i.is_executed && (
-                            <span style={{ color: i.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)", whiteSpace: "nowrap" }}>
-                              {money(i.pnl_net)}
-                            </span>
-                          )}
-                          <form action={detachIdea}>
-                            <input type="hidden" name="ideaId" value={i.id} />
-                            <SubmitButton className="ghost" pendingLabel="…">Détacher</SubmitButton>
-                          </form>
+                        <div className="card kpi" style={{ minHeight: 96 }}>
+                          <div className="eyebrow">Par unité de risque</div>
+                          <div className={`stat ${rW ? (rW.gt(0) ? "gain" : rW.lt(0) ? "loss" : "") : ""}`}>{rFmt(rW)}</div>
+                          <div className="note">P&amp;L total / risque total</div>
+                        </div>
+                        <div className="card kpi" style={{ minHeight: 96 }}>
+                          <div className="eyebrow">P&amp;L net</div>
+                          <div className={`stat ${c.pnl_net.gt(0) ? "gain" : c.pnl_net.lt(0) ? "loss" : ""}`}>{money(c.pnl_net)}</div>
                         </div>
                       </div>
-                    ))}
-                  </div>
-                )}
+                    </>
+                  )}
 
-                {/* Rattacher une idée */}
-                {unattached.length > 0 && (
-                  <form action={attachIdea} className="row" style={{ marginTop: 12, gap: 8 }}>
-                    <input type="hidden" name="campaignId" value={c.id} />
-                    <select name="ideaId" style={{ flex: 1 }}>
-                      {unattached.map((i) => (
-                        <option key={i.id} value={i.id}>
-                          {i.symbol} — {i.label || i.display_name}
-                        </option>
-                      ))}
-                    </select>
-                    <SubmitButton className="ghost" pendingLabel="…">Rattacher une idée</SubmitButton>
-                  </form>
-                )}
-
-                {/* Captures de la thèse */}
-                <div style={{ marginTop: 12, borderTop: "1px solid var(--border)", paddingTop: 10 }}>
-                  {c.captures.length > 0 && (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(160px,1fr))", gap: 8, marginBottom: 8 }}>
-                      {c.captures.map((cap) => (
-                        <div key={cap.id}>
-                          {captureUrls.get(cap.id) ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={captureUrls.get(cap.id)} alt={cap.caption || cap.original_name} style={{ width: "100%", borderRadius: 8, border: "1px solid var(--border)" }} />
-                          ) : (
-                            <div className="muted" style={{ fontSize: ".8rem" }}>image indisponible</div>
-                          )}
-                          <div className="between" style={{ marginTop: 4 }}>
-                            <span className="muted" style={{ fontSize: ".75rem" }}>{cap.caption || cap.kind}</span>
-                            <form action={removeCapture}>
-                              <input type="hidden" name="attachment_id" value={cap.id} />
-                              <input type="hidden" name="owner_id" value={c.id} />
-                              <input type="hidden" name="owner_type" value="campaign" />
-                              <SubmitButton className="ghost" pendingLabel="…">Retirer</SubmitButton>
-                            </form>
-                          </div>
-                        </div>
-                      ))}
+                  {/* jambes rattachées + détacher (confirmé) */}
+                  {legs.length > 0 && (
+                    <div className="tablewrap" style={{ marginTop: 12 }}>
+                      <table className="t">
+                        <thead><tr><th>instrument</th><th>sens</th><th className="num">R</th><th className="num">P&L net</th><th>tickets</th><th></th></tr></thead>
+                        <tbody>
+                          {legs.map((i) => {
+                            const r = i.r_multiple(book);
+                            return (
+                              <tr key={i.id}>
+                                <td><Link href={`/journal/${i.id}`} style={{ color: "var(--ink)" }}><b>{i.symbol}</b></Link></td>
+                                <td><span className={`chip ${i.thesis?.direction === Direction.SELL ? "bad" : "ok"}`}>{i.thesis ? (i.thesis.direction === Direction.SELL ? "short" : "long") : "—"}</span></td>
+                                <td className={`num ${r ? (r.gt(0) ? "gain" : r.lt(0) ? "loss" : "") : ""}`}>{rFmt(r)}</td>
+                                <td className={`num ${i.pnl_net.gt(0) ? "gain" : "loss"}`}>{money(i.pnl_net)}</td>
+                                <td className="note">{i.positions.length} ticket(s)</td>
+                                <td style={{ textAlign: "right" }}>
+                                  <ConfirmSubmit
+                                    action={detachIdea}
+                                    hidden={{ ideaId: i.id }}
+                                    className="pop-btn"
+                                    title="Détacher cette idée ?"
+                                    message={<>L&apos;idée <b>{i.symbol}</b> redevient autonome. Rien n&apos;est effacé.</>}
+                                    confirmLabel="Oui, détacher"
+                                  >
+                                    Détacher
+                                  </ConfirmSubmit>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   )}
-                  <form action={addCapture} className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-                    <input type="hidden" name="owner_type" value="campaign" />
-                    <input type="hidden" name="owner_id" value={c.id} />
-                    <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif" required />
-                    <input name="caption" placeholder="légende (facultatif)" style={{ flex: 1, minWidth: 140 }} />
-                    <SubmitButton className="ghost" pendingLabel="Envoi…">Joindre une capture</SubmitButton>
-                  </form>
+
+                  {/* rattacher une idée */}
+                  {unattached.length > 0 && (
+                    <form action={attachIdea} className="row" style={{ marginTop: 12, gap: 8 }}>
+                      <input type="hidden" name="campaignId" value={c.id} />
+                      <select name="ideaId" style={{ flex: 1 }}>
+                        {unattached.map((i) => (
+                          <option key={i.id} value={i.id}>{i.symbol} — {i.label || i.display_name}</option>
+                        ))}
+                      </select>
+                      <SubmitButton className="ghost" pendingLabel="…">Rattacher une idée</SubmitButton>
+                    </form>
+                  )}
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )
       )}
     </main>
   );

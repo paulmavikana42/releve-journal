@@ -510,6 +510,20 @@ table.t td b { font-family: var(--font-ui); }
 .blk-add { display: flex; gap: 8px; margin-top: 8px; padding: 4px; }
 .blk-add .ghost { padding: 6px 12px; font-size: .85rem; }
 
+/* --- assistant pas-à-pas (import) --- */
+.stepflow { display: flex; flex-direction: column; }
+.stepflow-row { display: flex; gap: 12px; padding: 12px 0; align-items: flex-start; }
+.stepflow-row + .stepflow-row { border-top: 1px solid var(--rule-soft); }
+.stepflow-num {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(245,168,60,.4);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-weight: 700; font-size: .85rem;
+}
+
+/* aperçu tronqué (quelques lignes) d'une note de thèse sur sa carte */
+.clamp3 { display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
 /* --- rendu lecture des blocs --- */
 .blk-view { display: flex; flex-direction: column; gap: 10px; }
 .blk-p { margin: 0; white-space: pre-wrap; line-height: 1.6; color: var(--ink); font-size: .95rem; }
