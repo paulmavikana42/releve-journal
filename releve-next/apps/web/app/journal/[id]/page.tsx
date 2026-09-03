@@ -28,6 +28,7 @@ import {
 import SubmitButton from "../../components/SubmitButton";
 import ConfirmSubmit from "../../components/ConfirmSubmit";
 import BackLink from "../../components/BackLink";
+import Help from "../../components/Help";
 
 const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.DRAFT]: "brouillon",
@@ -57,10 +58,10 @@ function money(x: Decimal | null): string {
   return (x.gt(0) ? "+" : "") + v + " $";
 }
 
-function Stat({ label, value, tone }: { label: string; value: string; tone?: "gain" | "loss" }) {
+function Stat({ label, value, tone, hint }: { label: string; value: string; tone?: "gain" | "loss"; hint?: string }) {
   return (
     <div className="card" style={{ padding: "10px 14px" }}>
-      <div className="muted" style={{ fontSize: ".78rem" }}>{label}</div>
+      <div className="muted" style={{ fontSize: ".78rem" }}>{label}{hint && <Help tip={hint} />}</div>
       <div
         style={{
           fontSize: "1.1rem",
@@ -174,16 +175,18 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           label="R engagé"
           value={r === null ? "incalculable" : (r.gt(0) ? "+" : "") + r.toFixed(2) + " R"}
           tone={r === null ? undefined : r.gt(0) ? "gain" : "loss"}
+          hint="Résultat divisé par le risque réel du trade. Mesure ton edge en neutralisant la taille de position : +1 R = tu as gagné ce que tu risquais."
         />
-        <Stat label="Risque engagé" value={risk === null ? "—" : risk.toFixed(2) + " $"} />
+        <Stat label="Risque engagé" value={risk === null ? "—" : risk.toFixed(2) + " $"} hint="La somme réellement risquée sur ce trade (entrée − stop, par ticket)." />
         <Stat
           label={`Exposition simultanée${measured ? "" : " (majorant)"}`}
           value={peak === null ? "—" : peak.toFixed(2) + " $"}
+          hint="Le risque maximum porté en même temps quand plusieurs tickets étaient ouverts. « Majorant » = estimation haute faute d'info sur les breakeven."
         />
       </section>
 
       {idea.adds.length > 0 && (
-        <section style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 20 }}>
+        <section className="g2" style={{ marginBottom: 20 }}>
           <Stat label="P&L du noyau" value={money(idea.pnl_initial)} tone={idea.pnl_initial.gt(0) ? "gain" : "loss"} />
           <Stat label={`P&L des renforcements (${idea.adds.length})`} value={money(idea.pnl_adds)} tone={idea.pnl_adds.gt(0) ? "gain" : "loss"} />
         </section>
@@ -266,7 +269,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
               Dès l'entrée : l'idée passe « en cours » et le stop réellement placé est enregistré
               avant que le broker ne l'écrase.
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+            <div className="g4">
               <div>
                 <label>N° de ticket</label>
                 <input name="ticket" required placeholder="88210912" style={{ width: "100%" }} />
@@ -437,7 +440,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
               </label>
             ))}
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="g2">
             <div>
               <label>Le marché t'a-t-il donné raison ?</label>
               <select name="thesis_outcome" defaultValue="non_testee" style={{ width: "100%" }}>
@@ -527,7 +530,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             La question n'est pas « avais-je raison » mais « ai-je eu l'occasion ». Un setup absent
             est un non-événement ; une hésitation devant un setup valide est l'information qui compte.
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="g2">
             <div>
               <label>Le setup s'est-il présenté ?</label>
               <select name="setup_appeared" defaultValue="setup_absent" style={{ width: "100%" }}>

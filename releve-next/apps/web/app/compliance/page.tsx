@@ -115,7 +115,7 @@ export default async function CompliancePage() {
       )}
 
       {/* Courbe d'équité + pizza des jours de trading minimum */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.5fr 1fr", gap: 18, marginTop: 24, alignItems: "start" }}>
+      <div className="g-split" style={{ marginTop: 24 }}>
         <div>
           <div className="eyebrow bar">courbe d&apos;équité</div>
           {equityPts.length >= 2 ? (
@@ -143,7 +143,7 @@ export default async function CompliancePage() {
 
       {/* Les règles (sans « perte journalière ») */}
       <div className="eyebrow bar" style={{ marginTop: 24 }}>où tu en es</div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+      <div className="g2">
         {comp.checks.filter((c) => c.key !== "daily").map((c) => (
           <div key={c.key} className="card between">
             <div>

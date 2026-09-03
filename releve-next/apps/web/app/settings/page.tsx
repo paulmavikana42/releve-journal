@@ -9,6 +9,7 @@ import {
 } from "./actions";
 import SubmitButton from "../components/SubmitButton";
 import PropRuleToggle from "./PropRuleToggle";
+import Help from "../components/Help";
 
 export default async function SettingsPage() {
   const { supabase, user } = await currentUser();
@@ -57,14 +58,14 @@ export default async function SettingsPage() {
             {accounts.map((acc) => {
               const isActive = acc.uid === a?.uid;
               return (
-                <div key={acc.uid} className="card between">
-                  <div className="row">
+                <div key={acc.uid} className="card" style={{ display: "flex", flexWrap: "wrap", gap: 10, alignItems: "center", justifyContent: "space-between" }}>
+                  <div className="row" style={{ flexWrap: "wrap", minWidth: 0 }}>
                     <strong>{acc.label}</strong>
                     <span className="muted">{acc.start_balance.toFixed(0)} {acc.symbol}</span>
                     {acc.account_id && <span className="chip">#{acc.account_id}</span>}
                     {isActive && <span className="chip" style={{ color: "var(--accent)" }}>actif</span>}
                   </div>
-                  <div className="row" style={{ gap: 8 }}>
+                  <div className="row" style={{ gap: 8, flexShrink: 0 }}>
                     {!isActive && (
                       <form action={activateAccountAction}>
                         <input type="hidden" name="uid" value={acc.uid} />
@@ -87,7 +88,7 @@ export default async function SettingsPage() {
 
       <h2 style={{ fontSize: "1rem" }}>{a ? "Modifier le compte actif" : "Créer ton compte"}</h2>
       <form action={saveAccountAction} className="card" style={{ display: "grid", gap: 14 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Nom du compte</label>
             <input name="label" defaultValue={v.label} style={{ width: "100%" }} />
@@ -102,18 +103,18 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Numéro de compte broker (facultatif)</label>
             <input name="account_id" defaultValue={v.account_id} placeholder="ex. 81714841" style={{ width: "100%" }} />
           </div>
           <div>
-            <label>Capital de départ</label>
+            <label>Capital de départ<Help tip="Le solde initial du compte challenge. Sert de base au drawdown fixe et au plancher fatal." /></label>
             <input name="start_balance" inputMode="decimal" defaultValue={v.start_balance} style={{ width: "100%" }} />
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Type de challenge</label>
             <select name="challenge_type" defaultValue={v.challenge_type} style={{ width: "100%" }}>
@@ -132,13 +133,13 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
-            <label>Drawdown max (%)</label>
+            <label>Drawdown max (%)<Help tip="La perte totale maximale autorisée depuis le capital de départ (ou le plus-haut si trailing). Au-delà, le challenge est perdu." /></label>
             <input name="max_drawdown_pct" inputMode="decimal" defaultValue={v.max_drawdown_pct} style={{ width: "100%" }} />
           </div>
           <div>
-            <label>Objectif de gain (%)</label>
+            <label>Objectif de gain (%)<Help tip="Le gain à atteindre pour valider la phase, en % du capital de départ." /></label>
             <input name="profit_target_pct" inputMode="decimal" defaultValue={v.profit_target_pct} style={{ width: "100%" }} />
           </div>
         </div>
@@ -159,7 +160,7 @@ export default async function SettingsPage() {
           hint="Certaines firmes exigent un nombre minimum de journées actives. Active-le seulement si ta firme l'impose."
           defaultOn={v.min_days_on}
         >
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="g2">
             <div>
               <label>Nombre de jours requis</label>
               <input name="min_trading_days" inputMode="numeric" defaultValue={v.min_trading_days} style={{ width: "100%" }} />

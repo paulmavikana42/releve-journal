@@ -66,7 +66,7 @@ export default async function ImportPage() {
         </div>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.1fr .9fr", gap: 18, alignItems: "start" }}>
+      <div className="g-split">
         {/* Assistant pas-à-pas : récupérer l'export MT5 */}
         <div>
           <div className="eyebrow bar">récupérer ton export MT5</div>

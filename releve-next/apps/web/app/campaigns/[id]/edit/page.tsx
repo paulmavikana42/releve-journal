@@ -34,7 +34,7 @@ export default async function CampaignEdit({ params }: { params: Promise<{ id: s
 
       <form action={updateCampaign} className="card" style={{ display: "grid", gap: 14 }}>
         <input type="hidden" name="campaignId" value={id} />
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Nom de la thèse</label>
             <input name="name" defaultValue={c.name} required style={{ width: "100%" }} />
@@ -44,7 +44,7 @@ export default async function CampaignEdit({ params }: { params: Promise<{ id: s
             <input name="conviction" inputMode="numeric" defaultValue={c.conviction != null ? String(c.conviction) : ""} style={{ width: "100%" }} />
           </div>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Thème macro</label>
             <input name="macro_theme" defaultValue={c.macro_theme} style={{ width: "100%" }} />

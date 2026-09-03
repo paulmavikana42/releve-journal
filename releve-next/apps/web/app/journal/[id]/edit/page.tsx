@@ -36,7 +36,7 @@ export default async function EditIdea({ params }: { params: Promise<{ id: strin
       <form action={updateThesis} className="card" style={{ display: "grid", gap: 14 }}>
         <input type="hidden" name="ideaId" value={id} />
 
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr .8fr .9fr", gap: 12 }}>
+        <div className="g3">
           <div>
             <label>Instrument</label>
             <input name="instrument" defaultValue={t?.instrument ?? ""} required style={{ width: "100%" }} />
@@ -54,7 +54,7 @@ export default async function EditIdea({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+        <div className="g4">
           <div>
             <label>Entrée visée</label>
             <input name="entry_planned" inputMode="decimal" defaultValue={val(t?.entry_planned)} style={{ width: "100%" }} />
@@ -78,7 +78,7 @@ export default async function EditIdea({ params }: { params: Promise<{ id: strin
           <input name="label" defaultValue={idea.label} placeholder="Short NDX100 — CPI" style={{ width: "100%" }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Thème macro</label>
             <input name="macro_theme" defaultValue={t?.macro_theme ?? ""} style={{ width: "100%" }} />
@@ -89,7 +89,7 @@ export default async function EditIdea({ params }: { params: Promise<{ id: strin
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Setup</label>
             <input name="setup" defaultValue={t?.setup ?? ""} style={{ width: "100%" }} />

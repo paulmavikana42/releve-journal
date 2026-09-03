@@ -51,7 +51,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             Le niveau au-dessus de l&apos;idée. À utiliser seulement quand une même conviction se joue
             sur <b>plusieurs instruments</b>. Pour un trade sur un seul symbole, l&apos;idée suffit.
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 12 }}>
+          <div className="g2">
             <div>
               <label>Nom de la thèse</label>
               <input name="name" placeholder="Dollar fort — Fed hawkish" required style={{ width: "100%" }} />
@@ -61,7 +61,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               <input name="conviction" inputMode="numeric" defaultValue="3" style={{ width: "100%" }} />
             </div>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+          <div className="g2">
             <div>
               <label>Thème macro</label>
               <input name="macro_theme" placeholder="Fed / taux US" style={{ width: "100%" }} />
@@ -127,7 +127,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
 
                   {executed.length > 0 && (
                     <>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginTop: 14 }}>
+                      <div className="g3" style={{ marginTop: 14 }}>
                         <div className="card kpi" style={{ minHeight: 96 }}>
                           <div className="eyebrow">R de la thèse</div>
                           <div className={`stat ${rTot ? (rTot.gt(0) ? "gain" : rTot.lt(0) ? "loss" : "") : ""}`}>{rFmt(rTot)}</div>

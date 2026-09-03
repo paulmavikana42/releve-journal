@@ -151,6 +151,37 @@ a:hover { text-decoration: underline; }
 .row { display: flex; align-items: center; gap: 12px; }
 .between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 
+/* --- grilles utilitaires responsives (formulaires, sections) --- */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.g4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+.g-split { display: grid; grid-template-columns: 1.5fr 1fr; gap: 18px; align-items: start; }
+@media (max-width: 860px) { .g-split { grid-template-columns: 1fr; } }
+@media (max-width: 820px) { .g4 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 520px) { .g2, .g3, .g4 { grid-template-columns: 1fr; } }
+
+/* --- helper (infobulle « ? » discrète, façon Streamlit qmark) --- */
+.help {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 50%; border: 1px solid var(--rule);
+  color: var(--muted); font-size: .62rem; font-weight: 700; margin-left: 5px;
+  cursor: help; position: relative; font-family: var(--font-mono); vertical-align: middle;
+  text-transform: none; letter-spacing: 0; flex-shrink: 0;
+}
+.help:hover { color: var(--ink); border-color: var(--accent); }
+.help:hover::after {
+  content: attr(data-tip); position: absolute; bottom: calc(100% + 8px); left: 50%;
+  transform: translateX(-50%); width: min(240px, 60vw);
+  background: var(--card); border: 1px solid var(--rule-soft); border-radius: 8px;
+  padding: 8px 10px; font-size: .74rem; color: var(--ink); line-height: 1.45; z-index: 90;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45); white-space: normal; text-align: left;
+  font-family: var(--font-ui); font-weight: 400; letter-spacing: normal; pointer-events: none;
+}
+.help:hover::before {
+  content: ""; position: absolute; bottom: calc(100% + 2px); left: 50%; transform: translateX(-50%);
+  border: 6px solid transparent; border-top-color: var(--rule-soft); z-index: 90;
+}
+
 /* --- eyebrow (filet ambre de section) --- */
 .eyebrow {
   font-family: var(--font-mono); font-size: .70rem; font-weight: 600;

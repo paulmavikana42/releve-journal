@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { addIdea } from "./actions";
 import BlockEditor from "../components/BlockEditor";
+import Help from "../components/Help";
 import { initBlocks } from "@/lib/blocks";
 
 // Auto-grow local (textarea qui descend au lieu de s'étendre).
@@ -55,7 +56,7 @@ export default function WriteIdeaForm({
 
       {/* Bulle 1 — infos du trade (compacte) */}
       <div hidden={tab !== "infos"} style={{ display: "grid", gap: 14 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.4fr .8fr .8fr", gap: 12 }}>
+        <div className="g3">
           <div>
             <label>Instrument</label>
             <select name="instrument" required defaultValue="" style={{ width: "100%" }}>
@@ -73,31 +74,31 @@ export default function WriteIdeaForm({
             </select>
           </div>
           <div>
-            <label>Conviction (1-5)</label>
+            <label>Conviction (1-5)<Help tip="Ta confiance dans l’idée avant d’entrer, de 1 (faible) à 5 (forte). Sert à vérifier plus tard si tes fortes convictions payent vraiment mieux." /></label>
             <input name="conviction" inputMode="numeric" defaultValue="3" style={{ width: "100%" }} />
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 12 }}>
+        <div className="g4">
           <div>
             <label>Entrée visée</label>
             <input name="entry" inputMode="decimal" placeholder="20100" style={{ width: "100%" }} />
           </div>
           <div>
-            <label>Stop initial</label>
+            <label>Stop initial<Help tip="Le prix où l’idée est invalidée. Seul champ indispensable au calcul du R — ton broker n’archive que ton dernier stop, celui d’origine ne peut venir que d’ici." /></label>
             <input name="stop" inputMode="decimal" placeholder="20250" style={{ width: "100%" }} />
           </div>
           <div>
-            <label>R voulu (%)</label>
+            <label>R voulu (%)<Help tip="Le pourcentage du capital que tu comptes risquer sur ce trade. Sert de contrôle croisé avec le risque réellement pris." /></label>
             <input name="risk_pct" inputMode="decimal" placeholder="0.5" style={{ width: "100%" }} />
           </div>
           <div>
-            <label>TP</label>
+            <label>TP<Help tip="Tes objectifs de prise de profit (take-profit). Sépare-les par un espace si tu en as plusieurs." /></label>
             <input name="targets" placeholder="19800 19500" style={{ width: "100%" }} />
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Thème macro</label>
             <input name="macro_theme" placeholder="Fed / taux US, risk-off…" style={{ width: "100%" }} />
@@ -108,7 +109,7 @@ export default function WriteIdeaForm({
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
             <label>Setup</label>
             <input name="setup" placeholder="Cassure de structure" style={{ width: "100%" }} />
@@ -124,9 +125,9 @@ export default function WriteIdeaForm({
           <textarea name="thesis_kill_switch" rows={1} onInput={grow} placeholder="Un CPI au-dessus du consensus, un pivot BoJ…" style={{ width: "100%", minHeight: 40, resize: "none", overflow: "hidden", lineHeight: 1.5 }} />
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+        <div className="g2">
           <div>
-            <label>N° de ticket (dès que tu es entré)</label>
+            <label>N° de ticket (dès que tu es entré)<Help tip="Le numéro affiché par ton terminal à l’entrée. Il fait passer l’idée « en cours » et sert de clé : l’import la clôturera toute seule par ce numéro." /></label>
             <input name="ticket" placeholder="celui de ton terminal" style={{ width: "100%" }} />
           </div>
           <div>
