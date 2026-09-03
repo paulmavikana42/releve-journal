@@ -32,6 +32,7 @@ import {
 import { currentUser, openStore } from "../journal/data";
 import { activeScope } from "../settings/data";
 import { CalibrationChart, CumulativeCurve, RHistogram } from "../components/charts";
+import CalendarGrid from "../components/CalendarGrid";
 
 const JOURS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
@@ -346,20 +347,17 @@ export default async function Dashboard({
           <div style={{ marginBottom: 10 }}>
             <PeriodSelect periods={periods} current={periodeKey} qp={qp} />
           </div>
-          <div className="cal">
-            {JOURS.map((j) => <div key={j} className="cal-head">{j}</div>)}
-            {cal.cells.map((cell, i) => {
-              if (!cell) return <div key={i} className="cal-day vide" />;
-              const klass = cell.pnl === null ? "" : cell.pnl > 0 ? "gain" : cell.pnl < 0 ? "loss" : "flat";
-              const montant = cell.pnl === null ? null : enPct ? pctFmt((cell.pnl / equityRef) * 100) : fmtMoney(cell.pnl);
-              return (
-                <div key={i} className={`cal-day ${klass}`}>
-                  <span className="num">{cell.d}</span>
-                  {montant !== null && <span className="pnl">{montant}</span>}
-                </div>
-              );
-            })}
-          </div>
+          <CalendarGrid
+            cells={cal.cells.map((cell) =>
+              cell === null
+                ? null
+                : {
+                    d: cell.d,
+                    klass: cell.pnl === null ? "" : cell.pnl > 0 ? "gain" : cell.pnl < 0 ? "loss" : "flat",
+                    montant: cell.pnl === null ? null : enPct ? pctFmt((cell.pnl / equityRef) * 100) : fmtMoney(cell.pnl),
+                  },
+            )}
+          />
           <div className="note" style={{ marginTop: 8 }}>
             <b className={cal.total > 0 ? "txt-gain" : cal.total < 0 ? "txt-loss" : "txt-sig"}>{fmtMoney(cal.total)}</b> sur le mois · <span className="txt-gain">{cal.verts} jour(s) vert(s)</span> · <span className="txt-loss">{cal.rouges} rouge(s)</span>. Seuls les jours où de l&apos;argent est réellement tombé sont colorés : un jour sans sortie n&apos;est pas un jour à zéro, c&apos;est un jour où rien n&apos;a été tranché. Une sortie partielle compte le jour où elle a lieu ; la clôture finale porte le <b>reste</b>.
           </div>
