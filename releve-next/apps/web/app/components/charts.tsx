@@ -187,6 +187,48 @@ export function RHistogram({
   );
 }
 
+/**
+ * Anneau « pizza » : un rond divisé en `total` parts égales, `done` remplies —
+ * pour les jours de trading minimum (ex. 2/3). Au centre, done/total.
+ */
+export function PieProgress({
+  done,
+  total,
+  size = 150,
+}: {
+  done: number;
+  total: number;
+  size?: number;
+}) {
+  const n = Math.max(1, total);
+  const cx = size / 2, cy = size / 2, r = size / 2 - 6;
+  const rin = r * 0.58; // trou central (donut)
+  const filled = Math.max(0, Math.min(n, done));
+  const arc = (i: number, outer: number) => {
+    const a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
+    const a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
+    const p = (ang: number, rad: number) => `${(cx + rad * Math.cos(ang)).toFixed(2)},${(cy + rad * Math.sin(ang)).toFixed(2)}`;
+    const large = a1 - a0 > Math.PI ? 1 : 0;
+    return `M${p(a0, rin)} L${p(a0, outer)} A${outer} ${outer} 0 ${large} 1 ${p(a1, outer)} L${p(a1, rin)} A${rin} ${rin} 0 ${large} 0 ${p(a0, rin)} Z`;
+  };
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" style={{ display: "block" }}>
+      {Array.from({ length: n }, (_, i) => (
+        <path
+          key={i}
+          d={arc(i, r)}
+          fill={i < filled ? "var(--accent)" : "var(--rule-soft)"}
+          fillOpacity={i < filled ? 0.95 : 0.5}
+          stroke="var(--paper)"
+          strokeWidth="2"
+        />
+      ))}
+      <text x={cx} y={cy - 2} textAnchor="middle" fontFamily="var(--font-mono)" fontWeight="700" fontSize={size * 0.2} fill="var(--ink)">{done}</text>
+      <text x={cx} y={cy + size * 0.15} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={size * 0.1} fill="var(--muted)">/ {total}</text>
+    </svg>
+  );
+}
+
 /** Calibration : espérance R par niveau de conviction déclaré. */
 export function CalibrationChart({
   points,
