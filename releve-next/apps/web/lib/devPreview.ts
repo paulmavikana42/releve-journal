@@ -28,6 +28,28 @@ export function devUser(): { id: string; email: string } {
   return { id: "dev-preview", email: "aperçu@local" };
 }
 
+/** Le dossier data/ du dépôt (même que Streamlit) — pour lire/écrire les captures. */
+export function repoDataDir(): string {
+  let dir = process.cwd();
+  for (let i = 0; i < 6; i++) {
+    if (existsSync(path.join(dir, "data", "events.jsonl")) || existsSync(path.join(dir, "data"))) {
+      return path.join(dir, "data");
+    }
+    const up = path.dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return path.join(process.cwd(), "data");
+}
+
+/** Résout un chemin relatif au dossier data/ en refusant toute évasion (..). */
+export function repoDataResolve(rel: string): string | null {
+  const base = repoDataDir();
+  const target = path.resolve(base, rel);
+  if (target !== base && !target.startsWith(base + path.sep)) return null;
+  return target;
+}
+
 export function devEvents(): EventRecord[] {
   const p = repoDataPath("events.jsonl");
   if (!existsSync(p)) return [];

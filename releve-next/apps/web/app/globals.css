@@ -400,6 +400,71 @@ table.t td b { font-family: var(--font-ui); }
 .cal-day.flat { background: var(--signal-soft); border-color: rgba(138,169,255,.30); }
 .cal-day.flat .pnl { color: var(--signal); }
 
+/* --- éditeur par blocs (façon Notion) --- */
+.blk-editor { border: 1px solid var(--rule-soft); border-radius: 10px; padding: 6px; background: rgba(233,239,247,.02); }
+.blk-list { display: flex; flex-direction: column; }
+.blk-row { display: flex; align-items: flex-start; gap: 6px; padding: 4px; border-radius: 8px; }
+.blk-row.dragging { background: var(--card-hi); opacity: .9; }
+.blk-row:hover { background: rgba(233,239,247,.02); }
+.blk-handle {
+  flex-shrink: 0; margin-top: 6px; cursor: grab; touch-action: none; user-select: none;
+  background: none; border: none; color: var(--muted); font-size: 1rem; line-height: 1;
+  padding: 4px 2px; border-radius: 6px;
+}
+.blk-handle:hover { color: var(--ink); background: rgba(233,239,247,.05); }
+.blk-handle:active { cursor: grabbing; }
+.blk-body { flex: 1; min-width: 0; }
+.blk-text {
+  width: 100%; background: transparent; border: 1px solid transparent; border-radius: 8px;
+  color: var(--ink); font-family: var(--font-ui); font-size: .95rem; line-height: 1.6;
+  padding: 6px 8px; resize: none; overflow: hidden; min-height: 38px;
+}
+.blk-text:focus { outline: none; border-color: var(--rule-soft); background: var(--card); }
+.blk-text::placeholder { color: var(--muted); opacity: .7; }
+.blk-img-wrap { padding: 4px 8px; }
+.blk-img { position: relative; display: inline-block; max-width: 100%; min-width: 20%; }
+.blk-img > img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--rule-soft); }
+.blk-img-ph {
+  display: flex; align-items: center; justify-content: center; min-height: 80px;
+  border: 1px dashed var(--rule); border-radius: 8px; color: var(--muted); font-size: .8rem;
+  background: rgba(233,239,247,.02);
+}
+.blk-resize {
+  position: absolute; top: 0; bottom: 0; right: -5px; width: 14px; cursor: ew-resize;
+  touch-action: none; display: flex; align-items: center; justify-content: center;
+}
+.blk-resize::after {
+  content: ""; width: 5px; height: 42px; max-height: 60%; border-radius: 3px;
+  background: var(--rule); border: 1px solid var(--paper); opacity: 0; transition: opacity .15s;
+}
+.blk-img:hover .blk-resize::after { opacity: 1; }
+.blk-resize:hover::after { background: var(--accent); opacity: 1; }
+.blk-pct {
+  position: absolute; top: 6px; right: 6px; font-family: var(--font-mono); font-size: .68rem;
+  padding: 2px 6px; border-radius: 5px; background: rgba(11,18,32,.82); color: var(--ink);
+  opacity: 0; transition: opacity .15s; pointer-events: none;
+}
+.blk-img:hover .blk-pct { opacity: 1; }
+.blk-cap {
+  width: 100%; margin-top: 6px; background: transparent; border: none; border-bottom: 1px solid var(--rule-soft);
+  border-radius: 0; color: var(--muted); font-size: .8rem; padding: 4px 2px;
+}
+.blk-cap:focus { outline: none; border-bottom-color: var(--accent); color: var(--ink); }
+.blk-x {
+  flex-shrink: 0; margin-top: 6px; background: none; border: none; color: var(--muted);
+  cursor: pointer; font-size: .85rem; padding: 4px 6px; border-radius: 6px;
+}
+.blk-x:hover { color: var(--loss); background: var(--loss-soft); }
+.blk-add { display: flex; gap: 8px; margin-top: 8px; padding: 4px; }
+.blk-add .ghost { padding: 6px 12px; font-size: .85rem; }
+
+/* --- rendu lecture des blocs --- */
+.blk-view { display: flex; flex-direction: column; gap: 10px; }
+.blk-p { margin: 0; white-space: pre-wrap; line-height: 1.6; color: var(--ink); font-size: .95rem; }
+.blk-fig { margin: 0; max-width: 100%; }
+.blk-fig > img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--rule-soft); }
+.blk-cap-view { margin-top: 4px; font-size: .78rem; color: var(--muted); font-style: italic; }
+
 /* --- galerie de captures --- */
 .shot { border: 1px solid var(--rule-soft); border-radius: 8px; padding: 6px; background: rgba(233,239,247,.02); }
 .shot .cap { font-size: .74rem; color: var(--muted); padding: 6px 4px 2px; }

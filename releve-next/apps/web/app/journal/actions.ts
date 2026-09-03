@@ -16,8 +16,30 @@ import {
   Thesis,
   ThesisOutcome,
 } from "@releve/core";
+import { mkdir, writeFile } from "node:fs/promises";
+import { dirname } from "node:path";
 import { currentUser, openStore } from "./data";
 import { activeScope } from "../settings/data";
+import { DEV_PREVIEW, repoDataResolve } from "@/lib/devPreview";
+import { type Block, serializeBlocks, toNote } from "@/lib/blocks";
+
+/** Parse en toute sécurité le JSON des blocs venus du formulaire. */
+function parseBlocks(raw: FormDataEntryValue | null): Block[] {
+  if (typeof raw !== "string" || !raw.trim()) return [];
+  try {
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return serializeBlocks(
+      arr.map((b: Record<string, unknown>) =>
+        b.type === "image"
+          ? { type: "image", path: String(b.path ?? ""), caption: String(b.caption ?? ""), width: Number(b.width ?? 100), bid: String(b.bid ?? "") }
+          : { type: "text", text: String(b.text ?? ""), bid: String(b.bid ?? "") },
+      ) as Block[],
+    );
+  } catch {
+    return [];
+  }
+}
 
 /**
  * Écrit une idée dans le journal de l'utilisateur (table events).
@@ -121,6 +143,7 @@ export async function updateThesis(formData: FormData): Promise<void> {
     .filter(Boolean)
     .map((s) => new Decimal(s));
   const conv = String(formData.get("conviction") ?? "").trim();
+  const blocks = parseBlocks(formData.get("blocks"));
 
   const thesis = new Thesis({
     instrument: String(formData.get("instrument") ?? "").trim().toUpperCase() || (idea.thesis?.instrument ?? ""),
@@ -134,9 +157,10 @@ export async function updateThesis(formData: FormData): Promise<void> {
     catalyst: String(formData.get("catalyst") ?? "").trim(),
     setup: String(formData.get("setup") ?? "").trim(),
     timeframe: String(formData.get("timeframe") ?? "").trim(),
-    technical_note: String(formData.get("technical_note") ?? "").trim(),
+    technical_note: "", // l'écriture libre vit désormais dans les blocs
     thesis_kill_switch: String(formData.get("thesis_kill_switch") ?? "").trim(),
-    macro_note: String(formData.get("macro_note") ?? "").trim(),
+    macro_note: toNote(blocks), // reflet à plat des blocs (recherche, rétrocompat)
+    blocks,
     risk_source: RiskSource.COMPUTED,
   });
 
@@ -281,6 +305,41 @@ export async function addCapture(formData: FormData): Promise<void> {
   await store.flush();
   if (ownerType === "campaign") revalidatePath(`/campaigns`);
   else revalidatePath(`/journal/${ownerId}`);
+}
+
+/**
+ * Upload d'une image insérée dans l'éditeur par blocs (idée ou thèse). Le fichier
+ * va dans le même bucket que les captures ; on renvoie le CHEMIN (stocké dans le
+ * bloc) et une URL d'aperçu. En aperçu de dev, on écrit dans data/captures/ local.
+ */
+export async function uploadBlockImage(formData: FormData): Promise<{ path: string; url: string }> {
+  const { supabase, user } = await currentUser();
+  if (!user) throw new Error("Non connecté.");
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) throw new Error("Aucun fichier.");
+  const ext = (file.name.split(".").pop() ?? "").toLowerCase();
+  if (!ALLOWED_EXT.has(ext)) throw new Error(`Format non accepté (${ext || "inconnu"}).`);
+  if (file.size > MAX_CAPTURE_BYTES) throw new Error("Image trop lourde (max 12 Mo).");
+
+  const aid = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+  const bytes = new Uint8Array(await file.arrayBuffer());
+
+  if (DEV_PREVIEW) {
+    const rel = `captures/${user.id}/${aid}.${ext}`;
+    const abs = repoDataResolve(rel);
+    if (!abs) throw new Error("Chemin invalide.");
+    await mkdir(dirname(abs), { recursive: true });
+    await writeFile(abs, bytes);
+    return { path: rel, url: `/dev-capture/${rel.split("/").map(encodeURIComponent).join("/")}` };
+  }
+
+  const path = `${user.id}/${aid}.${ext}`;
+  const { error } = await supabase.storage
+    .from("captures")
+    .upload(path, bytes, { contentType: file.type || `image/${ext}`, upsert: false });
+  if (error) throw new Error(`Upload image : ${error.message}`);
+  const { data } = await supabase.storage.from("captures").createSignedUrl(path, 3600);
+  return { path, url: data?.signedUrl ?? "" };
 }
 
 /** Retirer une capture (marquée removed ; le fichier reste — décision [P]). */

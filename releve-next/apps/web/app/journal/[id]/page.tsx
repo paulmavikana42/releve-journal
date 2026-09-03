@@ -11,7 +11,9 @@ import {
   type Idea,
   type Position,
 } from "@releve/core";
-import { currentUser, openStore, signedCaptureUrls } from "../data";
+import { currentUser, openStore, signedCaptureUrls, signedUrlsForPaths } from "../data";
+import BlockView from "../../components/BlockView";
+import { imagePaths } from "@/lib/blocks";
 import {
   abandonIdea,
   addCapture,
@@ -94,6 +96,8 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
   const disjoints = idea.tickets_disjoints;
   const rev = idea.review;
   const captureUrls = await signedCaptureUrls(supabase, idea.captures);
+  const blockUrlMap = await signedUrlsForPaths(supabase, imagePaths(idea.thesis?.blocks as unknown[] | undefined));
+  const blockUrls = Object.fromEntries(blockUrlMap);
 
   const tickets: Position[] = [...idea.positions].sort(
     (a, b) => a.open_time.getTime() - b.open_time.getTime(),
@@ -303,6 +307,9 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
               {t.thesis_kill_switch && <div><span className="muted">Invalidation : </span>{t.thesis_kill_switch}</div>}
             </div>
           )}
+          <div style={{ marginTop: 12 }}>
+            <BlockView blocks={t.blocks as unknown[] | undefined} note={t.macro_note || t.technical_note} urls={blockUrls} />
+          </div>
         </section>
       )}
 

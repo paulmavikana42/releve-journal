@@ -1,7 +1,8 @@
 import "server-only";
 import { Campaign, Idea, mine, SpecBook } from "@releve/core";
-import { currentUser, openStore, signedCaptureUrls } from "../journal/data";
+import { currentUser, openStore, signedCaptureUrls, signedUrlsForPaths } from "../journal/data";
 import { activeScope } from "../settings/data";
+import { imagePaths } from "@/lib/blocks";
 
 export type CampaignsView = {
   userEmail: string;
@@ -9,6 +10,7 @@ export type CampaignsView = {
   unattached: Idea[]; // idées exécutables/écrites sans thèse macro
   book: SpecBook;
   captureUrls: Map<string, string>;
+  blockUrls: Map<string, string>; // clé = chemin d'image de bloc
 } | null;
 
 export async function loadCampaigns(): Promise<CampaignsView> {
@@ -28,6 +30,8 @@ export async function loadCampaigns(): Promise<CampaignsView> {
 
   const allCaptures = campaigns.flatMap((c) => c.captures);
   const captureUrls = await signedCaptureUrls(supabase, allCaptures);
+  const blockPaths = campaigns.flatMap((c) => imagePaths(c.blocks as unknown[] | undefined));
+  const blockUrls = await signedUrlsForPaths(supabase, blockPaths);
 
-  return { userEmail: user.email ?? "", campaigns, unattached, book, captureUrls };
+  return { userEmail: user.email ?? "", campaigns, unattached, book, captureUrls, blockUrls };
 }

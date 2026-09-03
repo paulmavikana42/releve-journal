@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { Direction } from "@releve/core";
-import { currentUser, openStore } from "../../data";
+import { currentUser, openStore, signedUrlsForPaths } from "../../data";
 import { updateThesis } from "../../actions";
 import SubmitButton from "../../../components/SubmitButton";
+import BlockEditor from "../../../components/BlockEditor";
+import { imagePaths, initBlocks } from "@/lib/blocks";
 
 export default async function EditIdea({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -17,6 +19,12 @@ export default async function EditIdea({ params }: { params: Promise<{ id: strin
 
   const t = idea.thesis;
   const val = (x: { toString(): string } | null | undefined) => (x != null ? x.toString() : "");
+
+  // Éditeur par blocs : reprend blocks existants, sinon les anciennes notes.
+  const noteFallback = [t?.macro_note, t?.technical_note].filter(Boolean).join("\n\n");
+  const initialBlocks = initBlocks(t?.blocks as unknown[] | undefined, noteFallback, []);
+  const urlMap = await signedUrlsForPaths(supabase, imagePaths(t?.blocks as unknown[] | undefined));
+  const initialUrls = Object.fromEntries(urlMap);
 
   return (
     <main className="wrap">
@@ -97,12 +105,8 @@ export default async function EditIdea({ params }: { params: Promise<{ id: strin
           <input name="thesis_kill_switch" defaultValue={t?.thesis_kill_switch ?? ""} style={{ width: "100%" }} />
         </div>
         <div>
-          <label>Note technique</label>
-          <textarea name="technical_note" rows={2} defaultValue={t?.technical_note ?? ""} style={{ width: "100%" }} />
-        </div>
-        <div>
-          <label>Note macro</label>
-          <textarea name="macro_note" rows={2} defaultValue={t?.macro_note ?? ""} style={{ width: "100%" }} />
+          <label>Écriture — thèse, contexte, captures</label>
+          <BlockEditor initial={initialBlocks} initialUrls={initialUrls} />
         </div>
 
         <div className="row" style={{ gap: 10 }}>

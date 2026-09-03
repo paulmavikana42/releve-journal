@@ -5,6 +5,9 @@ import { loadCampaigns } from "./data";
 import { abandonCampaign, attachIdea, createCampaign, detachIdea } from "./actions";
 import { addCapture, removeCapture } from "../journal/actions";
 import SubmitButton from "../components/SubmitButton";
+import BlockEditor from "../components/BlockEditor";
+import BlockView from "../components/BlockView";
+import { initBlocks } from "@/lib/blocks";
 
 function rFmt(x: Decimal | null): string {
   if (x === null) return "—";
@@ -17,7 +20,8 @@ function money(x: Decimal): string {
 export default async function CampaignsPage() {
   const view = await loadCampaigns();
   if (!view) redirect("/login");
-  const { campaigns, unattached, book, captureUrls } = view;
+  const { campaigns, unattached, book, captureUrls, blockUrls } = view;
+  const blockUrlObj = Object.fromEntries(blockUrls);
 
   return (
     <main className="wrap">
@@ -54,6 +58,10 @@ export default async function CampaignsPage() {
           </div>
         </div>
         <div>
+          <label>Écriture — thèse, contexte, captures</label>
+          <BlockEditor initial={initBlocks([], "", [])} />
+        </div>
+        <div>
           <SubmitButton pendingLabel="Création…">Créer la thèse</SubmitButton>
         </div>
       </form>
@@ -75,6 +83,11 @@ export default async function CampaignsPage() {
                     <div className="muted" style={{ fontSize: ".85rem", marginTop: 2 }}>
                       {[c.macro_theme, c.catalyst].filter(Boolean).join(" · ") || "—"}
                     </div>
+                    {(c.blocks?.length || c.note) && (
+                      <div style={{ marginTop: 10 }}>
+                        <BlockView blocks={c.blocks as unknown[] | undefined} note={c.note} urls={blockUrlObj} />
+                      </div>
+                    )}
                   </div>
                   <form action={abandonCampaign}>
                     <input type="hidden" name="campaignId" value={c.id} />

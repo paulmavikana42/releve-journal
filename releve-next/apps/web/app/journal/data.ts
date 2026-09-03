@@ -1,13 +1,18 @@
 import "server-only";
 import {
+  MemoryBackend,
   SupabaseStore,
   supabaseBackend,
   type Attachment,
   type SupabaseClientLike,
 } from "@releve/core";
 import { createClient } from "@/lib/supabase/server";
+import { DEV_PREVIEW, devEvents, devUser } from "@/lib/devPreview";
 
-/** URLs signées (bucket privé) pour afficher les captures non retirées. */
+const devUrl = (p: string) => `/dev-capture/${p.split("/").map(encodeURIComponent).join("/")}`;
+
+/** URLs signées (bucket privé) pour afficher les captures non retirées. Clé = id.
+ *  En aperçu de dev, on sert les fichiers locaux via /dev-capture. */
 export async function signedCaptureUrls(
   supabase: Awaited<ReturnType<typeof createClient>>,
   attachments: readonly Attachment[],
@@ -15,6 +20,10 @@ export async function signedCaptureUrls(
   const out = new Map<string, string>();
   const active = attachments.filter((a) => !a.removed);
   if (!active.length) return out;
+  if (DEV_PREVIEW) {
+    for (const a of active) out.set(a.id, devUrl(a.path));
+    return out;
+  }
   const { data } = await supabase.storage
     .from("captures")
     .createSignedUrls(active.map((a) => a.path), 3600);
@@ -26,9 +35,31 @@ export async function signedCaptureUrls(
   return out;
 }
 
+/** URLs signées pour une liste de CHEMINS (images de blocs). Clé = chemin. */
+export async function signedUrlsForPaths(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  paths: readonly string[],
+): Promise<Map<string, string>> {
+  const out = new Map<string, string>();
+  const uniq = [...new Set(paths.filter(Boolean))];
+  if (!uniq.length) return out;
+  if (DEV_PREVIEW) {
+    for (const p of uniq) out.set(p, devUrl(p));
+    return out;
+  }
+  const { data } = await supabase.storage.from("captures").createSignedUrls(uniq, 3600);
+  if (data) {
+    data.forEach((d: { signedUrl?: string | null }, i: number) => {
+      if (d.signedUrl) out.set(uniq[i]!, d.signedUrl);
+    });
+  }
+  return out;
+}
+
 /** Le client Supabase serveur + l'utilisateur courant (ou null). */
 export async function currentUser() {
   const supabase = await createClient();
+  if (DEV_PREVIEW) return { supabase, user: devUser() };
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -44,6 +75,10 @@ export async function openStore(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
 ) {
+  if (DEV_PREVIEW) {
+    // Aperçu local : journal en mémoire alimenté par data/events.jsonl.
+    return SupabaseStore.open(new MemoryBackend(devEvents(), "dev-preview"));
+  }
   const backend = supabaseBackend(supabase as unknown as SupabaseClientLike, userId);
   return SupabaseStore.open(backend);
 }
