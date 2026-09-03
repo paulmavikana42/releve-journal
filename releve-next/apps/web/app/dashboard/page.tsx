@@ -182,7 +182,7 @@ export default async function Dashboard({
   const histoIdeas = [...ideasP]
     .filter((i) => i.is_executed && i.r_multiple(book) !== null)
     .sort((a, b) => (a.opened_at?.getTime() ?? 0) - (b.opened_at?.getTime() ?? 0));
-  const histoBars = histoIdeas.map((i) => ({ label: i.display_name, r: (i.r_multiple(book) as Decimal).toNumber(), clean: i.review ? i.discipline_score === 5 : null }));
+  const histoBars = histoIdeas.map((i) => ({ label: i.display_name, r: (i.r_multiple(book) as Decimal).toNumber(), clean: i.review ? i.discipline_score === 5 : null, href: `/journal/${i.id}` }));
   const histoXLabels = histoIdeas.map((i) => (i.opened_at ? `${String(i.opened_at.getUTCDate()).padStart(2, "0")}/${String(i.opened_at.getUTCMonth() + 1).padStart(2, "0")}` : ""));
   const calib = convictionCalibration(ideasP);
   const tem = thesisExecutionMatrix(ideasP);
@@ -251,7 +251,8 @@ export default async function Dashboard({
       </div>
       <div className="note" style={{ margin: "2px 0 14px" }}>{noteUnite}</div>
 
-      {/* 1. LES CHIFFRES — 4 × 2 */}
+      {/* 1. LES CHIFFRES — 4 × 2, une seule grille pour que TOUTES les tuiles
+          aient exactement la même taille (rangées 1fr sur l'ensemble). */}
       <section className="kpigrid">
         <Kpi label="Gain net" value={fmtMoney(pnlNet)} tone={tone(pnlNet)} sub={`${closed.length} clôturée(s) · ${((pnlNet / equityRef) * 100 > 0 ? "+" : "") + ((pnlNet / equityRef) * 100).toFixed(2)} %`} />
         {exp ? (
@@ -269,8 +270,6 @@ export default async function Dashboard({
         ) : (
           <Kpi label="Espérance" value="—" sub="aucun stop pré-engagé" />
         )}
-      </section>
-      <section className="kpigrid" style={{ marginTop: 10 }}>
         {exp ? (
           <Kpi label="Gain moyen" value={resR(exp.avg_win_r, meanOf(gainsPct))} tone="gain" sub={`sur ${gainsPct.length} ${mot} gagnante(s)`} />
         ) : (
@@ -511,7 +510,7 @@ export default async function Dashboard({
 
       {/* histogramme : une idée par barre */}
       <div className="eyebrow bar">tes idées, une par barre</div>
-      <div className="note" style={{ marginBottom: 6 }}>Une barre = une idée. <b>Pleine</b> = plan respecté · <b>hachurée</b> = plan dégradé · <b>contour</b> = review à faire.</div>
+      <div className="note" style={{ marginBottom: 6 }}>Une barre = une idée. <b>Pleine</b> = plan respecté · <b>hachurée</b> = plan dégradé · <b>contour</b> = review à faire. Clique une barre pour l&apos;ouvrir.</div>
       {histoBars.length > 0 ? <RHistogram bars={histoBars} xLabels={histoXLabels} /> : <div className="note">Aucune idée au R calculable.</div>}
 
       <Rule />

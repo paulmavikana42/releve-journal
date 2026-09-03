@@ -137,7 +137,7 @@ export function RHistogram({
   xLabels = [],
   height = 280,
 }: {
-  bars: { label: string; r: number; clean: boolean | null }[];
+  bars: { label: string; r: number; clean: boolean | null; href?: string }[];
   xLabels?: string[];
   height?: number;
 }) {
@@ -167,13 +167,20 @@ export function RHistogram({
         const col = b.r >= 0 ? "var(--gain)" : "var(--loss)";
         // plein = plan 5/5, semi = dégradé, contour = pas relu
         const fillOpacity = b.clean === true ? 1 : b.clean === false ? 0.33 : 0.08;
-        return (
-          <g key={i}>
-            <rect x={cx - bw / 2} y={y} width={bw} height={Math.max(h, 1)} fill={col} fillOpacity={fillOpacity} stroke={col} strokeWidth="1">
-              <title>{`${b.label} · ${b.r > 0 ? "+" : ""}${b.r.toFixed(2)} R`}</title>
-            </rect>
+        // Zone de clic pleine hauteur (colonne entière) : ouvre l'idée, comme
+        // le clic sur une barre dans Streamlit. Plus facile à viser qu'une barre fine.
+        const inner = (
+          <>
+            <rect x={cx - slot / 2} y={padTop} width={slot} height={height - padTop - padBot} fill="transparent" />
+            <rect x={cx - bw / 2} y={y} width={bw} height={Math.max(h, 1)} fill={col} fillOpacity={fillOpacity} stroke={col} strokeWidth="1" />
             {xLabels[i] && <text x={cx} y={height - 8} textAnchor="middle" fontSize="9" fill="var(--muted)" fontFamily="var(--font-mono)">{xLabels[i]}</text>}
-          </g>
+            <title>{`${b.label} · ${b.r > 0 ? "+" : ""}${b.r.toFixed(2)} R — ouvrir`}</title>
+          </>
+        );
+        return b.href ? (
+          <a key={i} href={b.href} style={{ cursor: "pointer" }}>{inner}</a>
+        ) : (
+          <g key={i}>{inner}</g>
         );
       })}
     </svg>

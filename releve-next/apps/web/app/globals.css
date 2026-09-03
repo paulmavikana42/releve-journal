@@ -319,10 +319,13 @@ button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: defa
 @media (max-width: 860px) {
   .split, .split-a { grid-template-columns: 1fr; gap: 14px; }
 }
+/* Tablette + desktop étroit : 4 colonnes seraient trop serrées pour les valeurs.
+   On passe les KPI en 2 colonnes dès 1000px, toutes les tuiles à la même taille. */
+@media (max-width: 1000px) {
+  .kpigrid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; }
+}
 @media (max-width: 760px) {
   .optrow { grid-template-columns: 1fr; gap: 14px; }
-  /* KPI en 2 colonnes, toutes les tuiles à la MÊME hauteur (rangées 1fr) */
-  .kpigrid { grid-template-columns: repeat(2, 1fr); grid-auto-rows: 1fr; }
   .grid3 { grid-template-columns: 1fr; }
   .card.kpi { min-height: 130px; padding: 14px 15px; }
   .card.kpi .stat { font-size: 1.4rem; }
