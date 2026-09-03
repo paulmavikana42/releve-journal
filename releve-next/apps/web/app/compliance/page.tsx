@@ -72,6 +72,9 @@ export default async function CompliancePage() {
   }
 
   const equityPts = comp.equity.points.map((p) => ({ balance: p.balance.toNumber() }));
+  const equityXLabels = comp.equity.points.map((p) =>
+    p.when.getUTCFullYear() < 2000 ? "" : `${String(p.when.getUTCDate()).padStart(2, "0")}/${String(p.when.getUTCMonth() + 1).padStart(2, "0")}`,
+  );
   const minDays = active.min_trading_days ?? 0;
 
   return (
@@ -116,7 +119,7 @@ export default async function CompliancePage() {
         <div>
           <div className="eyebrow bar">courbe d&apos;équité</div>
           {equityPts.length >= 2 ? (
-            <div className="card"><EquityCurve points={equityPts} /></div>
+            <div className="card"><EquityCurve points={equityPts} xLabels={equityXLabels} /></div>
           ) : (
             <div className="note">La courbe d&apos;équité apparaîtra dès qu&apos;un import apporte des soldes.</div>
           )}
@@ -124,10 +127,12 @@ export default async function CompliancePage() {
         <div>
           <div className="eyebrow bar">jours de trading</div>
           {minDays > 0 ? (
-            <div className="card" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, paddingTop: 6 }}>
               <PieProgress done={comp.trading_days} total={minDays} />
               <div className="note" style={{ textAlign: "center" }}>
-                <b className={comp.trading_days >= minDays ? "txt-gain" : ""}>{comp.trading_days}</b> jour(s) valides sur <b>{minDays}</b> requis.
+                {comp.trading_days >= minDays
+                  ? <b className="txt-gain">Minimum atteint</b>
+                  : <>jour(s) de trading valides</>}
               </div>
             </div>
           ) : (
@@ -138,7 +143,7 @@ export default async function CompliancePage() {
 
       {/* Les règles (sans « perte journalière ») */}
       <div className="eyebrow bar" style={{ marginTop: 24 }}>où tu en es</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         {comp.checks.filter((c) => c.key !== "daily").map((c) => (
           <div key={c.key} className="card between">
             <div>

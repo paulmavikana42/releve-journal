@@ -105,28 +105,47 @@ export function CumulativeCurve({
   );
 }
 
-/** Courbe de SOLDE (équité) — aire ambre, celle du compte en devise. */
+/** Courbe de SOLDE (équité) — aire ambre, avec repères d'axes (solde en Y, dates
+ *  en X). Les libellés portent de VRAIES valeurs, jamais « x » / « y ». */
 export function EquityCurve({
   points,
-  height = 200,
+  xLabels = [],
+  height = 220,
 }: {
   points: { balance: number }[];
+  xLabels?: string[];
   height?: number;
 }) {
   const n = points.length;
-  if (n < 2) return <div className="note">Pas encore assez de soldes pour tracer l'équité.</div>;
-  const W = 720, padX = 10, padTop = 12, padBot = 22;
+  if (n < 2) return <div className="note">Pas encore assez de soldes pour tracer l&apos;équité.</div>;
+  const W = 720, padL = 54, padR = 12, padTop = 12, padBot = 24;
   const bs = points.map((p) => p.balance);
   let lo = Math.min(...bs), hi = Math.max(...bs);
   const pad = (hi - lo || 100) * 0.2; lo -= pad; hi += pad;
-  const X = (i: number) => padX + (i / (n - 1)) * (W - 2 * padX);
+  const X = (i: number) => padL + (i / (n - 1)) * (W - padL - padR);
   const Y = (v: number) => padTop + ((hi - v) / (hi - lo)) * (height - padTop - padBot);
   const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${X(i).toFixed(1)},${Y(p.balance).toFixed(1)}`).join(" ");
   const area = `${line} L${X(n - 1).toFixed(1)},${(height - padBot).toFixed(1)} L${X(0).toFixed(1)},${(height - padBot).toFixed(1)} Z`;
+  const ticks = niceTicks(lo, hi, 4);
+  const grp = (v: number) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  // libellés de dates : quelques repères répartis (début, milieux, fin).
+  const xs = xLabels.length === n ? xLabels : [];
+  const xIdx = xs.length ? [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i) : [];
   return (
-    <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} preserveAspectRatio="none" role="img" style={{ display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} role="img" style={{ display: "block" }}>
+      {/* repères ordonnée (solde) */}
+      {ticks.map((t, k) => (
+        <g key={k}>
+          <line x1={padL} y1={Y(t)} x2={W - padR} y2={Y(t)} stroke="var(--rule-soft)" strokeWidth="1" opacity="0.9" />
+          <text x={padL - 8} y={Y(t) + 3} textAnchor="end" fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)">{grp(t)}</text>
+        </g>
+      ))}
       <path d={area} fill="var(--accent)" opacity="0.08" />
       <path d={line} fill="none" stroke="var(--accent)" strokeWidth="1.8" />
+      {/* repères abscisse (dates) */}
+      {xIdx.map((i) => (
+        <text key={i} x={X(i)} y={height - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)">{xs[i]}</text>
+      ))}
     </svg>
   );
 }
@@ -188,43 +207,55 @@ export function RHistogram({
 }
 
 /**
- * Anneau « pizza » : un rond divisé en `total` parts égales, `done` remplies —
- * pour les jours de trading minimum (ex. 2/3). Au centre, done/total.
+ * Anneau SEGMENTÉ « X sur Y » : le tour est découpé en `total` arcs à bouts
+ * arrondis, séparés d'un léger écart ; `done` arcs en ambre, le reste en gris.
+ * Au centre, le décompte. Modèle propre et moderne (jauge d'objectif).
  */
 export function PieProgress({
   done,
   total,
-  size = 150,
+  size = 180,
 }: {
   done: number;
   total: number;
   size?: number;
 }) {
   const n = Math.max(1, total);
-  const cx = size / 2, cy = size / 2, r = size / 2 - 6;
-  const rin = r * 0.58; // trou central (donut)
   const filled = Math.max(0, Math.min(n, done));
-  const arc = (i: number, outer: number) => {
-    const a0 = (i / n) * 2 * Math.PI - Math.PI / 2;
-    const a1 = ((i + 1) / n) * 2 * Math.PI - Math.PI / 2;
-    const p = (ang: number, rad: number) => `${(cx + rad * Math.cos(ang)).toFixed(2)},${(cy + rad * Math.sin(ang)).toFixed(2)}`;
-    const large = a1 - a0 > Math.PI ? 1 : 0;
-    return `M${p(a0, rin)} L${p(a0, outer)} A${outer} ${outer} 0 ${large} 1 ${p(a1, outer)} L${p(a1, rin)} A${rin} ${rin} 0 ${large} 0 ${p(a0, rin)} Z`;
-  };
+  const cx = size / 2, cy = size / 2;
+  const sw = Math.max(9, Math.round(size * 0.1));
+  const r = size / 2 - sw / 2 - 2;
+  const seg = (2 * Math.PI) / n;
+  const gap = n > 1 ? Math.min(0.28, seg * 0.18) : 0; // écart angulaire entre segments
+  const pt = (a: number) => `${(cx + r * Math.cos(a)).toFixed(2)},${(cy + r * Math.sin(a)).toFixed(2)}`;
+
+  const centre = (
+    <>
+      <text x={cx} y={cy - 2} textAnchor="middle" fontFamily="var(--font-mono)" fontWeight="700" fontSize={size * 0.28} fill="var(--ink)">{done}</text>
+      <text x={cx} y={cy + size * 0.17} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={size * 0.085} letterSpacing="1" fill="var(--muted)">SUR {total}</text>
+    </>
+  );
+
+  if (n === 1) {
+    return (
+      <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" style={{ display: "block" }}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke={filled >= 1 ? "var(--accent)" : "var(--rule-soft)"} strokeWidth={sw} opacity={filled >= 1 ? 1 : 0.55} />
+        {centre}
+      </svg>
+    );
+  }
   return (
     <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size} role="img" style={{ display: "block" }}>
-      {Array.from({ length: n }, (_, i) => (
-        <path
-          key={i}
-          d={arc(i, r)}
-          fill={i < filled ? "var(--accent)" : "var(--rule-soft)"}
-          fillOpacity={i < filled ? 0.95 : 0.5}
-          stroke="var(--paper)"
-          strokeWidth="2"
-        />
-      ))}
-      <text x={cx} y={cy - 2} textAnchor="middle" fontFamily="var(--font-mono)" fontWeight="700" fontSize={size * 0.2} fill="var(--ink)">{done}</text>
-      <text x={cx} y={cy + size * 0.15} textAnchor="middle" fontFamily="var(--font-mono)" fontSize={size * 0.1} fill="var(--muted)">/ {total}</text>
+      {Array.from({ length: n }, (_, i) => {
+        const a0 = -Math.PI / 2 + i * seg + gap / 2;
+        const a1 = -Math.PI / 2 + (i + 1) * seg - gap / 2;
+        const large = a1 - a0 > Math.PI ? 1 : 0;
+        const on = i < filled;
+        return (
+          <path key={i} d={`M${pt(a0)} A${r} ${r} 0 ${large} 1 ${pt(a1)}`} fill="none" stroke={on ? "var(--accent)" : "var(--rule-soft)"} strokeWidth={sw} strokeLinecap="round" opacity={on ? 1 : 0.55} />
+        );
+      })}
+      {centre}
     </svg>
   );
 }
