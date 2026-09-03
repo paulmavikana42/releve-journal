@@ -54,25 +54,72 @@ export async function addIdea(formData: FormData): Promise<void> {
   if (!instrument) return;
 
   const direction = String(formData.get("direction")) === "sell" ? Direction.SELL : Direction.BUY;
-  const entry = String(formData.get("entry") ?? "").trim();
-  const stop = String(formData.get("stop") ?? "").trim();
-  const label = String(formData.get("label") ?? "").trim();
+  const dir = direction === Direction.SELL ? "sell" : "buy";
+  const dec = (k: string): Decimal | null => {
+    const v = String(formData.get(k) ?? "").trim().replace(",", ".");
+    return v && Number(v) ? new Decimal(v) : null;
+  };
+  const conv = String(formData.get("conviction") ?? "").trim();
+  const macroTheme = String(formData.get("macro_theme") ?? "").trim();
+  const targets = String(formData.get("targets") ?? "")
+    .split(/[,;\s]+/)
+    .map((s) => s.trim().replace(",", "."))
+    .filter((s) => s && Number(s))
+    .map((s) => new Decimal(s));
+  const blocks = parseBlocks(formData.get("blocks"));
+  const entry = dec("entry");
+  const stop = dec("stop");
+
+  const thesis = new Thesis({
+    instrument,
+    direction,
+    macro_theme: macroTheme,
+    catalyst: String(formData.get("catalyst") ?? "").trim(),
+    macro_note: toNote(blocks),
+    blocks,
+    setup: String(formData.get("setup") ?? "").trim(),
+    timeframe: String(formData.get("timeframe") ?? "").trim(),
+    technical_note: "",
+    entry_planned: entry,
+    stop_initial: stop,
+    targets,
+    risk_pct: dec("risk_pct"),
+    thesis_kill_switch: String(formData.get("thesis_kill_switch") ?? "").trim(),
+    conviction: conv ? Math.trunc(Number(conv)) : null,
+    risk_source: RiskSource.COMPUTED,
+  });
+
+  const label = String(formData.get("label") ?? "").trim() || (macroTheme ? `${instrument} ${dir} — ${macroTheme}` : `${instrument} ${dir}`);
 
   const { activeUid } = await activeScope(supabase, user.id);
   const store = await openStore(supabase, user.id);
-  store.create_thesis(
-    new Thesis({
-      instrument,
-      direction,
-      entry_planned: entry ? new Decimal(entry) : null,
-      stop_initial: stop ? new Decimal(stop) : null,
-      risk_source: RiskSource.COMPUTED,
-    }),
-    { label, account_id: activeUid },
-  );
-  await store.flush();
+  const idea = store.create_thesis(thesis, { label, account_id: activeUid });
 
+  // Rattachement à une thèse macro (facultatif).
+  const campaignId = String(formData.get("campaign") ?? "").trim();
+  if (campaignId && campaignId !== "none") store.attach(idea.id, campaignId);
+
+  // Déclaration du ticket à l'entrée (décision [N]) : l'idée passe « en cours ».
+  const ticket = String(formData.get("ticket") ?? "").trim();
+  if (ticket) {
+    store.open_trade(
+      idea.id,
+      new OpenTrade({
+        ticket,
+        symbol: instrument,
+        direction,
+        volume: new Decimal("0"),
+        open_time: serverNow(),
+        open_price: entry ?? new Decimal("0"),
+        account_id: activeUid,
+        stop: stop,
+      }),
+    );
+  }
+
+  await store.flush();
   revalidatePath("/journal");
+  redirect("/journal?vue=journal");
 }
 
 /** Rattache une position orpheline à une idée (décision humaine de l'appariement). */

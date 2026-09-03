@@ -31,7 +31,9 @@ export function initBlocks(
     if (note) src.push({ type: "text", text: note, bid: newBid() });
     for (const a of captures) src.push({ type: "image", path: a.path, caption: a.caption ?? "", width: 100, bid: newBid() });
   }
-  if (!src.length) src = [{ type: "text", text: "", bid: newBid() }];
+  // bloc vide de départ : bid DÉTERMINISTE — sinon un composant client qui
+  // appelle initBlocks au rendu génère un id différent au SSR et à l'hydratation.
+  if (!src.length) src = [{ type: "text", text: "", bid: "seed" }];
   return src;
 }
 

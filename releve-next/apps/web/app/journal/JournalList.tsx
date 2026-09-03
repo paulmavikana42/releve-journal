@@ -64,39 +64,40 @@ export default function JournalList({ rows, toReview }: { rows: Row[]; toReview:
         </div>
       )}
 
-      {/* en-tête */}
-      <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", padding: "0 4px 6px" }}>
+      {/* en-tête de colonnes (aligné sur les tuiles) */}
+      <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", padding: "0 16px 6px" }}>
         {["symbole", "sens", "statut", "entrée", "décision", "résultat", ""].map((h, k) => (
           <div key={k} className="eyebrow" style={{ margin: 0, textAlign: k === 3 || k === 5 ? "right" : "left" }}>{h}</div>
         ))}
       </div>
-      <div style={{ borderTop: "1px solid var(--rule)" }} />
 
       {vus.length === 0 ? (
         <div className="note" style={{ padding: "14px 4px" }}>Aucune idée ne correspond.</div>
       ) : (
-        vus.map((r) => (
-          <div key={r.id} style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", padding: "10px 4px", borderBottom: "1px solid var(--rule-soft)" }}>
-            <div>
-              <b>{r.symbol}</b>
-              {r.tags.length > 0 && (
-                <span className="chips" style={{ display: "inline-flex", marginLeft: 8, verticalAlign: "middle" }}>
-                  {r.tags.map((t, i) => (
-                    <span key={i} className={`chip ${t.cls}`}>{t.label}</span>
-                  ))}
-                </span>
-              )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+          {vus.map((r) => (
+            <div key={r.id} className="card" style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", padding: "12px 16px" }}>
+              <div>
+                <b>{r.symbol}</b>
+                {r.tags.length > 0 && (
+                  <span className="chips" style={{ display: "inline-flex", marginLeft: 8, verticalAlign: "middle" }}>
+                    {r.tags.map((t, i) => (
+                      <span key={i} className={`chip ${t.cls}`}>{t.label}</span>
+                    ))}
+                  </span>
+                )}
+              </div>
+              <div><span className={`chip ${r.sensCls}`}>{r.sens}</span></div>
+              <div><span className={`chip ${r.statusCls}`}>{r.statusLabel}</span></div>
+              <div className="num" style={{ textAlign: "right" }}>{r.entree}</div>
+              <div><span className={`chip ${r.quadCls}`}>{r.quadGlyph} {r.quadLabel}</span></div>
+              <div className={`num ${r.resTone ? "txt-" + r.resTone : "muted"}`} style={{ textAlign: "right", whiteSpace: "nowrap" }}>{r.res}</div>
+              <div style={{ textAlign: "right" }}>
+                <IdeaMenu id={r.id} canModify={r.canModify} isArmed={r.isArmed} />
+              </div>
             </div>
-            <div><span className={`chip ${r.sensCls}`}>{r.sens}</span></div>
-            <div><span className={`chip ${r.statusCls}`}>{r.statusLabel}</span></div>
-            <div className="num" style={{ textAlign: "right" }}>{r.entree}</div>
-            <div><span className={`chip ${r.quadCls}`}>{r.quadGlyph} {r.quadLabel}</span></div>
-            <div className={`num ${r.resTone ? "txt-" + r.resTone : "muted"}`} style={{ textAlign: "right", whiteSpace: "nowrap" }}>{r.res}</div>
-            <div style={{ textAlign: "right" }}>
-              <IdeaMenu id={r.id} canModify={r.canModify} isArmed={r.isArmed} />
-            </div>
-          </div>
-        ))
+          ))}
+        </div>
       )}
     </div>
   );

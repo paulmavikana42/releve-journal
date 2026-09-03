@@ -39,6 +39,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; padding: 0; }
 body {
   background: var(--paper);
@@ -347,7 +348,7 @@ button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: defa
 .pill {
   font-family: var(--font-mono); font-size: .72rem; font-weight: 500; letter-spacing: .04em;
   padding: 5px 11px; border: 1px solid var(--rule-soft); border-radius: 6px;
-  color: var(--muted); background: var(--card); text-decoration: none; white-space: nowrap;
+  color: var(--muted); background: var(--card); text-decoration: none; white-space: nowrap; cursor: pointer;
 }
 .pill:hover { border-color: var(--rule); text-decoration: none; }
 .pill.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }

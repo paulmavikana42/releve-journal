@@ -11,7 +11,7 @@ import {
 } from "@releve/core";
 import { currentUser, openStore } from "./data";
 import { activeScope, getWatchlist } from "../settings/data";
-import AddIdeaForm from "./AddIdeaForm";
+import WriteIdeaForm from "./WriteIdeaForm";
 import ImportPanel from "./ImportPanel";
 import OrphanRow from "./OrphanRow";
 import JournalList, { type Row } from "./JournalList";
@@ -57,6 +57,11 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
     ...new Set([...watchlist, ...[...loaded.positions.values()].map((p) => p.symbol)]),
   ].sort();
   const book = new SpecBook([...loaded.positions.values()]);
+
+  // Thèses macro vivantes pour le rattachement (facultatif) à l'écriture.
+  const campaignsList = [...store.campaigns().values()]
+    .filter((c) => !c.abandoned && !c.closed && mine(c, activeUid, accountUids))
+    .map((c) => ({ id: c.id, name: c.display_name }));
 
   const list = [...ideas.values()]
     .filter((i) => mine(i, activeUid, accountUids))
@@ -170,7 +175,7 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
         )
       )}
 
-      {vue === "ecrire" && <AddIdeaForm symbols={knownSymbols} />}
+      {vue === "ecrire" && <WriteIdeaForm symbols={knownSymbols} campaigns={campaignsList} />}
 
       {vue === "import" && (
         <>
