@@ -26,6 +26,8 @@ import {
   updateFloating,
 } from "../actions";
 import SubmitButton from "../../components/SubmitButton";
+import ConfirmSubmit from "../../components/ConfirmSubmit";
+import BackLink from "../../components/BackLink";
 
 const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.DRAFT]: "brouillon",
@@ -106,7 +108,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
   return (
     <main className="wrap">
       <div style={{ marginBottom: 16 }}>
-        <Link href="/journal" className="muted">← retour au journal</Link>
+        <BackLink fallback="/journal">← Retour</BackLink>
       </div>
 
       <header className="between" style={{ marginBottom: 16 }}>
@@ -296,7 +298,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(140px,1fr))", gap: 10 }}>
             <Field label="Entrée visée" value={t.entry_planned ? t.entry_planned.toString() : "—"} />
             <Field label="Stop initial" value={t.stop_initial ? t.stop_initial.toString() : "—"} />
-            <Field label="Objectifs" value={t.targets.length ? t.targets.map((x) => x.toString()).join(" · ") : "—"} />
+            <Field label="TP" value={t.targets.length ? t.targets.map((x) => x.toString()).join(" · ") : "—"} />
             <Field label="Conviction" value={t.conviction ? `${t.conviction}/5` : "—"} />
             <Field label="Risque déclaré" value={t.risk_pct ? `${t.risk_pct.toString()} %` : "—"} />
           </div>
@@ -317,27 +319,33 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
       <section className="card" style={{ marginBottom: 20 }}>
         <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Captures</h2>
         {idea.captures.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: 10, marginBottom: 12 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(260px,1fr))", gap: 14, marginBottom: 18, paddingBottom: 16, borderBottom: "1px solid var(--rule-soft)" }}>
             {idea.captures.map((c) => (
-              <div key={c.id}>
+              <div key={c.id} className="shot">
                 {captureUrls.get(c.id) ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={captureUrls.get(c.id)}
-                    alt={c.caption || c.original_name}
-                    style={{ width: "100%", borderRadius: 8, border: "1px solid var(--border)" }}
-                  />
+                  <a href={captureUrls.get(c.id)} target="_blank" rel="noreferrer" title="Ouvrir en grand">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={captureUrls.get(c.id)}
+                      alt={c.caption || c.original_name}
+                      style={{ width: "100%", height: "auto", maxHeight: 340, objectFit: "contain", borderRadius: 8, display: "block" }}
+                    />
+                  </a>
                 ) : (
-                  <div className="card muted" style={{ fontSize: ".8rem" }}>image indisponible</div>
+                  <div className="muted" style={{ fontSize: ".8rem", padding: 20, textAlign: "center" }}>image indisponible</div>
                 )}
-                <div className="between" style={{ marginTop: 4 }}>
+                <div className="between" style={{ marginTop: 6 }}>
                   <span className="muted" style={{ fontSize: ".78rem" }}>{c.caption || c.kind}</span>
-                  <form action={removeCapture}>
-                    <input type="hidden" name="attachment_id" value={c.id} />
-                    <input type="hidden" name="owner_id" value={idea.id} />
-                    <input type="hidden" name="owner_type" value="idea" />
-                    <SubmitButton className="ghost" pendingLabel="…">Retirer</SubmitButton>
-                  </form>
+                  <ConfirmSubmit
+                    action={removeCapture}
+                    hidden={{ attachment_id: c.id, owner_id: idea.id, owner_type: "idea" }}
+                    className="pop-btn"
+                    title="Retirer cette capture ?"
+                    message="L'image est retirée de l'idée. Le fichier lui-même n'est pas supprimé."
+                    confirmLabel="Oui, retirer"
+                  >
+                    Retirer
+                  </ConfirmSubmit>
                 </div>
               </div>
             ))}
@@ -389,11 +397,15 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
                   <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: p.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)" }}>
                     {money(p.pnl_net)}
                   </span>
-                  <form action={unlinkPosition}>
-                    <input type="hidden" name="ideaId" value={idea.id} />
-                    <input type="hidden" name="positionUid" value={p.uid} />
-                    <SubmitButton className="ghost" pendingLabel="…">Détacher</SubmitButton>
-                  </form>
+                  <ConfirmSubmit
+                    action={unlinkPosition}
+                    hidden={{ ideaId: idea.id, positionUid: p.uid }}
+                    title="Détacher ce ticket ?"
+                    message={<>Le ticket <b>#{p.position_id}</b> est retiré de cette idée (le journal est append-only : rien n&apos;est effacé).</>}
+                    confirmLabel="Oui, détacher"
+                  >
+                    Détacher
+                  </ConfirmSubmit>
                 </div>
               </div>
             );
@@ -449,16 +461,37 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
         </form>
       )}
 
-      {/* La review */}
+      {/* La review (qualité d'exécution) — inclut l'état psychologique */}
       {rev && (
         <section className="card" style={{ marginBottom: 20 }}>
           <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Revue</h2>
-          <div className="row" style={{ gap: 10, flexWrap: "wrap" }}>
-            <span className="chip">discipline {rev.discipline_score}/5</span>
-            <span className="chip">{OUTCOME_LABEL[rev.thesis_outcome] ?? rev.thesis_outcome}</span>
-            <span className="chip">{QUADRANT_LABEL[idea.quadrant] ?? idea.quadrant}</span>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: 10 }}>
+            <div className="card" style={{ padding: "10px 14px" }}>
+              <div className="muted" style={{ fontSize: ".78rem" }}>Respect du plan</div>
+              <div style={{ fontWeight: 600, fontFamily: "var(--font-mono)", color: rev.discipline_score >= 4 ? "var(--gain)" : "var(--loss)" }}>{rev.discipline_score}/5</div>
+              <div className="note" style={{ marginTop: 2 }}>entrée, taille, stop, sortie</div>
+            </div>
+            <div className="card" style={{ padding: "10px 14px" }}>
+              <div className="muted" style={{ fontSize: ".78rem" }}>Verdict du marché</div>
+              <div style={{ fontWeight: 600, color: rev.thesis_outcome === ThesisOutcome.CORRECT ? "var(--gain)" : rev.thesis_outcome === ThesisOutcome.WRONG ? "var(--loss)" : "var(--ink)" }}>{OUTCOME_LABEL[rev.thesis_outcome] ?? rev.thesis_outcome}</div>
+              <div className="note" style={{ marginTop: 2 }}>indépendant du P&L</div>
+            </div>
+            <div className="card" style={{ padding: "10px 14px" }}>
+              <div className="muted" style={{ fontSize: ".78rem" }}>État psychologique</div>
+              <div style={{ fontWeight: 600 }}>{rev.emotional_state || "—"}</div>
+              <div className="note" style={{ marginTop: 2 }}>déclaratif, pendant le trade</div>
+            </div>
+            <div className="card" style={{ padding: "10px 14px" }}>
+              <div className="muted" style={{ fontSize: ".78rem" }}>Décision × résultat</div>
+              <div style={{ fontWeight: 600 }}>{QUADRANT_LABEL[idea.quadrant] ?? idea.quadrant}</div>
+            </div>
           </div>
-          {rev.lesson && <p style={{ marginBottom: 0 }}>{rev.lesson}</p>}
+          {rev.lesson && (
+            <div style={{ marginTop: 14 }}>
+              <div className="eyebrow" style={{ marginBottom: 4 }}>leçon</div>
+              <p style={{ margin: 0, whiteSpace: "pre-wrap", lineHeight: 1.6 }}>{rev.lesson}</p>
+            </div>
+          )}
         </section>
       )}
 
