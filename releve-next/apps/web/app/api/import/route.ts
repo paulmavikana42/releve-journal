@@ -19,7 +19,7 @@ function parseFile(bytes: Uint8Array): Parsed {
   } catch (e) {
     if (!(e instanceof parser.ParseError)) throw e;
   }
-  // 2) sinon CSV (MT4/MT5/cTrader/générique)
+  // 2) sinon CSV (MT4/MT5/générique)
   const cf = csv.parse(bytes);
   const acct = cf.account_id;
   const positions = cf.closed.map((r) => r.to_position(acct));

@@ -8,6 +8,7 @@ const NAV = [
   { href: "/dashboard", label: "Tableau de bord" },
   { href: "/journal", label: "Journal" },
   { href: "/campaigns", label: "Thèses" },
+  { href: "/import", label: "Import" },
   { href: "/compliance", label: "Conformité" },
   { href: "/settings", label: "Réglages" },
 ];

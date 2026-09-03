@@ -92,7 +92,7 @@ export default function WriteIdeaForm({
             <input name="risk_pct" inputMode="decimal" placeholder="0.5" style={{ width: "100%" }} />
           </div>
           <div>
-            <label>TP (séparés par espace)</label>
+            <label>TP</label>
             <input name="targets" placeholder="19800 19500" style={{ width: "100%" }} />
           </div>
         </div>
@@ -144,19 +144,26 @@ export default function WriteIdeaForm({
           <label>Libellé (facultatif — sinon généré)</label>
           <textarea name="label" rows={1} onInput={grow} placeholder="Libellé (ex. Short NDX100 — CPI)" style={{ width: "100%", minHeight: 40, resize: "none", overflow: "hidden", lineHeight: 1.5 }} />
         </div>
+
+        {/* pas de « Armer » ici : on passe à l'écriture des motivations */}
+        <div className="row" style={{ gap: 10, marginTop: 4, justifyContent: "flex-end" }}>
+          <button type="button" className="primary" onClick={() => setTab("ecriture")}>
+            Écrire mes motivations techniques →
+          </button>
+        </div>
       </div>
 
-      {/* Bulle 2 — écriture Notion */}
+      {/* Bulle 2 — écriture Notion (c'est ici qu'on arme l'idée) */}
       <div hidden={tab !== "ecriture"} style={{ display: "grid", gap: 8 }}>
         <label>Ce qui te fait entrer en position — écris, ajoute des visuels au fil</label>
         <BlockEditor initial={initBlocks([], "", [])} />
-      </div>
-
-      <div className="row" style={{ gap: 10, marginTop: 18 }}>
-        <button type="submit" className="primary" disabled={pending}>
-          {pending ? "Écriture…" : "Armer l'idée"}
-        </button>
-        <span className="note">Le stop initial est le seul champ indispensable au calcul du R.</span>
+        <div className="row" style={{ gap: 10, marginTop: 12 }}>
+          <button type="button" className="ghost" onClick={() => setTab("infos")}>← Infos du trade</button>
+          <button type="submit" className="primary" disabled={pending}>
+            {pending ? "Écriture…" : "Armer l'idée"}
+          </button>
+          <span className="note">Le stop initial est le seul champ indispensable au calcul du R.</span>
+        </div>
       </div>
     </form>
   );

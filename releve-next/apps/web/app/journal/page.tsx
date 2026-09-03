@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
-  candidates as matchCandidates,
   type Decimal,
   Direction,
   IdeaStatus,
@@ -12,8 +11,6 @@ import {
 import { currentUser, openStore } from "./data";
 import { activeScope, getWatchlist } from "../settings/data";
 import WriteIdeaForm from "./WriteIdeaForm";
-import ImportPanel from "./ImportPanel";
-import OrphanRow from "./OrphanRow";
 import JournalList, { type Row } from "./JournalList";
 
 const QUAD: Record<string, [string, string, string]> = {
@@ -27,7 +24,6 @@ const QUAD: Record<string, [string, string, string]> = {
 const VUES = [
   { key: "journal", label: "Le journal" },
   { key: "ecrire", label: "＋ Écrire une idée" },
-  { key: "import", label: "Importer un rapport" },
 ];
 
 function fmtPrice(x: Decimal | null | undefined): string {
@@ -46,7 +42,7 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
   const { supabase, user } = await currentUser();
   if (!user) redirect("/login");
   const sp = await searchParams;
-  const vue = sp.vue === "ecrire" || sp.vue === "import" ? sp.vue : "journal";
+  const vue = sp.vue === "ecrire" ? "ecrire" : "journal";
 
   const store = await openStore(supabase, user.id);
   const loaded = store.load();
@@ -66,27 +62,6 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
   const list = [...ideas.values()]
     .filter((i) => mine(i, activeUid, accountUids))
     .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
-
-  const orphans = store
-    .orphans()
-    .filter((p) => mine(p, activeUid, accountUids))
-    .sort((a, b) => b.close_time.getTime() - a.close_time.getTime())
-    .map((p) => ({
-      uid: p.uid,
-      symbol: p.symbol,
-      dirLabel: p.direction === Direction.SELL ? "Vente" : "Achat",
-      ticket: p.position_id,
-      opened: p.open_time.toISOString().slice(0, 10),
-      closed: p.close_time.toISOString().slice(0, 10),
-      pnl: p.pnl_net.toFixed(2),
-      pnlPos: p.pnl_net.gt(0),
-      candidates: matchCandidates(p, list).map((c) => ({
-        ideaId: c.idea.id,
-        label: c.idea.label || c.idea.display_name,
-        reason: c.reason,
-        kind: c.kind,
-      })),
-    }));
 
   const toReview = list.filter((i) => i.is_executed && !i.is_running && i.review === null).length;
 
@@ -155,7 +130,7 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
     <main className="wrap">
       <header style={{ marginBottom: 14 }}>
         <h1 style={{ margin: 0 }}>Journal</h1>
-        <div className="subtitle">{list.length} idée(s){orphans.length ? ` · ${orphans.length} à rapparier` : ""}</div>
+        <div className="subtitle">{list.length} idée(s)</div>
       </header>
 
       {/* Onglets en bulles */}
@@ -176,22 +151,6 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
       )}
 
       {vue === "ecrire" && <WriteIdeaForm symbols={knownSymbols} campaigns={campaignsList} />}
-
-      {vue === "import" && (
-        <>
-          <ImportPanel />
-          {orphans.length > 0 && (
-            <section style={{ marginTop: 20 }}>
-              <div className="eyebrow bar">trades importés à rapparier ({orphans.length})</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {orphans.map((p) => (
-                  <OrphanRow key={p.uid} {...p} />
-                ))}
-              </div>
-            </section>
-          )}
-        </>
-      )}
     </main>
   );
 }
