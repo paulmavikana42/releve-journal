@@ -9,8 +9,10 @@
       "url": "https://mcp.vercel.com"
     },
     "playwright": {
-      "command": "npx",
-      "args": ["-y", "@executeautomation/playwright-mcp-server"]
+      "command": "node",
+      "args": [
+        "C:/Users/Paul/AppData/Roaming/npm/node_modules/@executeautomation/playwright-mcp-server/dist/index.js"
+      ]
     }
   }
 }

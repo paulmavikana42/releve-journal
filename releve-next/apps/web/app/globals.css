@@ -129,6 +129,11 @@ a:hover { text-decoration: underline; }
 a.card:hover { border-color: var(--rule); text-decoration: none; }
 .card.flat { background: transparent; }
 
+/* Tuiles KPI : même hauteur sur toute une rangée, note calée en bas (theme.py). */
+.card.kpi { display: flex; flex-direction: column; min-height: 148px; }
+.card.kpi .note { margin-top: auto; padding-top: 6px; }
+.stat + .note { margin-top: 6px; }
+
 /* --- stat / note --- */
 .stat {
   font-family: var(--font-mono); font-weight: 600; font-size: 1.6rem;
@@ -181,9 +186,9 @@ a.card:hover { border-color: var(--rule); text-decoration: none; }
 .gauge.loss > span { background: var(--loss); }
 
 /* --- quadrants décision × résultat --- */
-.quad { border: 1px solid var(--rule-soft); border-radius: 8px; padding: 12px 14px; min-height: 88px; background: rgba(233,239,247,.02); }
+.quad { border: 1px solid var(--rule-soft); border-radius: 8px; padding: 12px 14px; min-height: 96px; background: rgba(233,239,247,.02); }
 .quad .lab { font-family: var(--font-mono); font-size: .63rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
-.quad .n { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 700; margin-top: 8px; }
+.quad .n { font-family: var(--font-mono); font-size: 1.7rem; font-weight: 700; margin-top: 10px; }
 .quad.mastery { background: var(--gain-soft); border-color: rgba(79,227,166,.35); }
 .quad.mastery .n { color: var(--gain); }
 .quad.luck, .quad.error { background: var(--loss-soft); border-color: rgba(255,138,124,.30); }
@@ -232,6 +237,115 @@ input[inputmode="decimal"], input[inputmode="numeric"] { font-family: var(--font
 }
 .ghost:hover, button.ghost:hover { border-color: var(--accent); background: var(--card-hi); text-decoration: none; }
 button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: default; }
+
+/* --- radios d'option (façon Streamlit : rond + libellé) --- */
+.radios { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.radio {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-ui); font-size: .86rem; color: var(--muted);
+  text-decoration: none; white-space: nowrap;
+}
+.radio:hover { text-decoration: none; color: var(--ink); }
+.radio::before {
+  content: ""; width: 13px; height: 13px; border-radius: 50%;
+  border: 2px solid var(--rule); background: transparent; flex-shrink: 0;
+}
+.radio.on { color: var(--ink); }
+.radio.on::before { border-color: var(--accent); background: radial-gradient(var(--accent) 0 42%, transparent 46%); }
+
+/* --- pilules d'option (radios de réglage) --- */
+.pill {
+  font-family: var(--font-mono); font-size: .72rem; font-weight: 500; letter-spacing: .04em;
+  padding: 5px 11px; border: 1px solid var(--rule-soft); border-radius: 6px;
+  color: var(--muted); background: var(--card); text-decoration: none; white-space: nowrap;
+}
+.pill:hover { border-color: var(--rule); text-decoration: none; }
+.pill.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+
+/* --- grilles responsives du tableau de bord ---------------------------- */
+.optrow { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 18px; margin: 6px 0 2px; }
+.kpigrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.split { display: grid; grid-template-columns: 1.6fr 1fr; gap: 18px; align-items: start; margin-top: 26px; }
+.split-a { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; align-items: start; }
+/* les enfants de grille doivent pouvoir rétrécir sous leur contenu (svg, matrice) */
+.split > *, .split-a > * { min-width: 0; }
+/* matrice thèse × exécution : 2×2 avec en-têtes en desktop, empilée en mobile */
+.matrix { display: grid; grid-template-columns: 0.55fr 1fr 1fr; gap: 10px; align-items: stretch; }
+/* tables : défilement horizontal propre sur petits écrans, jamais la page */
+.tablewrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.tablewrap > table.t { min-width: 560px; }
+
+@media (max-width: 860px) {
+  .split, .split-a { grid-template-columns: 1fr; gap: 14px; }
+}
+@media (max-width: 760px) {
+  .optrow { grid-template-columns: 1fr; gap: 14px; }
+  .kpigrid { grid-template-columns: repeat(2, 1fr); }
+  .grid3 { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  h1 { font-size: 1.6rem; }
+  .stat.big { font-size: 1.5rem; }
+  .grid2 { grid-template-columns: 1fr; }
+  .cal { gap: 4px; }
+  .cal-day { min-height: 46px; padding: 4px 5px; border-radius: 6px; }
+  .cal-day .num { font-size: .62rem; }
+  .cal-day .pnl { font-size: .60rem; }
+  .cal-head { font-size: .55rem; }
+  .matrix { grid-template-columns: 1fr 1fr; }
+  .matrix .mmeta { display: none; }
+}
+@media (max-width: 440px) {
+  .kpigrid { grid-template-columns: 1fr; }
+  .matrix { grid-template-columns: 1fr; }
+}
+
+/* --- tableaux (portés de theme.py) --- */
+table.t { width: 100%; border-collapse: collapse; font-family: var(--font-mono); font-size: .83rem; }
+table.t th {
+  text-align: left; font-weight: 600; color: var(--muted);
+  font-size: .66rem; letter-spacing: .09em; text-transform: uppercase;
+  padding: 9px 14px 9px 0; border-bottom: 1px solid var(--rule-soft); white-space: nowrap;
+}
+table.t td {
+  padding: 13px 14px 13px 0; border-bottom: 1px solid var(--rule-soft);
+  font-variant-numeric: tabular-nums; color: var(--ink); vertical-align: middle;
+}
+table.t tr:last-child td { border-bottom: none; }
+table.t td.num { text-align: right; white-space: nowrap; }
+table.t td.tight { white-space: nowrap; }
+table.t th.r, table.t th.num { text-align: right; }
+table.t th:first-child, table.t td:first-child { padding-left: 4px; }
+table.t td:first-child { padding-right: 18px; }
+table.t td.gain { color: var(--gain); font-weight: 600; }
+table.t td.loss { color: var(--loss); font-weight: 600; }
+table.t td.warn { color: var(--warn); font-weight: 600; }
+table.t td.note { color: var(--muted); }
+table.t td b { font-family: var(--font-ui); }
+
+/* --- le calendrier (porté de theme.py) --- */
+.cal { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; }
+.cal-head {
+  font-family: var(--font-mono); font-size: .64rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--muted); text-align: center; padding-bottom: 2px;
+}
+.cal-day {
+  border: 1px solid var(--rule-soft); border-radius: 8px;
+  min-height: 62px; padding: 6px 8px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: rgba(233,239,247,.02);
+}
+.cal-day.vide { border-color: transparent; background: transparent; }
+.cal-day .num { font-family: var(--font-mono); font-size: .70rem; color: var(--muted); }
+.cal-day .pnl { font-family: var(--font-mono); font-size: .78rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.cal-day.gain { background: var(--gain-soft); border-color: rgba(79,227,166,.40); }
+.cal-day.gain .pnl, .cal-day.gain .num { color: var(--gain); }
+.cal-day.loss { background: var(--loss-soft); border-color: rgba(255,138,124,.40); }
+.cal-day.loss .pnl, .cal-day.loss .num { color: var(--loss); }
+.cal-day.flat { background: var(--signal-soft); border-color: rgba(138,169,255,.30); }
+.cal-day.flat .pnl { color: var(--signal); }
 
 /* --- galerie de captures --- */
 .shot { border: 1px solid var(--rule-soft); border-radius: 8px; padding: 6px; background: rgba(233,239,247,.02); }

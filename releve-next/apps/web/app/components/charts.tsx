@@ -1,7 +1,22 @@
 // Graphiques en SVG inline — pas de dépendance, rendu serveur, couleurs du thème.
-// On affinera au pixel avec les maquettes Streamlit (Plotly) ensuite.
+// Calqués sur les graphes Plotly de Streamlit : graduations Y + dates en X.
 
 type CurvePoint = { label: string; value: number };
+
+// Graduations « rondes » (0, ±0.5, ±1…) sur un intervalle, façon Plotly.
+function niceTicks(lo: number, hi: number, target = 5): number[] {
+  const span = hi - lo || 1;
+  const raw = span / target;
+  const mag = Math.pow(10, Math.floor(Math.log10(raw)));
+  const norm = raw / mag;
+  const step = (norm >= 5 ? 5 : norm >= 2 ? 2 : norm >= 1 ? 1 : 0.5) * mag;
+  const start = Math.ceil(lo / step) * step;
+  const out: number[] = [];
+  for (let v = start; v <= hi + 1e-9; v += step) out.push(Math.abs(v) < 1e-9 ? 0 : Number(v.toFixed(6)));
+  return out;
+}
+
+const fmtTick = (v: number) => (Number.isInteger(v) ? v.toString() : v.toFixed(v < 1 && v > -1 ? 1 : 2));
 
 /**
  * Courbe de CUMUL bicolore (R, % ou argent) : vert au-dessus de zéro, rouge en
@@ -11,10 +26,14 @@ type CurvePoint = { label: string; value: number };
 export function CumulativeCurve({
   series,
   unit = "R",
+  xLabels = [],
+  xValues = [],
   height = 300,
 }: {
   series: CurvePoint[];
   unit?: string;
+  xLabels?: string[];
+  xValues?: number[];
   height?: number;
 }) {
   const pts: { y: number; label: string }[] = [{ y: 0, label: "avant le premier trade" }];
@@ -27,15 +46,26 @@ export function CumulativeCurve({
   const n = pts.length;
   if (n < 2) return <div className="note">La courbe apparaîtra dès une clôture au R calculable.</div>;
 
-  const W = 720, H = height, padX = 10, padTop = 12, padBot = 22;
+  const W = 720, H = height, padL = 34, padR = 12, padTop = 12, padBot = 24;
   const ys = pts.map((p) => p.y);
   let lo = Math.min(...ys, 0);
   let hi = Math.max(...ys, 0);
   const margin = (hi - lo || 1) * 0.15;
   lo -= margin; hi += margin;
-  const X = (i: number) => padX + (i / (n - 1)) * (W - 2 * padX);
+
+  // Axe X TEMPOREL (comme Plotly) : deux clôtures le même jour se superposent →
+  // segment vertical. L'origine reprend la date du premier trade.
+  const xv = xValues.length === n - 1 ? [xValues[0]!, ...xValues] : pts.map((_, i) => i);
+  const xMin = Math.min(...xv), xMax = Math.max(...xv);
+  const xSpan = xMax - xMin || 1;
+  const X = (i: number) => padL + ((xv[i]! - xMin) / xSpan) * (W - padL - padR);
   const Y = (v: number) => padTop + ((hi - v) / (hi - lo)) * (H - padTop - padBot);
   const zeroY = Y(0);
+  const ticks = niceTicks(lo, hi);
+  // libellés de dates X : une entrée par date DISTINCTE (évite les doublons).
+  const xs = xLabels.length === n - 1 ? [xLabels[0]!, ...xLabels] : [];
+  const seenX = new Set<number>();
+  const xTicks = xs.length ? xs.map((lab, i) => ({ lab, x: X(i), key: xv[i]! })).filter((t) => (seenX.has(t.key) ? false : (seenX.add(t.key), true))) : [];
 
   const line = pts.map((p, i) => `${i === 0 ? "M" : "L"}${X(i).toFixed(1)},${Y(p.y).toFixed(1)}`).join(" ");
   const area = `M${X(0).toFixed(1)},${zeroY.toFixed(1)} ` +
@@ -43,13 +73,18 @@ export function CumulativeCurve({
     ` L${X(n - 1).toFixed(1)},${zeroY.toFixed(1)} Z`;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={height} preserveAspectRatio="none" role="img" style={{ display: "block" }}>
+    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={height} role="img" style={{ display: "block" }}>
       <defs>
         <clipPath id="clipTop"><rect x="0" y="0" width={W} height={zeroY} /></clipPath>
         <clipPath id="clipBot"><rect x="0" y={zeroY} width={W} height={H - zeroY} /></clipPath>
       </defs>
-      {/* ligne de zéro */}
-      <line x1={padX} y1={zeroY} x2={W - padX} y2={zeroY} stroke="var(--rule)" strokeWidth="1" strokeDasharray="2 3" />
+      {/* graduations horizontales + libellés Y */}
+      {ticks.map((t, k) => (
+        <g key={k}>
+          <line x1={padL} y1={Y(t)} x2={W - padR} y2={Y(t)} stroke={t === 0 ? "var(--rule)" : "var(--rule-soft)"} strokeWidth={t === 0 ? 1.2 : 1} opacity={t === 0 ? 1 : 0.9} />
+          <text x={padL - 6} y={Y(t) + 3} textAnchor="end" fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)">{fmtTick(t)}</text>
+        </g>
+      ))}
       {/* aires */}
       <path d={area} fill="var(--gain)" opacity="0.10" clipPath="url(#clipTop)" />
       <path d={area} fill="var(--loss)" opacity="0.10" clipPath="url(#clipBot)" />
@@ -61,6 +96,10 @@ export function CumulativeCurve({
         <circle key={i} cx={X(i)} cy={Y(p.y)} r="3" fill={p.y >= 0 ? "var(--gain)" : "var(--loss)"}>
           <title>{`${p.label}\ncumul ${p.y > 0 ? "+" : ""}${p.y.toFixed(2)}`}</title>
         </circle>
+      ))}
+      {/* libellés de dates X (une par date distincte) */}
+      {xTicks.map((t, i) => (
+        <text key={i} x={t.x} y={H - 8} textAnchor="middle" fontSize="9" fill="var(--muted)" fontFamily="var(--font-mono)">{t.lab}</text>
       ))}
     </svg>
   );
@@ -95,35 +134,46 @@ export function EquityCurve({
 /** Histogramme : une barre par idée (R), verte/rouge selon le signe. */
 export function RHistogram({
   bars,
-  height = 220,
+  xLabels = [],
+  height = 280,
 }: {
   bars: { label: string; r: number; clean: boolean | null }[];
+  xLabels?: string[];
   height?: number;
 }) {
   const n = bars.length;
   if (!n) return <div className="note">Aucune idée au R calculable.</div>;
-  const W = 720, padX = 10, padTop = 12, padBot = 22;
+  const W = 720, padL = 30, padR = 12, padTop = 12, padBot = 24;
   const rs = bars.map((b) => b.r);
   let lo = Math.min(...rs, 0), hi = Math.max(...rs, 0);
   const margin = (hi - lo || 1) * 0.12; lo -= margin; hi += margin;
   const Y = (v: number) => padTop + ((hi - v) / (hi - lo)) * (height - padTop - padBot);
   const zeroY = Y(0);
-  const slot = (W - 2 * padX) / n;
-  const bw = Math.min(slot * 0.62, 22);
+  const slot = (W - padL - padR) / n;
+  const bw = Math.min(slot * 0.62, 26);
+  const ticks = niceTicks(lo, hi);
   return (
     <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} role="img" style={{ display: "block" }}>
-      <line x1={padX} y1={zeroY} x2={W - padX} y2={zeroY} stroke="var(--rule)" strokeWidth="1" />
+      {ticks.map((t, k) => (
+        <g key={k}>
+          <line x1={padL} y1={Y(t)} x2={W - padR} y2={Y(t)} stroke={t === 0 ? "var(--rule)" : "var(--rule-soft)"} strokeWidth={t === 0 ? 1.2 : 1} opacity="0.9" />
+          <text x={padL - 6} y={Y(t) + 3} textAnchor="end" fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)">{fmtTick(t)}</text>
+        </g>
+      ))}
       {bars.map((b, i) => {
-        const cx = padX + slot * (i + 0.5);
+        const cx = padL + slot * (i + 0.5);
         const y = Y(Math.max(0, b.r));
         const h = Math.abs(Y(b.r) - zeroY);
         const col = b.r >= 0 ? "var(--gain)" : "var(--loss)";
         // plein = plan 5/5, semi = dégradé, contour = pas relu
         const fillOpacity = b.clean === true ? 1 : b.clean === false ? 0.33 : 0.08;
         return (
-          <rect key={i} x={cx - bw / 2} y={y} width={bw} height={Math.max(h, 1)} fill={col} fillOpacity={fillOpacity} stroke={col} strokeWidth="1">
-            <title>{`${b.label} · ${b.r > 0 ? "+" : ""}${b.r.toFixed(2)} R`}</title>
-          </rect>
+          <g key={i}>
+            <rect x={cx - bw / 2} y={y} width={bw} height={Math.max(h, 1)} fill={col} fillOpacity={fillOpacity} stroke={col} strokeWidth="1">
+              <title>{`${b.label} · ${b.r > 0 ? "+" : ""}${b.r.toFixed(2)} R`}</title>
+            </rect>
+            {xLabels[i] && <text x={cx} y={height - 8} textAnchor="middle" fontSize="9" fill="var(--muted)" fontFamily="var(--font-mono)">{xLabels[i]}</text>}
+          </g>
         );
       })}
     </svg>
