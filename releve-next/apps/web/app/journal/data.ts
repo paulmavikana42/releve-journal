@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import {
   MemoryBackend,
   SupabaseStore,
@@ -56,29 +57,43 @@ export async function signedUrlsForPaths(
   return out;
 }
 
-/** Le client Supabase serveur + l'utilisateur courant (ou null). */
-export async function currentUser() {
+/**
+ * Le client Supabase serveur + l'utilisateur courant (ou null).
+ * - `cache()` : appelé une seule fois par requête (dédup client + auth).
+ * - `getSession()` (lecture cookie, SANS réseau) au lieu de `getUser()` : le
+ *   middleware valide et rafraîchit déjà la session à chaque requête, donc on
+ *   évite un aller-retour réseau par page.
+ */
+export const currentUser = cache(async () => {
   const supabase = await createClient();
   if (DEV_PREVIEW) return { supabase, user: devUser() };
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (session?.user) return { supabase, user: session.user };
+  // Repli (session absente du cookie) : validation réseau, évite une fausse
+  // déconnexion.
   const {
     data: { user },
   } = await supabase.auth.getUser();
   return { supabase, user };
-}
+});
 
 /**
  * Ouvre un SupabaseStore pour l'utilisateur : hydrate son journal depuis la
  * table `events` (RLS → seules SES lignes reviennent). Le client supabase-js
  * satisfait structurellement SupabaseClientLike (from/select/order/insert).
  */
-export async function openStore(
+export const openStore = cache(async function openStore(
   supabase: Awaited<ReturnType<typeof createClient>>,
   userId: string,
 ) {
+  // `cache()` : une seule hydratation du journal par requête, même si plusieurs
+  // composants/serveurs l'ouvrent (même client + même userId → une seule liste).
   if (DEV_PREVIEW) {
     // Aperçu local : journal en mémoire alimenté par data/events.jsonl.
     return SupabaseStore.open(new MemoryBackend(devEvents(), "dev-preview"));
   }
   const backend = supabaseBackend(supabase as unknown as SupabaseClientLike, userId);
   return SupabaseStore.open(backend);
-}
+});

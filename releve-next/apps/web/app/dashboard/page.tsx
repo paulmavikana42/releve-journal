@@ -82,9 +82,12 @@ export default async function Dashboard({
   const mot = unit === Unit.THESIS ? "décision(s)" : "idée(s)";
   const motUnite = mot.replace("(s)", "");
 
-  const store = await openStore(supabase, user.id);
+  // events (openStore) et réglages (activeScope) en PARALLÈLE → un seul aller-retour.
+  const [store, { active, activeUid, accountUids }] = await Promise.all([
+    openStore(supabase, user.id),
+    activeScope(supabase, user.id),
+  ]);
   const loaded = store.load();
-  const { active, activeUid, accountUids } = await activeScope(supabase, user.id);
   const scoped = scopeToAccount(
     { ideas: loaded.ideas, campaigns: store.campaigns(), deals: loaded.deals },
     activeUid,

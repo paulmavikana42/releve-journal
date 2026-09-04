@@ -44,10 +44,13 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
   const sp = await searchParams;
   const vue = sp.vue === "ecrire" ? "ecrire" : "journal";
 
-  const store = await openStore(supabase, user.id);
+  // events + réglages en parallèle (getWatchlist réutilise ensuite le cache réglages).
+  const [store, { activeUid, accountUids }] = await Promise.all([
+    openStore(supabase, user.id),
+    activeScope(supabase, user.id),
+  ]);
   const loaded = store.load();
   const { ideas } = loaded;
-  const { activeUid, accountUids } = await activeScope(supabase, user.id);
   const watchlist = await getWatchlist(supabase, user.id);
   const knownSymbols = [
     ...new Set([...watchlist, ...[...loaded.positions.values()].map((p) => p.symbol)]),

@@ -99,8 +99,10 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
   const needStop = idea.tickets_needing_stop();
   const disjoints = idea.tickets_disjoints;
   const rev = idea.review;
-  const captureUrls = await signedCaptureUrls(supabase, idea.captures);
-  const blockUrlMap = await signedUrlsForPaths(supabase, imagePaths(idea.thesis?.blocks as unknown[] | undefined));
+  const [captureUrls, blockUrlMap] = await Promise.all([
+    signedCaptureUrls(supabase, idea.captures),
+    signedUrlsForPaths(supabase, imagePaths(idea.thesis?.blocks as unknown[] | undefined)),
+  ]);
   const blockUrls = Object.fromEntries(blockUrlMap);
 
   const tickets: Position[] = [...idea.positions].sort(

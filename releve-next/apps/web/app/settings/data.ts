@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { PropRules } from "@releve/core";
 import { createClient } from "@/lib/supabase/server";
 import { DEV_PREVIEW, devSettings } from "@/lib/devPreview";
@@ -18,11 +19,13 @@ export const DEFAULT_WATCHLIST = [
 
 type Client = Awaited<ReturnType<typeof createClient>>;
 
-async function readRow(supabase: Client, userId: string): Promise<SettingsData> {
+// `cache()` : une seule lecture des réglages par requête, même si plusieurs
+// helpers (activeScope, getActiveAccount, getWatchlist…) la demandent.
+const readRow = cache(async function readRow(supabase: Client, userId: string): Promise<SettingsData> {
   if (DEV_PREVIEW) return devSettings() as SettingsData;
   const { data } = await supabase.from("settings").select("data").eq("user_id", userId).maybeSingle();
   return ((data?.data as SettingsData) ?? {}) as SettingsData;
-}
+});
 
 /** Fusionne un patch dans les réglages existants (ne perd jamais le reste). */
 async function writeData(supabase: Client, userId: string, patch: Partial<SettingsData>): Promise<void> {
