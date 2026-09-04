@@ -50,7 +50,7 @@ export default function WriteIdeaForm({
           Infos du trade
         </button>
         <button type="button" className={`pill ${tab === "ecriture" ? "on" : ""}`} onClick={() => setTab("ecriture")}>
-          Écriture
+          Motivations
         </button>
       </div>
 
@@ -121,7 +121,7 @@ export default function WriteIdeaForm({
         </div>
 
         <div>
-          <label>Invalidation (ce qui tue l&apos;idée, même sans toucher le stop)</label>
+          <label>Invalidation<Help tip="Ce qui tue l'idée même si le prix n'atteint pas le stop (un CPI contraire, un pivot BoJ…). C'est l'invalidation de la thèse, pas du trade." /></label>
           <textarea name="thesis_kill_switch" rows={1} onInput={grow} placeholder="Un CPI au-dessus du consensus, un pivot BoJ…" style={{ width: "100%", minHeight: 40, resize: "none", overflow: "hidden", lineHeight: 1.5 }} />
         </div>
 
@@ -149,14 +149,14 @@ export default function WriteIdeaForm({
         {/* pas de « Armer » ici : on passe à l'écriture des motivations */}
         <div className="row" style={{ gap: 10, marginTop: 4, justifyContent: "flex-end" }}>
           <button type="button" className="primary" onClick={() => setTab("ecriture")}>
-            Écrire mes motivations techniques →
+            Passer aux motivations →
           </button>
         </div>
       </div>
 
       {/* Bulle 2 — écriture Notion (c'est ici qu'on arme l'idée) */}
       <div hidden={tab !== "ecriture"} style={{ display: "grid", gap: 8 }}>
-        <label>Ce qui te fait entrer en position — écris, ajoute des visuels au fil</label>
+        <label>Pourquoi tu entres — écris ta thèse, glisse tes captures au fil</label>
         <BlockEditor initial={initBlocks([], "", [])} />
         <div className="row" style={{ gap: 10, marginTop: 12 }}>
           <button type="button" className="ghost" onClick={() => setTab("infos")}>← Infos du trade</button>

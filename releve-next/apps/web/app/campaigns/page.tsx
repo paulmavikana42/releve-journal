@@ -47,10 +47,6 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
 
       {vue === "ecrire" && (
         <form action={createCampaign} className="card" style={{ display: "grid", gap: 14 }}>
-          <div className="note">
-            Le niveau au-dessus de l&apos;idée. À utiliser seulement quand une même conviction se joue
-            sur <b>plusieurs instruments</b>. Pour un trade sur un seul symbole, l&apos;idée suffit.
-          </div>
           <div className="g2">
             <div>
               <label>Nom de la thèse</label>
@@ -72,7 +68,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
             </div>
           </div>
           <div>
-            <label>La thèse — écris, ajoute des visuels au fil</label>
+            <label>La thèse — développe ta conviction, glisse tes captures au fil</label>
             <BlockEditor initial={initBlocks([], "", [])} />
           </div>
           <div>

@@ -222,7 +222,7 @@ export default async function Dashboard({
   const noteUnite =
     unit === Unit.THESIS
       ? nGroupes > 0
-        ? <>Les chiffres ci-dessous comptent <b>une thèse macro comme une seule décision</b> : {nGroupes} thèse(s) regroupant plusieurs idées, plus les idées autonomes. Le R d&apos;une thèse est la somme des R de ses jambes.</>
+        ? <>Ici, <b>une thèse macro = une seule décision</b> ({nGroupes} regroupant plusieurs idées, plus les idées seules). Le R d&apos;une thèse est la somme de celui de ses jambes.</>
         : <>Les chiffres ci-dessous comptent <b>une thèse macro comme une seule décision</b>. Tu n&apos;en as aucune pour l&apos;instant : chaque idée compte donc pour elle-même, et les deux modes donnent le même résultat.</>
       : <>Les chiffres ci-dessous comptent <b>chaque idée séparément</b>, y compris les jambes d&apos;une même thèse macro. Utile pour juger l&apos;exécution instrument par instrument ; trompeur pour juger ton edge, puisqu&apos;un seul pari joué sur trois instruments compte alors trois fois.</>;
 
@@ -358,7 +358,7 @@ export default async function Dashboard({
             )}
           />
           <div className="note" style={{ marginTop: 8 }}>
-            <b className={cal.total > 0 ? "txt-gain" : cal.total < 0 ? "txt-loss" : "txt-sig"}>{fmtMoney(cal.total)}</b> sur le mois · <span className="txt-gain">{cal.verts} jour(s) vert(s)</span> · <span className="txt-loss">{cal.rouges} rouge(s)</span>. Seuls les jours où de l&apos;argent est réellement tombé sont colorés : un jour sans sortie n&apos;est pas un jour à zéro, c&apos;est un jour où rien n&apos;a été tranché. Une sortie partielle compte le jour où elle a lieu ; la clôture finale porte le <b>reste</b>.
+            <b className={cal.total > 0 ? "txt-gain" : cal.total < 0 ? "txt-loss" : "txt-sig"}>{fmtMoney(cal.total)}</b> sur le mois · <span className="txt-gain">{cal.verts} jour(s) vert(s)</span> · <span className="txt-loss">{cal.rouges} rouge(s)</span>. Seuls les jours où de l&apos;argent est tombé sont colorés — un jour sans sortie n&apos;est pas un zéro, c&apos;est un jour sans verdict.
           </div>
         </>
       ) : (

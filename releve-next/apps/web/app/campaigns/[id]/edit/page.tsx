@@ -55,7 +55,7 @@ export default async function CampaignEdit({ params }: { params: Promise<{ id: s
           </div>
         </div>
         <div>
-          <label>La thèse — écris, ajoute des visuels au fil</label>
+          <label>La thèse — développe ta conviction, glisse tes captures au fil</label>
           <BlockEditor initial={initialBlocks} initialUrls={initialUrls} />
         </div>
         <div>

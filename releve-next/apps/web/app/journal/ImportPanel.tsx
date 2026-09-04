@@ -47,7 +47,7 @@ export default function ImportPanel() {
         <div>
           <strong>Importer un rapport</strong>
           <div className="muted" style={{ fontSize: ".85rem" }}>
-            Rapport HTML MT5 ou export CSV (MT4/MT5). Rapproché par ticket, idempotent.
+            Rapport HTML MT5 ou export CSV (MT4/MT5). Rapproché par ticket : aucun doublon.
           </div>
         </div>
         <div className="row">

@@ -42,8 +42,8 @@ export default async function SettingsPage() {
       </header>
 
       <p className="muted" style={{ marginTop: 0 }}>
-        Les règles sont <strong>contractuelles</strong> et varient d'une firme à l'autre : rien n'est
-        supposé. Ce sont elles qui rendent le tableau de bord (marge de survie, drawdown) juste.
+        Les règles sont <strong>contractuelles</strong> et propres à chaque firme. Renseigne-les :
+        c'est ce qui rend ta marge de survie et ton drawdown justes.
       </p>
 
       {accounts.length > 0 && (

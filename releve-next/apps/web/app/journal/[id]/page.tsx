@@ -257,7 +257,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             })}
           </div>
           <div className="muted" style={{ fontSize: ".82rem", marginTop: 8 }}>
-            Le prochain import contenant ce numéro de ticket clôturera le trade automatiquement.
+            Ton prochain import refermera ce trade tout seul, par ce numéro de ticket.
           </div>
         </section>
       ) : (
@@ -421,7 +421,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
       {!rev && idea.is_executed && (
         <form action={completeReview} className="card" style={{ marginBottom: 20, display: "grid", gap: 12 }}>
           <input type="hidden" name="ideaId" value={idea.id} />
-          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Faire la revue</h2>
+          <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Relire ce trade</h2>
           <div className="muted" style={{ fontSize: ".85rem", marginTop: -6 }}>
             La discipline mesure le <em>process</em>, indépendamment du gain. Le verdict dit si le
             marché t'a donné raison. Les deux se croisent dans le quadrant.
