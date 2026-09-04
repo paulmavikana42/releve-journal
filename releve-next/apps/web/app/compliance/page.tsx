@@ -72,8 +72,14 @@ export default async function CompliancePage() {
   }
 
   const equityPts = comp.equity.points.map((p) => ({ balance: p.balance.toNumber() }));
+  // Repères temporels : jour epoch de chaque solde. Le point « départ » (sentinelle,
+  // année < 2000) est calé un jour avant le premier vrai solde pour un espacement juste.
+  const dayNum = (d: Date) => Math.floor(d.getTime() / 86400000);
+  const firstReal = comp.equity.points.find((p) => p.when.getUTCFullYear() >= 2000);
+  const baseDay = firstReal ? dayNum(firstReal.when) - 1 : 0;
+  const equityXValues = comp.equity.points.map((p) => (p.when.getUTCFullYear() < 2000 ? baseDay : dayNum(p.when)));
   const equityXLabels = comp.equity.points.map((p) =>
-    p.when.getUTCFullYear() < 2000 ? "" : `${String(p.when.getUTCDate()).padStart(2, "0")}/${String(p.when.getUTCMonth() + 1).padStart(2, "0")}`,
+    p.when.getUTCFullYear() < 2000 ? "départ" : `${String(p.when.getUTCDate()).padStart(2, "0")}/${String(p.when.getUTCMonth() + 1).padStart(2, "0")}`,
   );
   const minDays = active.min_trading_days ?? 0;
 
@@ -119,7 +125,7 @@ export default async function CompliancePage() {
         <div>
           <div className="eyebrow bar">courbe d&apos;équité</div>
           {equityPts.length >= 2 ? (
-            <div className="card"><EquityCurve points={equityPts} xLabels={equityXLabels} /></div>
+            <div className="card"><EquityCurve points={equityPts} xLabels={equityXLabels} xValues={equityXValues} /></div>
           ) : (
             <div className="note">La courbe d&apos;équité apparaîtra dès qu&apos;un import apporte des soldes.</div>
           )}

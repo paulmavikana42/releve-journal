@@ -4,6 +4,8 @@ import { currentUser, openStore } from "../journal/data";
 import { activeScope } from "../settings/data";
 import ImportPanel from "../journal/ImportPanel";
 import OrphanRow from "../journal/OrphanRow";
+import ConfirmSubmit from "../components/ConfirmSubmit";
+import { undoImportAction } from "./actions";
 
 // Étapes pour récupérer l'export depuis MetaTrader 5 (inspiré du step-by-step
 // Streamlit) — un guide, pas un blocage.
@@ -32,6 +34,7 @@ export default async function ImportPage() {
 
   const store = await openStore(supabase, user.id);
   store.load();
+  const lastImport = store.undoableImports()[0] ?? null;
   const { activeUid, accountUids } = await activeScope(supabase, user.id);
   const list = [...store.load().ideas.values()].filter((i) => mine(i, activeUid, accountUids));
 
@@ -95,6 +98,29 @@ export default async function ImportPage() {
           </div>
         </div>
       </div>
+
+      {lastImport && (lastImport.positions > 0 || lastImport.deals > 0) && (
+        <section style={{ marginTop: 20 }}>
+          <div className="card between" style={{ borderColor: "var(--rule)", flexWrap: "wrap", gap: 12 }}>
+            <div>
+              <div className="eyebrow" style={{ marginBottom: 2 }}>dernier import</div>
+              <div className="note">
+                {lastImport.positions} trade(s) et {lastImport.deals} solde(s) ajoutés.
+                Tu t&apos;es trompé de fichier ? Tu peux annuler ce lot — le fichier reste réimportable ensuite.
+              </div>
+            </div>
+            <ConfirmSubmit
+              action={undoImportAction}
+              hidden={{ importId: lastImport.import_id }}
+              title="Annuler le dernier import ?"
+              message={<>Les <b>{lastImport.positions} trade(s)</b> et <b>{lastImport.deals} solde(s)</b> de ce lot sont retirés (rien n&apos;est effacé du journal : c&apos;est réversible et réimportable).</>}
+              confirmLabel="Oui, annuler l'import"
+            >
+              Annuler le dernier import
+            </ConfirmSubmit>
+          </div>
+        </section>
+      )}
 
       {orphans.length > 0 && (
         <section style={{ marginTop: 24 }}>

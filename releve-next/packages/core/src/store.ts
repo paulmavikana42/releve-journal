@@ -269,14 +269,27 @@ export class Store {
     const opens = new Map<string, [string, OpenTrade]>();
     const attachments = new Map<string, Attachment>();
 
+    // Imports annulés (import du mauvais fichier) : leur lot est neutralisé au
+    // replay — rien n'est effacé (append-only), les positions/soldes du lot sont
+    // simplement ignorés. Passe préalable pour connaître les lots révoqués.
+    const revertedImports = new Set<string>();
+    for (const ev of this.events()) {
+      if (ev.type === "import_reverted") {
+        const rp = decode(ev.payload) as Dict;
+        if (rp["import_id"]) revertedImports.add(String(rp["import_id"]));
+      }
+    }
+
     for (const ev of this.events()) {
       const t = ev.type;
       const p = decode(ev.payload) as Dict;
 
       if (t === "position_imported") {
+        if (p["import_id"] && revertedImports.has(String(p["import_id"]))) continue;
         const pos = positionFrom(p);
         positions.set(pos.uid, pos);
       } else if (t === "deal_imported") {
+        if (p["import_id"] && revertedImports.has(String(p["import_id"]))) continue;
         const d = dealFrom(p);
         deals.set(d.deal_id, d);
       } else if (t === "thesis_created") {
@@ -481,9 +494,48 @@ export class Store {
     const { positions: knownPos, deals: knownDeals } = this.load();
     const knownDealIds = new Set(knownDeals.map((d) => d.deal_id));
     const fresh = positions.filter((p) => !knownPos.has(p.uid));
-    for (const p of fresh) this.append("position_imported", p as unknown as Dict);
-    for (const d of deals) if (!knownDealIds.has(d.deal_id)) this.append("deal_imported", d as unknown as Dict);
+    const freshDeals = deals.filter((d) => !knownDealIds.has(d.deal_id));
+    if (!fresh.length && !freshDeals.length) return fresh;
+    // Chaque import forme un LOT (import_id) : ça le rend annulable en bloc si
+    // l'utilisateur a déposé le mauvais fichier (revert_import).
+    const importId = globalThis.crypto.randomUUID().replace(/-/g, "").slice(0, 12);
+    for (const p of fresh) this.append("position_imported", { ...(p as unknown as Dict), import_id: importId });
+    for (const d of freshDeals) this.append("deal_imported", { ...(d as unknown as Dict), import_id: importId });
     return fresh;
+  }
+
+  /** Annule un lot d'import (neutralisé au replay, append-only). */
+  revert_import(importId: string): void {
+    this.append("import_reverted", { import_id: importId });
+  }
+
+  /**
+   * Les lots d'import ENCORE actifs (non annulés), du plus récent au plus ancien —
+   * pour proposer « annuler le dernier import » après un mauvais fichier.
+   */
+  undoableImports(): { import_id: string; positions: number; deals: number; when: string }[] {
+    const reverted = new Set<string>();
+    for (const ev of this.events()) {
+      if (ev.type === "import_reverted") {
+        const rp = decode(ev.payload) as Dict;
+        if (rp["import_id"]) reverted.add(String(rp["import_id"]));
+      }
+    }
+    const batches = new Map<string, { positions: number; deals: number; when: string }>();
+    for (const ev of this.events()) {
+      if (ev.type !== "position_imported" && ev.type !== "deal_imported") continue;
+      const p = decode(ev.payload) as Dict;
+      const id = p["import_id"] ? String(p["import_id"]) : "";
+      if (!id || reverted.has(id)) continue;
+      const b = batches.get(id) ?? { positions: 0, deals: 0, when: ev.ts };
+      if (ev.type === "position_imported") b.positions += 1;
+      else b.deals += 1;
+      b.when = ev.ts;
+      batches.set(id, b);
+    }
+    return [...batches.entries()]
+      .map(([import_id, b]) => ({ import_id, ...b }))
+      .sort((a, b) => (a.when < b.when ? 1 : -1));
   }
 
   link(ideaId: string, positionUid: string): void {

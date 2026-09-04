@@ -110,10 +110,12 @@ export function CumulativeCurve({
 export function EquityCurve({
   points,
   xLabels = [],
+  xValues = [],
   height = 220,
 }: {
   points: { balance: number }[];
   xLabels?: string[];
+  xValues?: number[]; // repères temporels (ex. jour epoch) — espacement PROPORTIONNEL au temps
   height?: number;
 }) {
   const n = points.length;
@@ -122,15 +124,24 @@ export function EquityCurve({
   const bs = points.map((p) => p.balance);
   let lo = Math.min(...bs), hi = Math.max(...bs);
   const pad = (hi - lo || 100) * 0.2; lo -= pad; hi += pad;
-  const X = (i: number) => padL + (i / (n - 1)) * (W - padL - padR);
+
+  // Axe X TEMPOREL si des valeurs de temps sont fournies (sinon indexé). Les
+  // écarts reflètent alors la vraie durée entre les soldes.
+  const xv = xValues.length === n ? xValues : points.map((_, i) => i);
+  const xMin = Math.min(...xv), xMax = Math.max(...xv);
+  const xSpan = xMax - xMin || 1;
+  const X = (i: number) => padL + ((xv[i]! - xMin) / xSpan) * (W - padL - padR);
   const Y = (v: number) => padTop + ((hi - v) / (hi - lo)) * (height - padTop - padBot);
   const line = points.map((p, i) => `${i === 0 ? "M" : "L"}${X(i).toFixed(1)},${Y(p.balance).toFixed(1)}`).join(" ");
   const area = `${line} L${X(n - 1).toFixed(1)},${(height - padBot).toFixed(1)} L${X(0).toFixed(1)},${(height - padBot).toFixed(1)} Z`;
   const ticks = niceTicks(lo, hi, 4);
   const grp = (v: number) => Math.round(v).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  // libellés de dates : quelques repères répartis (début, milieux, fin).
+  // libellés de dates : début, milieu (par le temps), fin — sans doublon.
   const xs = xLabels.length === n ? xLabels : [];
-  const xIdx = xs.length ? [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i) : [];
+  const midX = (xMin + xMax) / 2;
+  let midI = 0;
+  for (let i = 1; i < n; i++) if (Math.abs(xv[i]! - midX) < Math.abs(xv[midI]! - midX)) midI = i;
+  const xIdx = xs.length ? [...new Set([0, midI, n - 1])] : [];
   return (
     <svg viewBox={`0 0 ${W} ${height}`} width="100%" height={height} role="img" style={{ display: "block" }}>
       {/* repères ordonnée (solde) */}
@@ -142,6 +153,10 @@ export function EquityCurve({
       ))}
       <path d={area} fill="var(--accent)" opacity="0.08" />
       <path d={line} fill="none" stroke="var(--accent)" strokeWidth="1.8" />
+      {/* points (repères visuels des soldes) */}
+      {points.map((p, i) => (
+        <circle key={i} cx={X(i)} cy={Y(p.balance)} r="2.5" fill="var(--accent)" />
+      ))}
       {/* repères abscisse (dates) */}
       {xIdx.map((i) => (
         <text key={i} x={X(i)} y={height - 8} textAnchor={i === 0 ? "start" : i === n - 1 ? "end" : "middle"} fontSize="10" fill="var(--muted)" fontFamily="var(--font-mono)">{xs[i]}</text>
