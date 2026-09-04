@@ -69,11 +69,25 @@ async function main() {
     console.log("🧹 purge events + settings OK");
   }
 
+  // La RLS Storage exige que le 1er dossier de la clé = auth.uid(). On PRÉFIXE
+  // donc les chemins d'images (events) ET les clés uploadées par l'uid, pour
+  // qu'ils coïncident et que l'app puisse signer les URLs.
+  const rekey = (v) => {
+    if (typeof v === "string") return v.startsWith("captures/") ? `${USER}/${v}` : v;
+    if (Array.isArray(v)) return v.map(rekey);
+    if (v && typeof v === "object") {
+      const o = {};
+      for (const [k, val] of Object.entries(v)) o[k] = rekey(val);
+      return o;
+    }
+    return v;
+  };
+
   // 2) EVENTS (dans l'ordre du fichier → id croissant = ordre de replay)
   const lines = readFileSync(join(dataDir, "events.jsonl"), "utf-8").split(/\r?\n/).filter((l) => l.trim());
   const rows = lines.map((l) => {
     const e = JSON.parse(l);
-    return { user_id: USER, v: e.v ?? 1, ts: e.ts, type: e.type, payload: e.payload ?? {}, demo: false };
+    return { user_id: USER, v: e.v ?? 1, ts: e.ts, type: e.type, payload: rekey(e.payload ?? {}), demo: false };
   });
   for (let i = 0; i < rows.length; i += 200) {
     const batch = rows.slice(i, i + 200);
@@ -97,7 +111,8 @@ async function main() {
     const files = walk(capDir, dataDir);
     let ok = 0, skip = 0;
     for (const abs of files) {
-      const key = relative(dataDir, abs).split("\\").join("/"); // ex. captures/056f.../78c4....jpg
+      const rel = relative(dataDir, abs).split("\\").join("/"); // ex. captures/056f.../78c4....jpg
+      const key = `${USER}/${rel}`; // préfixe uid → passe la RLS Storage (foldername[1] = uid)
       const ext = extname(abs).toLowerCase();
       const type = MIME[ext];
       if (!type) { skip++; continue; }
