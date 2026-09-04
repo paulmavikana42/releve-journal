@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { createOffPlan, linkPosition } from "./actions";
+import { deleteOrphanAction } from "../import/actions";
+import ConfirmSubmit from "../components/ConfirmSubmit";
 
 export type Candidate = { ideaId: string; label: string; reason: string; kind: string };
 
@@ -35,11 +37,21 @@ export default function OrphanRow(props: {
             {opened} → {closed}
           </div>
         </div>
-        <div
-          style={{ fontWeight: 600, whiteSpace: "nowrap", color: pnlPos ? "var(--gain)" : "var(--loss)" }}
-        >
-          {pnlPos ? "+" : ""}
-          {pnl}
+        <div className="row" style={{ gap: 10 }}>
+          <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: pnlPos ? "var(--gain)" : "var(--loss)" }}>
+            {pnlPos ? "+" : ""}
+            {pnl}
+          </span>
+          <ConfirmSubmit
+            action={deleteOrphanAction}
+            hidden={{ positionUid: uid }}
+            className="pop-btn"
+            title="Supprimer ce trade importé ?"
+            message="Il disparaît de la liste. Mauvais fichier ? Réimporte le bon : ce trade réapparaîtra si le fichier le contient."
+            confirmLabel="Oui, supprimer"
+          >
+            Supprimer
+          </ConfirmSubmit>
         </div>
       </div>
 

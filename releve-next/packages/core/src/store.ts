@@ -273,10 +273,18 @@ export class Store {
     // replay — rien n'est effacé (append-only), les positions/soldes du lot sont
     // simplement ignorés. Passe préalable pour connaître les lots révoqués.
     const revertedImports = new Set<string>();
+    // Positions supprimées (orphelins d'un mauvais CSV) : on ignore l'import
+    // ANTÉRIEUR à la suppression, mais un réimport ULTÉRIEUR (ts plus récent)
+    // réapparaît — l'append-only ne "fige" que ce qui reste importé.
+    const deletedPosAt = new Map<string, string>();
     for (const ev of this.events()) {
       if (ev.type === "import_reverted") {
         const rp = decode(ev.payload) as Dict;
         if (rp["import_id"]) revertedImports.add(String(rp["import_id"]));
+      } else if (ev.type === "position_deleted") {
+        const rp = decode(ev.payload) as Dict;
+        const uid = String(rp["uid"] ?? "");
+        if (uid && (!deletedPosAt.has(uid) || ev.ts > deletedPosAt.get(uid)!)) deletedPosAt.set(uid, ev.ts);
       }
     }
 
@@ -287,6 +295,8 @@ export class Store {
       if (t === "position_imported") {
         if (p["import_id"] && revertedImports.has(String(p["import_id"]))) continue;
         const pos = positionFrom(p);
+        const delAt = deletedPosAt.get(pos.uid);
+        if (delAt && ev.ts <= delAt) continue; // import antérieur à la suppression → ignoré
         positions.set(pos.uid, pos);
       } else if (t === "deal_imported") {
         if (p["import_id"] && revertedImports.has(String(p["import_id"]))) continue;
@@ -507,6 +517,12 @@ export class Store {
   /** Annule un lot d'import (neutralisé au replay, append-only). */
   revert_import(importId: string): void {
     this.append("import_reverted", { import_id: importId });
+  }
+
+  /** Supprime une position orpheline (mauvais CSV). Ignorée au replay à partir de
+   *  maintenant ; un réimport ultérieur du même ticket la fera réapparaître. */
+  delete_position(uid: string): void {
+    this.append("position_deleted", { uid });
   }
 
   /** Marque le passage à une nouvelle phase du challenge (p2, funded) pour un
