@@ -4,7 +4,17 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Decimal, PropRules } from "@releve/core";
 import { currentUser } from "@/app/journal/data";
-import { getActiveAccount, removeAccount, saveAccount, setActiveAccount } from "./data";
+import { getActiveAccount, removeAccount, saveAccount, setActiveAccount, setWatchlist } from "./data";
+
+/** Enregistre la watchlist (les symboles proposés à l'écriture d'une idée). */
+export async function saveWatchlistAction(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const raw = String(formData.get("symbols") ?? "");
+  const symbols = raw.split(/[,\n;]+/).map((s) => s.trim()).filter(Boolean);
+  await setWatchlist(supabase, user.id, symbols);
+  revalidatePath("/settings");
+}
 
 function dec(fd: FormData, key: string, fallback: string): Decimal {
   const v = String(fd.get(key) ?? "").trim().replace(",", ".");

@@ -1,11 +1,12 @@
 import { redirect } from "next/navigation";
 import { currentUser } from "@/app/journal/data";
-import { getAccounts, getActiveAccount } from "./data";
+import { getAccounts, getActiveAccount, getWatchlist } from "./data";
 import {
   activateAccountAction,
   newAccountAction,
   removeAccountAction,
   saveAccountAction,
+  saveWatchlistAction,
 } from "./actions";
 import SubmitButton from "../components/SubmitButton";
 import PropRuleToggle from "./PropRuleToggle";
@@ -16,6 +17,7 @@ export default async function SettingsPage() {
   if (!user) redirect("/login");
   const a = await getActiveAccount(supabase, user.id);
   const accounts = await getAccounts(supabase, user.id);
+  const watchlist = await getWatchlist(supabase, user.id);
 
   const v = {
     label: a?.label ?? "FundedNext",
@@ -186,6 +188,29 @@ export default async function SettingsPage() {
 
         <div>
           <button type="submit" className="primary">Enregistrer</button>
+        </div>
+      </form>
+
+      {/* Watchlist — les noms d'actifs proposés à l'écriture d'une idée */}
+      <div className="eyebrow bar" style={{ marginTop: 28 }}>watchlist</div>
+      <form action={saveWatchlistAction} className="card" style={{ display: "grid", gap: 12 }}>
+        <div className="note">
+          Les <b>noms d&apos;actifs</b> proposés quand tu écris une idée. Mets le nom de <b>ton
+          broker</b> : tu penses « BRENT », il écrit « UKOUSD » — c&apos;est le sien qui compte, sinon
+          l&apos;idée part en hors-plan. Tout symbole importé s&apos;ajoute tout seul.
+        </div>
+        <div>
+          <label>Symboles (séparés par des virgules)</label>
+          <textarea
+            name="symbols"
+            rows={3}
+            defaultValue={watchlist.join(", ")}
+            placeholder="EURUSD, GBPUSD, USDJPY, BTCUSD, NDX100, XAUUSD…"
+            style={{ width: "100%", fontFamily: "var(--font-mono)" }}
+          />
+        </div>
+        <div>
+          <SubmitButton pendingLabel="Enregistrement…">Enregistrer la watchlist</SubmitButton>
         </div>
       </form>
     </main>
