@@ -256,14 +256,14 @@ export default async function Dashboard({
       <section className="kpigrid">
         <Kpi label="Gain net" value={fmtMoney(pnlNet)} tone={tone(pnlNet)} sub={`${closed.length} clôturée(s) · ${((pnlNet / equityRef) * 100 > 0 ? "+" : "") + ((pnlNet / equityRef) * 100).toFixed(2)} %`} />
         {exp ? (
-          <Kpi label="Profit factor" value={exp.profit_factor === Infinity ? "∞" : exp.profit_factor.toFixed(2)} tone={exp.profit_factor > 1.5 ? "gain" : exp.profit_factor < 1 ? "loss" : "warn"} sub={exp.profit_factor > 1.5 ? "sain · > 1.5" : "sous 1.5"} />
+          <Kpi label="Profit factor" value={exp.profit_factor === Infinity ? "∞" : exp.profit_factor.toFixed(2)} tone={exp.profit_factor > 1.5 ? "gain" : exp.profit_factor < 1 ? "loss" : "warn"} sub={exp.profit_factor > 1.5 ? "tes gains dépassent tes pertes" : exp.profit_factor < 1 ? "tes pertes dépassent tes gains" : "gains et pertes s'équilibrent"} />
         ) : (
-          <Kpi label="Profit factor" value="—" sub="aucun R calculable" />
+          <Kpi label="Profit factor" value="—" sub="rien à mesurer pour l'instant" />
         )}
         {exp ? (
-          <Kpi label="Win rate" value={pct0(exp.win_rate)} sub={`n=${exp.n} · payoff ${exp.payoff.toFixed(2)}`} />
+          <Kpi label="Win rate" value={pct0(exp.win_rate)} sub="part de tes décisions gagnantes" />
         ) : (
-          <Kpi label="Win rate" value={`${closed.length ? Math.round((closed.filter((l) => l.pnl > 0).length / closed.length) * 100) : 0} %`} sub={`n=${closed.length} · sur le P&L (pas de R)`} />
+          <Kpi label="Win rate" value={`${closed.length ? Math.round((closed.filter((l) => l.pnl > 0).length / closed.length) * 100) : 0} %`} sub="part de tes décisions gagnantes" />
         )}
         {exp ? (
           <Kpi label="Espérance" value={resR(exp.expectancy_r, pctMean)} tone={tone(enPct ? pctMean : exp.expectancy_r)} sub={`par ${motUnite}`} />
@@ -281,14 +281,14 @@ export default async function Dashboard({
           <Kpi label="Perte moyenne" value="—" sub="—" />
         )}
         {sh ? (
-          <Kpi label="Sharpe" value={sh.value.toFixed(2)} tone={tone(sh.value)} sub={sh.is_meaningful ? `n=${sh.n} j · ${measured ? "soldes broker" : "reconstitué"}` : `n=${sh.n} j · pas fiable · ${measured ? "soldes broker" : "reconstitué"}`} />
+          <Kpi label="Sharpe" value={sh.value.toFixed(2)} tone={tone(sh.value)} sub={sh.is_meaningful ? "régularité de tes gains" : "régularité — encore peu de recul"} />
         ) : (
-          <Kpi label="Sharpe" value="—" sub="moins de 2 jours de résultats" />
+          <Kpi label="Sharpe" value="—" sub="il faut au moins 2 jours" />
         )}
         {so ? (
-          <Kpi label="Sortino" value={so.value.toFixed(2)} tone={tone(so.value)} sub={`n=${so.n} j · ${measured ? "soldes broker" : "reconstitué"}`} />
+          <Kpi label="Sortino" value={so.value.toFixed(2)} tone={tone(so.value)} sub={so.is_meaningful ? "régularité, côté pertes" : "côté pertes — encore peu de recul"} />
         ) : (
-          <Kpi label="Sortino" value="—" sub="moins de 2 jours de résultats" />
+          <Kpi label="Sortino" value="—" sub="il faut au moins 2 jours" />
         )}
       </section>
 
@@ -540,7 +540,7 @@ export default async function Dashboard({
                   <div className="card" style={{ background: c.bg, minHeight: 150, display: "flex", flexDirection: "column", margin: 0 }}>
                     <div className="eyebrow" style={{ margin: 0, color: c.col }}>{c.tag}</div>
                     {c.cell.n === 0 ? <div className="stat none big" style={{ marginTop: 6 }}>—</div> : <div className="stat big" style={{ marginTop: 6, color: c.col }}>{fmtMoney(c.cell.expectancy_money)}</div>}
-                    <div className="note" style={{ marginTop: 6 }}>{c.cell.n === 0 ? "aucune donnée sur cette portée" : `moy./idée · n = ${c.cell.n} · total ${fmtMoney(c.cell.total_money)} · ${c.verdict}`}</div>
+                    <div className="note" style={{ marginTop: 6 }}>{c.cell.n === 0 ? "aucune donnée pour l'instant" : `${c.verdict} · ${c.cell.n} idée${c.cell.n > 1 ? "s" : ""}`}</div>
                   </div>
                 );
                 return (

@@ -11,6 +11,7 @@ import {
 import SubmitButton from "../components/SubmitButton";
 import PropRuleToggle from "./PropRuleToggle";
 import Help from "../components/Help";
+import AutoTextarea from "../components/AutoTextarea";
 
 export default async function SettingsPage() {
   const { supabase, user } = await currentUser();
@@ -201,7 +202,7 @@ export default async function SettingsPage() {
         </div>
         <div>
           <label>Symboles (séparés par des virgules)</label>
-          <textarea
+          <AutoTextarea
             name="symbols"
             rows={3}
             defaultValue={watchlist.join(", ")}

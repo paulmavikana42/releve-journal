@@ -607,4 +607,22 @@ table.t td b { font-family: var(--font-ui); }
 .shot { border: 1px solid var(--rule-soft); border-radius: 8px; padding: 6px; background: rgba(233,239,247,.02); }
 .shot .cap { font-size: .74rem; color: var(--muted); padding: 6px 4px 2px; }
 
+/* --- formulaire « joindre une capture » : ne déborde jamais --- */
+.capture-form { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.capture-form .cap-file { max-width: 100%; min-width: 0; font-size: .85rem; }
+.capture-form .cap-caption { flex: 1 1 160px; min-width: 0; }
+input[type="file"] { max-width: 100%; }
+@media (max-width: 560px) {
+  .capture-form > * { flex: 1 1 100%; }
+  .capture-form .cap-file, .capture-form .cap-caption, .capture-form select, .capture-form button { width: 100%; }
+}
+
+/* --- garde-fous mobile : rien ne déborde à droite --- */
+.note, .card, .stat, p { overflow-wrap: anywhere; }
+@media (max-width: 600px) {
+  .card.between { flex-wrap: wrap; }
+  .card .row { flex-wrap: wrap; }
+  .ticket-row > div { min-width: 0; }
+}
+
 img { max-width: 100%; }

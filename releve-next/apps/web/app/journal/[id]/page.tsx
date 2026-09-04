@@ -28,6 +28,7 @@ import {
 import SubmitButton from "../../components/SubmitButton";
 import ConfirmSubmit from "../../components/ConfirmSubmit";
 import BackLink from "../../components/BackLink";
+import AutoTextarea from "../../components/AutoTextarea";
 import Help from "../../components/Help";
 
 const STATUS_LABEL: Record<string, string> = {
@@ -354,10 +355,10 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             ))}
           </div>
         )}
-        <form action={addCapture} className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+        <form action={addCapture} className="capture-form">
           <input type="hidden" name="owner_type" value="idea" />
           <input type="hidden" name="owner_id" value={idea.id} />
-          <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif" required />
+          <input type="file" name="file" accept="image/png,image/jpeg,image/webp,image/gif" required className="cap-file" />
           <select name="kind" defaultValue="entree">
             <option value="these">Thèse</option>
             <option value="entree">Entrée</option>
@@ -365,7 +366,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             <option value="sortie">Sortie</option>
             <option value="autre">Autre</option>
           </select>
-          <input name="caption" placeholder="légende (facultatif)" style={{ flex: 1, minWidth: 160 }} />
+          <input name="caption" placeholder="légende (facultatif)" className="cap-caption" />
           <SubmitButton pendingLabel="Envoi…">Joindre</SubmitButton>
         </form>
       </section>
@@ -382,7 +383,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             const rk = risks.get(p.position_id) ?? null;
             const isCore = idea.initial_position?.uid === p.uid;
             return (
-              <div key={p.uid} className="card between">
+              <div key={p.uid} className="card between ticket-row">
                 <div>
                   <div className="row">
                     <span className="chip">#{p.position_id}</span>
@@ -426,7 +427,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             La discipline mesure le <em>process</em>, indépendamment du gain. Le verdict dit si le
             marché t'a donné raison. Les deux se croisent dans le quadrant.
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          <div className="g2">
             {[
               ["entry_in_zone", "Entrée dans la zone prévue"],
               ["size_conforme", "Taille conforme au risque"],
@@ -456,7 +457,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           </div>
           <div>
             <label>Leçon</label>
-            <textarea name="lesson" rows={3} placeholder="Ce que ce trade t'apprend, à répliquer ou à éviter." style={{ width: "100%" }} />
+            <AutoTextarea name="lesson" rows={3} placeholder="Ce que ce trade t'apprend, à répliquer ou à éviter." style={{ width: "100%" }} />
           </div>
           <div>
             <SubmitButton pendingLabel="Enregistrement…">Enregistrer la revue</SubmitButton>
@@ -549,7 +550,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           </div>
           <div>
             <label>Note</label>
-            <textarea name="note" rows={2} placeholder="Pourquoi je ne l'ai pas pris…" style={{ width: "100%" }} />
+            <AutoTextarea name="note" rows={2} placeholder="Pourquoi je ne l'ai pas pris…" style={{ width: "100%" }} />
           </div>
           <div>
             <SubmitButton pendingLabel="Enregistrement…">Enregistrer le bilan</SubmitButton>
