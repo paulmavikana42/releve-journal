@@ -10,6 +10,10 @@ import { EquityCurve, PieProgress } from "../components/charts";
 
 const PHASE_LABEL: Record<string, string> = { p1: "Phase 1", p2: "Phase 2", funded: "Financé" };
 
+// Section VERROUILLÉE jusqu'au branchement live MT5 (voir docs/compliance.md).
+// Personne n'y accède, même par URL directe. Passer à false pour rallumer.
+const COMPLIANCE_LOCKED = true;
+
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 const TONE_COLOR: Record<string, string> = { gain: "var(--gain)", warn: "var(--accent)", loss: "var(--loss)" };
 
@@ -19,6 +23,7 @@ function fmtMoney(n: number, cur: string): string {
 }
 
 export default async function CompliancePage() {
+  if (COMPLIANCE_LOCKED) redirect("/dashboard"); // section en pause jusqu'au live MT5
   const { supabase, user } = await currentUser();
   if (!user) redirect("/login");
 

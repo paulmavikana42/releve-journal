@@ -9,9 +9,10 @@ const NAV = [
   { href: "/journal", label: "Journal" },
   { href: "/campaigns", label: "Thèses" },
   { href: "/import", label: "Import" },
-  { href: "/compliance", label: "Conformité" },
+  // Conformité : verrouillée jusqu'au branchement live MT5 (voir docs/compliance.md).
+  { href: "/compliance", label: "Conformité", locked: true },
   { href: "/settings", label: "Réglages" },
-];
+] as { href: string; label: string; locked?: boolean }[];
 
 export default function Rail() {
   const p = usePathname() ?? "";
@@ -53,11 +54,19 @@ export default function Rail() {
           </button>
         </div>
         <nav>
-          {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className={isOn(n.href) ? "on" : ""} onClick={() => setOpen(false)}>
-              {n.label}
-            </Link>
-          ))}
+          {NAV.map((n) =>
+            n.locked ? (
+              <span key={n.href} className="nav-locked" title="Bientôt disponible — activé en prod avec le flux MT5 en direct" aria-disabled="true">
+                {n.label}
+                <span className="nav-lock" aria-hidden="true">🔒</span>
+                <span className="help" data-tip="Bientôt disponible. Cette section s'activera quand ton compte sera en prod réelle, rattaché en direct aux terminaux MT5.">?</span>
+              </span>
+            ) : (
+              <Link key={n.href} href={n.href} className={isOn(n.href) ? "on" : ""} onClick={() => setOpen(false)}>
+                {n.label}
+              </Link>
+            ),
+          )}
         </nav>
         <div className="spacer" />
         <div className="foot">

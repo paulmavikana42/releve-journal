@@ -90,6 +90,15 @@ a:hover { text-decoration: underline; }
 }
 .rail nav a:hover { background: rgba(233,239,247,.04); text-decoration: none; }
 .rail nav a.on { background: var(--accent-soft); border-left-color: var(--accent); color: var(--accent); font-weight: 600; }
+/* entrée de nav verrouillée (bientôt disponible) : grisée, non cliquable */
+.rail nav .nav-locked {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 12px; border-left: 2px solid transparent;
+  color: var(--muted); font-weight: 500; font-size: .95rem;
+  opacity: .5; cursor: not-allowed; user-select: none;
+}
+.rail nav .nav-locked .nav-lock { font-size: .8rem; }
+.rail nav .nav-locked .help { opacity: .9; }
 .rail .spacer { flex: 1; }
 .rail .foot { border-top: 1px solid var(--rule-soft); padding-top: 12px; margin-top: 8px; }
 .main { flex: 1; min-width: 0; }
