@@ -52,7 +52,10 @@ export default async function CompliancePage() {
   const phaseStart = store.phaseStart(activeUid);
   const inPhase = (i: Idea) => !phaseStart || !i.closed_at || i.closed_at >= phaseStart;
   const phaseIdeas = scoped.ideas.filter(inPhase);
-  const comp = evaluate(active, phaseIdeas, []);
+  // Tant qu'aucune phase n'a été franchie : comportement d'origine (soldes broker,
+  // tous les trades même non rapariés). Après un passage : on repart de la base
+  // (reconstruction depuis le capital de départ, sur les trades de la phase).
+  const comp = phaseStart ? evaluate(active, phaseIdeas, []) : evaluate(active, scoped.ideas, scoped.deals);
   const cur = active.symbol;
   const breached = comp.breached.length > 0;
   const isFunded = active.is_funded || active.phase === "funded";
