@@ -64,8 +64,8 @@ export default function JournalList({ rows, toReview }: { rows: Row[]; toReview:
         </div>
       )}
 
-      {/* en-tête de colonnes (aligné sur les tuiles) */}
-      <div style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", padding: "0 16px 6px" }}>
+      {/* en-tête de colonnes (aligné sur les tuiles, masqué en mobile) */}
+      <div className="journal-head" style={{ padding: "0 16px 6px" }}>
         {["symbole", "sens", "statut", "entrée", "décision", "résultat", ""].map((h, k) => (
           <div key={k} className="eyebrow" style={{ margin: 0, textAlign: k === 3 || k === 5 ? "right" : "left" }}>{h}</div>
         ))}
@@ -76,8 +76,8 @@ export default function JournalList({ rows, toReview }: { rows: Row[]; toReview:
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
           {vus.map((r) => (
-            <div key={r.id} className="card" style={{ display: "grid", gridTemplateColumns: COLS, gap: 10, alignItems: "center", padding: "12px 16px" }}>
-              <div>
+            <div key={r.id} className="card journal-row" style={{ padding: "12px 16px" }}>
+              <div className="jr-sym">
                 <b>{r.symbol}</b>
                 {r.tags.length > 0 && (
                   <span className="chips" style={{ display: "inline-flex", marginLeft: 8, verticalAlign: "middle" }}>
@@ -87,12 +87,12 @@ export default function JournalList({ rows, toReview }: { rows: Row[]; toReview:
                   </span>
                 )}
               </div>
-              <div><span className={`chip ${r.sensCls}`}>{r.sens}</span></div>
-              <div><span className={`chip ${r.statusCls}`}>{r.statusLabel}</span></div>
-              <div className="num" style={{ textAlign: "right" }}>{r.entree}</div>
-              <div><span className={`chip ${r.quadCls}`}>{r.quadGlyph} {r.quadLabel}</span></div>
-              <div className={`num ${r.resTone ? "txt-" + r.resTone : "muted"}`} style={{ textAlign: "right", whiteSpace: "nowrap" }}>{r.res}</div>
-              <div style={{ textAlign: "right" }}>
+              <div className="jr-sens"><span className={`chip ${r.sensCls}`}>{r.sens}</span></div>
+              <div className="jr-statut"><span className={`chip ${r.statusCls}`}>{r.statusLabel}</span></div>
+              <div className="jr-entree num" style={{ textAlign: "right" }}>{r.entree}</div>
+              <div className="jr-dec"><span className={`chip ${r.quadCls}`}>{r.quadGlyph} {r.quadLabel}</span></div>
+              <div className={`jr-res num ${r.resTone ? "txt-" + r.resTone : "muted"}`} style={{ textAlign: "right", whiteSpace: "nowrap" }}>{r.res}</div>
+              <div className="jr-menu" style={{ textAlign: "right" }}>
                 <IdeaMenu id={r.id} canModify={r.canModify} isArmed={r.isArmed} />
               </div>
             </div>

@@ -102,7 +102,7 @@ a:hover { text-decoration: underline; }
     display: flex; align-items: center; gap: 10px;
     position: sticky; top: 0; z-index: 40;
     background: var(--rail); border-bottom: 1px solid var(--rule-soft);
-    padding: 10px 14px;
+    padding: 12px 20px;
   }
   .railtop .hb {
     background: none; border: none; padding: 0; cursor: pointer;
@@ -139,7 +139,7 @@ a:hover { text-decoration: underline; }
   .rail .foot { margin-top: 12px; }
   .rail .foot .ghost { padding: 13px; font-size: 1rem; }
 
-  .wrap { padding: 18px 16px 56px; }
+  .wrap { padding: 20px 20px 64px; }
 }
 
 .mono, code { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
@@ -150,6 +150,24 @@ a:hover { text-decoration: underline; }
 
 .row { display: flex; align-items: center; gap: 12px; }
 .between { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+/* --- liste du journal : grille 7 colonnes en desktop, empilée en mobile --- */
+.journal-head, .journal-row {
+  display: grid; grid-template-columns: 1.7fr .8fr .95fr .95fr 1fr .85fr .5fr;
+  gap: 10px; align-items: center;
+}
+@media (max-width: 700px) {
+  .journal-head { display: none; }
+  .journal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+  .journal-row > .jr-sym { order: 1; flex: 1 1 55%; min-width: 0; }
+  .journal-row > .jr-menu { order: 2; margin-left: auto; }
+  .journal-row > .jr-sens { order: 3; }
+  .journal-row > .jr-statut { order: 4; }
+  .journal-row > .jr-dec { order: 5; }
+  .journal-row > .jr-entree { order: 6; }
+  .journal-row > .jr-res { order: 7; margin-left: auto; }
+  .journal-row > .jr-entree, .journal-row > .jr-res { text-align: left !important; }
+}
 
 /* --- grilles utilitaires responsives (formulaires, sections) --- */
 .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
