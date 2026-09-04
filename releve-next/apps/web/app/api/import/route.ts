@@ -44,15 +44,15 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: `Fichier non reconnu : ${String(e)}` }, { status: 400 });
   }
 
-  // Cloisonnement : on tague positions et soldes avec le compte ACTIF (comme la
-  // version Streamlit). Sans compte configuré (activeUid ""), on laisse tel quel.
+  // Cloisonnement. Une POSITION garde le n° de compte du BROKER (clé stable
+  // <compte>:<ticket>) : c'est ce qui rend l'import idempotent (réimporter le même
+  // rapport n'ajoute rien) et ce qui préserve les liens idée↔ticket déjà posés.
+  // Elle se cloisonne de toute façon via son idée liée. Les SOLDES (deals), eux,
+  // se cloisonnent directement par compte : on les tague avec le compte actif.
   const { activeUid } = await activeScope(supabase, user.id);
-  let positions = parsed.positions;
+  const positions = parsed.positions;
   let deals = parsed.deals;
   if (activeUid) {
-    positions = parsed.positions.map(
-      (p) => new Position({ ...p, account_id: activeUid } as unknown as ConstructorParameters<typeof Position>[0]),
-    );
     deals = parsed.deals.map(
       (d) => new Deal({ ...d, account_id: activeUid } as unknown as ConstructorParameters<typeof Deal>[0]),
     );
