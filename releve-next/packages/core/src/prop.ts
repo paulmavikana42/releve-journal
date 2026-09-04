@@ -487,15 +487,18 @@ export function evaluate(
     ),
   );
 
-  // 2. drawdown max
+  // 2. drawdown max — on affiche la MARGE avant le plancher (room avant de
+  // sauter), plus parlante que la profondeur du creux ; le pire creux reste en
+  // détail. La marge = (solde − plancher) / capital de départ.
+  const ddMarginPct = pct(marge, rules.start_balance);
   checks.push(
     new Check(
       "drawdown",
       "Drawdown max",
       ddPct.lt(rules.max_drawdown_pct.times(rules.warn_at).div(100)),
       ddPct.gte(rules.max_drawdown_pct),
-      ddPct.gt(0) ? `-${ddPct.toNumber().toFixed(2)} %` : "0.00 %",
-      `limite ${rules.max_drawdown_pct.toNumber().toFixed(0)} % · ${rules.drawdown_static ? "statique" : "trailing"} · plancher ${groupThousands(floor.toNumber())}`,
+      `+${ddMarginPct.toNumber().toFixed(2)} % de marge`,
+      `limite ${rules.max_drawdown_pct.toNumber().toFixed(0)} % · ${rules.drawdown_static ? "statique" : "trailing"} · plancher ${groupThousands(floor.toNumber())} · pire creux ${ddPct.gt(0) ? `-${ddPct.toNumber().toFixed(2)} %` : "0.00 %"}`,
       rules.max_drawdown_pct.isZero() ? null : ddPct.div(rules.max_drawdown_pct).toNumber(),
     ),
   );

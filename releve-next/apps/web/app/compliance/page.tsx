@@ -1,10 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { dailyPnlRealise, evaluate, scopeToAccount } from "@releve/core";
+import { dailyPnlRealise, evaluate, scopeToAccount, serverNow, type Idea } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
 import { activeScope } from "../settings/data";
+import { advancePhaseAction } from "../settings/actions";
+import ConfirmSubmit from "../components/ConfirmSubmit";
 import CalendarGrid from "../components/CalendarGrid";
 import { EquityCurve, PieProgress } from "../components/charts";
+
+const PHASE_LABEL: Record<string, string> = { p1: "Phase 1", p2: "Phase 2", funded: "Financé" };
 
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
 const TONE_COLOR: Record<string, string> = { gain: "var(--gain)", warn: "var(--accent)", loss: "var(--loss)" };
@@ -42,9 +46,23 @@ export default async function CompliancePage() {
     );
   }
 
-  const comp = evaluate(active, scoped.ideas, scoped.deals);
+  // Conformité PAR PHASE : à chaque passage (p2, funded), tout repart de la base.
+  // On ne garde que les trades depuis le début de la phase courante, et l'équité
+  // est reconstruite depuis le capital de départ (deals=[] → pas de solde absolu).
+  const phaseStart = store.phaseStart(activeUid);
+  const inPhase = (i: Idea) => !phaseStart || !i.closed_at || i.closed_at >= phaseStart;
+  const phaseIdeas = scoped.ideas.filter(inPhase);
+  const comp = evaluate(active, phaseIdeas, []);
   const cur = active.symbol;
   const breached = comp.breached.length > 0;
+  const isFunded = active.is_funded || active.phase === "funded";
+  const nextPhaseLabel = active.challenge_type === "two_phase" && active.phase === "p1" ? "Phase 2" : "Financé";
+
+  // Jours de trading : renouvelés au MOIS (indépendant de la phase).
+  const now = serverNow();
+  const moisCourant = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+  const moisIdeas = scoped.ideas.filter((i) => i.closed_at && `${i.closed_at.getUTCFullYear()}-${String(i.closed_at.getUTCMonth() + 1).padStart(2, "0")}` === moisCourant);
+  const tradingDaysMois = evaluate(active, moisIdeas, []).trading_days;
 
   // Calendrier (dupliqué du tableau de bord) : P&L réellement tombé, jour par jour.
   const parJour = dailyPnlRealise(scoped.ideas, scoped.deals);
@@ -85,9 +103,24 @@ export default async function CompliancePage() {
 
   return (
     <main className="wrap">
-      <header style={{ marginBottom: 14 }}>
-        <h1 style={{ margin: 0 }}>Conformité prop firm</h1>
-        <div className="subtitle">{active.label} · mise à jour à chaque import</div>
+      <header className="between" style={{ marginBottom: 14, flexWrap: "wrap", gap: 12 }}>
+        <div>
+          <h1 style={{ margin: 0 }}>Conformité prop firm</h1>
+          <div className="subtitle" style={{ marginBottom: 0 }}>
+            {active.label} · <span className="txt-acc">{PHASE_LABEL[active.phase] ?? active.phase}</span> · mise à jour à chaque import
+          </div>
+        </div>
+        {!isFunded && (
+          <ConfirmSubmit
+            action={advancePhaseAction}
+            className="ghost"
+            title="Passer à la phase suivante ?"
+            message={<>Ta firme t&apos;a validé cette phase ? On passe en <b>{nextPhaseLabel}</b> : la conformité (équité, drawdown, marge) <b>repart de la base</b> à partir d&apos;aujourd&apos;hui. Réversible seulement en recréant le compte — à faire seulement quand c&apos;est officiel.</>}
+            confirmLabel={`Oui, passer en ${nextPhaseLabel}`}
+          >
+            J&apos;ai passé cette phase →
+          </ConfirmSubmit>
+        )}
       </header>
 
       {/* Statut (sans « vigilance ») */}
@@ -134,11 +167,11 @@ export default async function CompliancePage() {
           <div className="eyebrow bar">jours de trading</div>
           {minDays > 0 ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 12, paddingTop: 6 }}>
-              <PieProgress done={comp.trading_days} total={minDays} />
+              <PieProgress done={tradingDaysMois} total={minDays} />
               <div className="note" style={{ textAlign: "center" }}>
-                {comp.trading_days >= minDays
-                  ? <b className="txt-gain">Minimum atteint</b>
-                  : <>jour(s) de trading valides</>}
+                {tradingDaysMois >= minDays
+                  ? <b className="txt-gain">Minimum atteint ce mois</b>
+                  : <><b>{tradingDaysMois}/{minDays}</b> jour(s) de trading valides ce mois</>}
               </div>
             </div>
           ) : (

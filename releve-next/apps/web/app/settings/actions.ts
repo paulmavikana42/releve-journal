@@ -3,8 +3,38 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Decimal, PropRules } from "@releve/core";
-import { currentUser } from "@/app/journal/data";
-import { getActiveAccount, removeAccount, saveAccount, setActiveAccount, setWatchlist } from "./data";
+import { currentUser, openStore } from "@/app/journal/data";
+import { getActiveAccount, removeAccount, saveAccount, setActiveAccount, setWatchlist, activeScope } from "./data";
+import { serverNow } from "@releve/core";
+
+/**
+ * Passe à la phase suivante du challenge (bouton manuel : la firme t'a validé).
+ * Enregistre la date du passage → la conformité repart de la base pour la
+ * nouvelle phase. p1→p2→funded (two_phase) ou p1→funded (one_phase/instant).
+ */
+export async function advancePhaseAction(): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const active = await getActiveAccount(supabase, user.id);
+  if (!active) return;
+  const cur = active.phase;
+  if (active.is_funded || cur === "funded") return;
+  const next = active.challenge_type === "two_phase" && cur === "p1" ? "p2" : "funded";
+
+  const { activeUid } = await activeScope(supabase, user.id);
+  const store = await openStore(supabase, user.id);
+  store.load();
+  store.advance_phase(activeUid, next, serverNow());
+  await store.flush();
+
+  const d = active.to_dict();
+  d.phase = next;
+  await saveAccount(supabase, user.id, PropRules.from_dict(d));
+
+  revalidatePath("/compliance");
+  revalidatePath("/settings");
+  revalidatePath("/dashboard");
+}
 
 /** Enregistre la watchlist (les symboles proposés à l'écriture d'une idée). */
 export async function saveWatchlistAction(formData: FormData): Promise<void> {

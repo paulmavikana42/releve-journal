@@ -509,6 +509,25 @@ export class Store {
     this.append("import_reverted", { import_id: importId });
   }
 
+  /** Marque le passage à une nouvelle phase du challenge (p2, funded) pour un
+   *  compte : la conformité repart de la base à partir de cette date. */
+  advance_phase(accountId: string, toPhase: string, at: Date): void {
+    this.append("phase_advanced", { account_id: accountId, to_phase: toPhase, at });
+  }
+
+  /** Date de début de la phase COURANTE d'un compte (dernier passage), ou null. */
+  phaseStart(accountId: string): Date | null {
+    let last: Date | null = null;
+    for (const ev of this.events()) {
+      if (ev.type !== "phase_advanced") continue;
+      const p = decode(ev.payload) as Dict;
+      if (String(p["account_id"] ?? "") !== accountId) continue;
+      const at = asDate(p["at"]);
+      if (at && (!last || at > last)) last = at;
+    }
+    return last;
+  }
+
   /**
    * Les lots d'import ENCORE actifs (non annulés), du plus récent au plus ancien —
    * pour proposer « annuler le dernier import » après un mauvais fichier.

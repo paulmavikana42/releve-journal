@@ -127,10 +127,13 @@ describe("drawdown", () => {
     expect(c.margin_to_floor.eq("7000")).toBe(true);
   });
 
-  it("jamais en perte -> drawdown NUL, affiché '0.00 %'", () => {
+  it("jamais en perte -> drawdown NUL ; tuile affiche la MARGE + 'pire creux 0.00 %'", () => {
     const c = evaluate(REGLES, [idee("500", 6)], [], day(7), at(7, 12));
     expect(c.drawdown_pct.isZero()).toBe(true);
-    expect(check(c, "drawdown").value).toBe("0.00 %");
+    // La valeur affiche désormais la marge avant plancher (positive), le pire
+    // creux passe en détail.
+    expect(check(c, "drawdown").value).toMatch(/^\+\d+\.\d{2} % de marge$/);
+    expect(check(c, "drawdown").detail).toContain("pire creux 0.00 %");
   });
 });
 
