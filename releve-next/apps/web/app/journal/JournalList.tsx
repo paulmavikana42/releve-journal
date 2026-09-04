@@ -43,14 +43,14 @@ export default function JournalList({ rows, toReview }: { rows: Row[]; toReview:
 
   return (
     <div>
-      <div className="row" style={{ gap: 10, marginBottom: 10 }}>
+      <div className="row" style={{ gap: 10, marginBottom: 10, flexWrap: "wrap" }}>
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Rechercher — un symbole, un tag, une thèse…"
-          style={{ flex: 1 }}
+          style={{ flex: "1 1 180px", minWidth: 0 }}
         />
-        <select value={filtre} onChange={(e) => setFiltre(e.target.value)} style={{ minWidth: 140 }}>
+        <select value={filtre} onChange={(e) => setFiltre(e.target.value)} style={{ flex: "0 1 150px", minWidth: 120 }}>
           {FILTRES.map((f) => (
             <option key={f} value={f}>{f}</option>
           ))}

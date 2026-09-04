@@ -154,19 +154,29 @@ a:hover { text-decoration: underline; }
 /* --- liste du journal : grille 7 colonnes en desktop, empilée en mobile --- */
 .journal-head, .journal-row {
   display: grid; grid-template-columns: 1.7fr .8fr .95fr .95fr 1fr .85fr .5fr;
+  grid-template-areas: "sym sens statut entree dec res menu";
   gap: 10px; align-items: center;
 }
+.jr-sym { grid-area: sym; }
+.jr-sens { grid-area: sens; }
+.jr-statut { grid-area: statut; }
+.jr-entree { grid-area: entree; }
+.jr-dec { grid-area: dec; }
+.jr-res { grid-area: res; }
+.jr-menu { grid-area: menu; }
 @media (max-width: 700px) {
   .journal-head { display: none; }
-  .journal-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
-  .journal-row > .jr-sym { order: 1; flex: 1 1 55%; min-width: 0; }
-  .journal-row > .jr-menu { order: 2; margin-left: auto; }
-  .journal-row > .jr-sens { order: 3; }
-  .journal-row > .jr-statut { order: 4; }
-  .journal-row > .jr-dec { order: 5; }
-  .journal-row > .jr-entree { order: 6; }
-  .journal-row > .jr-res { order: 7; margin-left: auto; }
-  .journal-row > .jr-entree, .journal-row > .jr-res { text-align: left !important; }
+  .journal-row {
+    grid-template-columns: 1fr 1fr auto;
+    grid-template-areas:
+      "sym sym menu"
+      "sens statut dec"
+      "entree res res";
+    gap: 8px;
+  }
+  .journal-row .jr-menu { justify-self: end; }
+  .journal-row .jr-entree { text-align: left !important; }
+  .journal-row .jr-res { text-align: right !important; }
 }
 
 /* --- grilles utilitaires responsives (formulaires, sections) --- */
