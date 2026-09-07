@@ -30,6 +30,8 @@ import ConfirmSubmit from "../../components/ConfirmSubmit";
 import BackLink from "../../components/BackLink";
 import AutoTextarea from "../../components/AutoTextarea";
 import Help from "../../components/Help";
+import TicketRiskEditor from "../TicketRiskEditor";
+import TicketFocus from "../TicketFocus";
 
 const STATUS_LABEL: Record<string, string> = {
   [IdeaStatus.DRAFT]: "brouillon",
@@ -265,7 +267,8 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
         </section>
       ) : (
         !idea.is_executed && t && (
-          <form action={openTrade} className="card" style={{ marginBottom: 20, display: "grid", gap: 12 }}>
+          <form id="declarer-ticket" action={openTrade} className="card" style={{ marginBottom: 20, display: "grid", gap: 12, scrollMarginTop: 80 }}>
+            <TicketFocus />
             <input type="hidden" name="ideaId" value={idea.id} />
             <h2 style={{ marginTop: 0, fontSize: "1rem" }}>Déclarer le ticket (entrée)</h2>
             <div className="muted" style={{ fontSize: ".85rem", marginTop: -6 }}>
@@ -275,7 +278,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             <div className="g4">
               <div>
                 <label>N° de ticket</label>
-                <input name="ticket" required placeholder="88210912" style={{ width: "100%" }} />
+                <input id="ticket-input" name="ticket" required placeholder="88210912" style={{ width: "100%" }} />
               </div>
               <div>
                 <label>Volume</label>
@@ -380,39 +383,58 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
           {idea.adds.length > 0 ? ` · noyau + ${idea.adds.length} renfort` : ""})
         </h2>
         <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-          {tickets.map((p, k) => {
+          {tickets.map((p) => {
             const [stop, src] = idea.stop_for(p);
             const rk = risks.get(p.position_id) ?? null;
-            const isCore = idea.initial_position?.uid === p.uid;
+            const isAdd = !idea.est_du_noyau(p);
+            const needs = stop === null;
+            const securedAnswered = idea.secured_on_add.has(p.uid);
+            const showEditor = isAdd || needs;
             return (
-              <div key={p.uid} className="card between ticket-row">
-                <div>
-                  <div className="row">
-                    <span className="chip">#{p.position_id}</span>
-                    <span className="muted">{isCore ? "noyau" : "renfort"}</span>
-                    <span>{p.open_price.toString()} → {p.close_price.toString()}</span>
+              <div key={p.uid} className="card ticket-row-wrap">
+                <div className="between ticket-row">
+                  <div>
+                    <div className="row">
+                      <span className="chip">#{p.position_id}</span>
+                      <span className="muted">{isAdd ? "renfort" : "noyau"}</span>
+                      <span>{p.open_price.toString()} → {p.close_price.toString()}</span>
+                    </div>
+                    <div className="muted" style={{ fontSize: ".82rem", marginTop: 2 }}>
+                      {p.open_time.toISOString().slice(0, 16).replace("T", " ")} →{" "}
+                      {p.close_time.toISOString().slice(0, 16).replace("T", " ")}
+                      {" · stop "}{stop ? `${stop.toString()} (${src})` : "manquant"}
+                      {" · risque "}{rk ? `${rk.toFixed(2)} $` : "—"}
+                      {isAdd && securedAnswered && (idea.secured_on_add.get(p.uid) ? " · noyau au BE" : " · noyau à risque")}
+                    </div>
                   </div>
-                  <div className="muted" style={{ fontSize: ".82rem", marginTop: 2 }}>
-                    {p.open_time.toISOString().slice(0, 16).replace("T", " ")} →{" "}
-                    {p.close_time.toISOString().slice(0, 16).replace("T", " ")}
-                    {" · stop "}{stop ? `${stop.toString()} (${src})` : "manquant"}
-                    {" · risque "}{rk ? `${rk.toFixed(2)} $` : "—"}
+                  <div className="row" style={{ gap: 10 }}>
+                    <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: p.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)" }}>
+                      {money(p.pnl_net)}
+                    </span>
+                    <ConfirmSubmit
+                      action={unlinkPosition}
+                      hidden={{ ideaId: idea.id, positionUid: p.uid }}
+                      title="Détacher ce ticket ?"
+                      message={<>Le ticket <b>#{p.position_id}</b> est retiré de cette idée (le journal est append-only : rien n&apos;est effacé).</>}
+                      confirmLabel="Oui, détacher"
+                    >
+                      Détacher
+                    </ConfirmSubmit>
                   </div>
                 </div>
-                <div className="row" style={{ gap: 10 }}>
-                  <span style={{ fontWeight: 600, whiteSpace: "nowrap", color: p.pnl_net.gt(0) ? "var(--gain)" : "var(--loss)" }}>
-                    {money(p.pnl_net)}
-                  </span>
-                  <ConfirmSubmit
-                    action={unlinkPosition}
-                    hidden={{ ideaId: idea.id, positionUid: p.uid }}
-                    title="Détacher ce ticket ?"
-                    message={<>Le ticket <b>#{p.position_id}</b> est retiré de cette idée (le journal est append-only : rien n&apos;est effacé).</>}
-                    confirmLabel="Oui, détacher"
-                  >
-                    Détacher
-                  </ConfirmSubmit>
-                </div>
+                {showEditor && (
+                  <div style={{ marginTop: 10 }}>
+                    <TicketRiskEditor
+                      ideaId={idea.id}
+                      positionUid={p.uid}
+                      isAdd={isAdd}
+                      defaultStop={stop ? stop.toString() : (p.stop_original ? p.stop_original.toString() : "")}
+                      needsStop={needs}
+                      securedAnswered={securedAnswered}
+                      securedValue={idea.secured_on_add.get(p.uid) ?? false}
+                    />
+                  </div>
+                )}
               </div>
             );
           })}

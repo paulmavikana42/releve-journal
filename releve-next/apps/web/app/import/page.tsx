@@ -5,6 +5,7 @@ import { activeScope } from "../settings/data";
 import ImportPanel from "../journal/ImportPanel";
 import OrphanRow from "../journal/OrphanRow";
 import ConfirmSubmit from "../components/ConfirmSubmit";
+import PageGuide from "../components/PageGuide";
 import { undoImportAction } from "./actions";
 
 // Étapes pour récupérer l'export depuis MetaTrader 5 (inspiré du step-by-step
@@ -51,6 +52,7 @@ export default async function ImportPage() {
       closed: p.close_time.toISOString().slice(0, 10),
       pnl: p.pnl_net.toFixed(2),
       pnlPos: p.pnl_net.gt(0),
+      defaultStop: p.stop_original ? p.stop_original.toString() : "",
       candidates: matchCandidates(p, list).map((c) => ({
         ideaId: c.idea.id,
         label: c.idea.label || c.idea.display_name,
@@ -68,6 +70,17 @@ export default async function ImportPage() {
           mis à jour, jamais dupliqué.
         </div>
       </header>
+
+      <PageGuide
+        pageKey="import"
+        title="Dépose ton export, rapproché par ticket"
+        intro="Rapport HTML MT5 ou CSV (MT4/MT5). Un trade déjà déclaré est complété, jamais dupliqué — réimporter le même fichier n'ajoute rien."
+        points={[
+          "Les trades sans idée écrite avant apparaissent « à rapparier », en bas.",
+          "Pour un renfort : saisis son stop propre et coche si le noyau était au breakeven.",
+          "Trompé de fichier ? « Annuler le dernier import » — réversible et réimportable.",
+        ]}
+      />
 
       <div className="g-split">
         {/* Assistant pas-à-pas : récupérer l'export MT5 */}

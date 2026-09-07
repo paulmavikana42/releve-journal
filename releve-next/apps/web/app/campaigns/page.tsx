@@ -7,6 +7,7 @@ import SubmitButton from "../components/SubmitButton";
 import BlockEditor from "../components/BlockEditor";
 import ConfirmSubmit from "../components/ConfirmSubmit";
 import CampaignMenu from "../components/CampaignMenu";
+import PageGuide from "../components/PageGuide";
 import { initBlocks } from "@/lib/blocks";
 
 function rFmt(x: Decimal | null): string {
@@ -35,6 +36,18 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         <h1 style={{ margin: 0 }}>Thèses macro</h1>
         <div className="subtitle">Une conviction jouée sur plusieurs instruments. Facultatif.</div>
       </header>
+
+      <PageGuide
+        pageKey="campaigns"
+        title="Regroupe une même lecture macro"
+        intro="Une thèse relie plusieurs idées sur des instruments différents — « dollar fort » joué short EURUSD et long USDJPY. C'est UNE décision, pas trois."
+        points={[
+          "Le R d'une thèse est la somme des R de ses idées.",
+          "Écris-la avec le même éditeur par blocs (texte + captures) que tes idées.",
+          "Rattache tes idées à la thèse à l'écriture, ou ici.",
+          "Abandonner une thèse libère ses idées : elles redeviennent autonomes.",
+        ]}
+      />
 
       {/* Deux sections en bulles */}
       <div className="row" style={{ gap: 6, marginBottom: 18, flexWrap: "wrap" }}>

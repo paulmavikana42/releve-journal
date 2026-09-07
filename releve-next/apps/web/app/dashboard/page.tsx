@@ -34,6 +34,7 @@ import { CalibrationChart, CumulativeCurve, RHistogram } from "../components/cha
 import CalendarGrid from "../components/CalendarGrid";
 import MonthGrid from "../components/MonthGrid";
 import WelcomeBanner from "../components/WelcomeBanner";
+import PageGuide from "../components/PageGuide";
 
 const JOURS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
@@ -270,6 +271,18 @@ export default async function Dashboard({
 
       {/* Compte vierge : on accueille et on oriente vers le guide (refermable). */}
       {all.length === 0 && deals.length === 0 && <WelcomeBanner />}
+
+      <PageGuide
+        pageKey="dashboard"
+        title="Lis-le de haut en bas"
+        intro="Chaque bloc répond à une question. Les options en haut (unité, mesure, matrice) changent tout d'un coup, sans qu'un écran contredise un autre."
+        points={[
+          "Unité : une thèse macro = une décision (recommandé) ; « par idée » juge l'exécution instrument par instrument.",
+          "R ou % : le R mesure ton edge (taille neutralisée), le % l'impact réel sur le compte.",
+          "Le calendrier passe en mois-par-mois quand tu choisis « tout l'historique ».",
+          "La matrice décision × résultat ne se remplit qu'avec tes relectures.",
+        ]}
+      />
 
       {/* Comment on compte : 3 choix annoncés, jamais devinés */}
       <div className="optrow">

@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useMemo, useState } from "react";
 import IdeaMenu from "../components/IdeaMenu";
 
@@ -85,6 +86,11 @@ export default function JournalList({ rows, toReview }: { rows: Row[]; toReview:
                       <span key={i} className={`chip ${t.cls}`}>{t.label}</span>
                     ))}
                   </span>
+                )}
+                {r.isArmed && (
+                  <Link href={`/journal/${r.id}#declarer-ticket`} className="jr-incomplete" title="Idée écrite mais ticket pas encore déclaré">
+                    ↳ déclarer le ticket
+                  </Link>
                 )}
               </div>
               <div className="jr-sens"><span className={`chip ${r.sensCls}`}>{r.sens}</span></div>

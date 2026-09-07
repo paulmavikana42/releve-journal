@@ -150,6 +150,22 @@ export default function GuidePage() {
         })}
       </div>
 
+      {/* ÉCRIRE UNE THÈSE — mis en avant */}
+      <div className="card" style={{ borderColor: "var(--accent)", background: "rgba(255,196,84,.05)", marginTop: 22 }}>
+        <div className="eyebrow" style={{ color: "var(--accent)" }}>écris aussi tes thèses</div>
+        <div style={{ fontWeight: 600, margin: "3px 0 6px" }}>Une même conviction, plusieurs instruments = une thèse</div>
+        <div className="note">
+          Quand une seule lecture du monde te fait prendre plusieurs positions — « dollar fort » joué
+          <b> short EURUSD</b> ET <b>long USDJPY</b> — écris-la comme <b>thèse macro</b> dans l&apos;onglet
+          <b> Thèses</b> (même éditeur par blocs que les idées : texte + captures), puis rattache-lui tes
+          idées. Relevé la compte alors comme <b>une seule décision</b> et <b>somme les R</b> de ses jambes —
+          sinon un pari joué sur trois instruments compterait trois fois et gonflerait ton échantillon.
+        </div>
+        <div className="row" style={{ marginTop: 10 }}>
+          <Link href="/campaigns?vue=ecrire" className="ghost" style={{ textDecoration: "none" }}>Écrire une thèse macro</Link>
+        </div>
+      </div>
+
       {/* EXEMPLE MACRO ULTRA-COHÉRENT */}
       <div className="eyebrow bar" style={{ marginTop: 30 }}>un exemple concret</div>
       <div className="note" style={{ marginBottom: 12 }}>
@@ -252,6 +268,9 @@ export default function GuidePage() {
         </div>
         <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
           <Link href="/settings" className="ghost">Régler mon compte</Link>
+          <Link href="/campaigns?vue=ecrire" className="ghost" style={{ textDecoration: "none" }}>
+            Écrire une thèse
+          </Link>
           <Link href="/journal?vue=ecrire" className="primary" style={{ textDecoration: "none" }}>
             Écrire ma première idée
           </Link>

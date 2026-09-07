@@ -5,7 +5,9 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/journal";
+  // "/" décide de la 1re page selon que le compte est réglé ou non (nouvel
+  // utilisateur → Réglages, sinon → Tableau de bord).
+  const next = searchParams.get("next") ?? "/";
 
   if (code) {
     const supabase = await createClient();

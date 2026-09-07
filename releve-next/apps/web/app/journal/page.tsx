@@ -12,6 +12,7 @@ import { currentUser, openStore } from "./data";
 import { activeScope, getWatchlist } from "../settings/data";
 import WriteIdeaForm from "./WriteIdeaForm";
 import JournalList, { type Row } from "./JournalList";
+import PageGuide from "../components/PageGuide";
 
 const QUAD: Record<string, [string, string, string]> = {
   [Quadrant.MASTERY]: ["Maîtrise", "ok", "✓"],
@@ -135,6 +136,18 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
         <h1 style={{ margin: 0 }}>Journal</h1>
         <div className="subtitle">{list.length} idée(s)</div>
       </header>
+
+      <PageGuide
+        pageKey="journal"
+        title="Écris l'idée AVANT d'entrer"
+        intro="C'est le seul geste qui permet à Relevé de te contredire. Puis, dès que tu entres, déclare ton numéro de ticket."
+        points={[
+          "« ＋ Écrire une idée » : ta prédiction (sens, stop, conviction) et tes motivations.",
+          "Statuts : armée → en cours → clôturé → revue.",
+          "Une idée « armée » attend son ticket : clique « ↳ déclarer le ticket ».",
+          "Filtre et recherche pour retrouver une idée, un tag ou une thèse.",
+        ]}
+      />
 
       {/* Onglets en bulles */}
       <div className="row" style={{ gap: 6, marginBottom: 18, flexWrap: "wrap" }}>

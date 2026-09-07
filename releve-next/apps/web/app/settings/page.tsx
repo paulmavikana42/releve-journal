@@ -13,6 +13,7 @@ import PropRuleToggle from "./PropRuleToggle";
 import PropFieldset from "./PropFieldset";
 import Help from "../components/Help";
 import AutoTextarea from "../components/AutoTextarea";
+import PageGuide from "../components/PageGuide";
 
 export default async function SettingsPage() {
   const { supabase, user } = await currentUser();
@@ -45,6 +46,17 @@ export default async function SettingsPage() {
       <header style={{ marginBottom: 20 }}>
         <h1 style={{ margin: 0 }}>Réglages du compte</h1>
       </header>
+
+      <PageGuide
+        pageKey="settings"
+        title="Pose ton compte en premier"
+        intro="C'est le point de départ : choisis le type de compte, ton capital, et — si c'est un compte prop firm — les règles de ta firme. Tout le reste s'appuie dessus."
+        points={[
+          "Compte prop firm : renseigne drawdown, objectif, jours minimum… Compte propre : aucune règle de challenge.",
+          "Watchlist : les noms d'actifs proposés à l'écriture d'une idée — mets ceux de TON broker.",
+          "Plusieurs comptes ? Chacun est cloisonné ; active celui que tu veux voir.",
+        ]}
+      />
 
       <p className="muted" style={{ marginTop: 0 }}>
         Choisis d&apos;abord le <strong>type de compte</strong>. Sur un compte prop firm, les règles sont

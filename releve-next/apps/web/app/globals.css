@@ -545,6 +545,43 @@ table.t td b { font-family: var(--font-ui); }
 .calm-cell.flat .pnl { color: var(--signal); }
 .calm-cell.clickable { cursor: pointer; }
 
+/* --- guide contextuel de page --- */
+.pageguide { position: relative; background: rgba(255,196,84,.05); border-color: var(--rule); margin-bottom: 18px; }
+.pageguide-x {
+  position: absolute; top: 8px; right: 10px; border: 0; background: transparent;
+  color: var(--muted); cursor: pointer; font-size: .9rem; line-height: 1; padding: 4px;
+}
+.pageguide-x:hover { color: var(--ink); }
+.pageguide-list { margin: 0; padding-left: 18px; display: grid; gap: 5px; }
+.pageguide-list li { font-size: .88rem; color: var(--muted); line-height: 1.5; }
+.pageguide-list li b { color: var(--ink); }
+.pageguide-reopen {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px;
+  border: 1px solid var(--rule-soft); background: var(--card); color: var(--muted);
+  border-radius: 999px; padding: 5px 12px; font-size: .8rem; cursor: pointer;
+}
+.pageguide-reopen:hover { border-color: var(--accent); color: var(--ink); }
+
+/* --- risque d'un renfort (appariement + détail) --- */
+.add-risk {
+  border: 1px dashed var(--rule); border-radius: 8px; padding: 10px 12px;
+  background: rgba(255,196,84,.04); display: grid; gap: 8px;
+}
+.add-risk-fields { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: end; }
+.add-risk-fields .add-be { align-self: center; }
+.add-risk-toggle { padding: 6px 10px; font-size: .82rem; }
+@media (max-width: 640px) {
+  .add-risk-fields { grid-template-columns: 1fr; align-items: stretch; }
+}
+
+/* invitation « idée incomplète » (journal) */
+.jr-incomplete {
+  display: inline-block; margin-left: 8px; font-size: .74rem; font-family: var(--font-mono);
+  color: var(--accent); text-decoration: none; white-space: nowrap;
+}
+.jr-incomplete:hover { text-decoration: underline; }
+.ticket-row-wrap { display: block; }
+
 /* --- bannière de bienvenue (compte vierge) --- */
 .welcome { position: relative; background: rgba(255,196,84,.05); }
 .welcome-x {
@@ -700,6 +737,7 @@ input[type="file"] { max-width: 100%; }
 @media (max-width: 600px) {
   .card.between { flex-wrap: wrap; }
   .card .row { flex-wrap: wrap; }
+  .ticket-row { flex-wrap: wrap; gap: 8px; }
   .ticket-row > div { min-width: 0; }
 }
 

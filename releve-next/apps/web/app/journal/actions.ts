@@ -13,6 +13,7 @@ import {
   Review,
   RiskSource,
   serverNow,
+  StopEvidence,
   Thesis,
   ThesisOutcome,
 } from "@releve/core";
@@ -122,7 +123,13 @@ export async function addIdea(formData: FormData): Promise<void> {
   redirect("/journal?vue=journal");
 }
 
-/** Rattache une position orpheline à une idée (décision humaine de l'appariement). */
+/**
+ * Rattache une position orpheline à une idée (décision humaine de l'appariement).
+ * Si le candidat est un RENFORT, on capture au passage son vrai stop (un renfort
+ * n'hérite jamais du stop du noyau — décision [H ter]) et si le noyau était déjà
+ * au breakeven à son ouverture (décision [H quater]) — sinon l'exposition
+ * simultanée reste un majorant et le R peut être incalculable.
+ */
 export async function linkPosition(formData: FormData): Promise<void> {
   const { supabase, user } = await currentUser();
   if (!user) redirect("/login");
@@ -132,7 +139,38 @@ export async function linkPosition(formData: FormData): Promise<void> {
 
   const store = await openStore(supabase, user.id);
   store.link(ideaId, positionUid);
+  // Renfort : stop propre + « noyau au breakeven » (répondus à l'appariement).
+  if (formData.get("is_add") === "1") {
+    const stop = decOf(formData, "add_stop");
+    if (stop !== null) store.set_ticket_stop(ideaId, positionUid, stop, StopEvidence.CAPTURE);
+    store.set_secured(ideaId, positionUid, formData.get("core_secured") === "on");
+  }
   await store.flush();
+  revalidatePath("/journal");
+  revalidatePath(`/journal/${ideaId}`);
+}
+
+/**
+ * Précise le risque d'un ticket rattaché (depuis le détail) : le stop réel d'un
+ * renfort et, pour un renfort, si le noyau était au breakeven à son ouverture.
+ * C'est ce qui rend l'exposition simultanée « mesurée » plutôt que « majorant ».
+ */
+export async function saveTicketRisk(formData: FormData): Promise<void> {
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  const ideaId = String(formData.get("ideaId") ?? "");
+  const positionUid = String(formData.get("positionUid") ?? "");
+  if (!ideaId || !positionUid) return;
+
+  const store = await openStore(supabase, user.id);
+  const stop = decOf(formData, "stop");
+  if (stop !== null) store.set_ticket_stop(ideaId, positionUid, stop, StopEvidence.CAPTURE);
+  // Champ caché présent uniquement pour un renfort → on enregistre oui/non.
+  if (formData.get("with_secured") === "1") {
+    store.set_secured(ideaId, positionUid, formData.get("core_secured") === "on");
+  }
+  await store.flush();
+  revalidatePath(`/journal/${ideaId}`);
   revalidatePath("/journal");
 }
 
