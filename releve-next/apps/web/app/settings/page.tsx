@@ -10,6 +10,7 @@ import {
 } from "./actions";
 import SubmitButton from "../components/SubmitButton";
 import PropRuleToggle from "./PropRuleToggle";
+import PropFieldset from "./PropFieldset";
 import Help from "../components/Help";
 import AutoTextarea from "../components/AutoTextarea";
 
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
     trading_day_threshold_pct: a ? a.trading_day_threshold_pct.toString() : "0",
     consistency_on: a ? a.consistency_pct != null && !a.consistency_pct.isZero() : false,
     consistency_pct: a?.consistency_pct ? a.consistency_pct.toString() : "30",
+    is_prop: a ? a.is_prop : true,
   };
 
   return (
@@ -45,8 +47,9 @@ export default async function SettingsPage() {
       </header>
 
       <p className="muted" style={{ marginTop: 0 }}>
-        Les règles sont <strong>contractuelles</strong> et propres à chaque firme. Renseigne-les :
-        c'est ce qui rend ta marge de survie et ton drawdown justes.
+        Choisis d&apos;abord le <strong>type de compte</strong>. Sur un compte prop firm, les règles sont
+        <strong> contractuelles</strong> et propres à chaque firme : les renseigner rend ta marge de
+        survie et ton drawdown justes. Un compte propre n&apos;a aucune règle de challenge.
       </p>
 
       {accounts.length > 0 && (
@@ -117,75 +120,78 @@ export default async function SettingsPage() {
           </div>
         </div>
 
-        <div className="g2">
-          <div>
-            <label>Type de challenge</label>
-            <select name="challenge_type" defaultValue={v.challenge_type} style={{ width: "100%" }}>
-              <option value="one_phase">Une phase</option>
-              <option value="two_phase">Deux phases</option>
-              <option value="instant">Compte financé (instant)</option>
-            </select>
-          </div>
-          <div>
-            <label>Phase actuelle</label>
-            <select name="phase" defaultValue={v.phase} style={{ width: "100%" }}>
-              <option value="p1">Phase 1</option>
-              <option value="p2">Phase 2</option>
-              <option value="funded">Financé</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="g2">
-          <div>
-            <label>Drawdown max (%)<Help tip="La perte totale maximale autorisée depuis le capital de départ (ou le plus-haut si trailing). Au-delà, le challenge est perdu." /></label>
-            <input name="max_drawdown_pct" inputMode="decimal" defaultValue={v.max_drawdown_pct} style={{ width: "100%" }} />
-          </div>
-          <div>
-            <label>Objectif de gain (%)<Help tip="Le gain à atteindre pour valider la phase, en % du capital de départ." /></label>
-            <input name="profit_target_pct" inputMode="decimal" defaultValue={v.profit_target_pct} style={{ width: "100%" }} />
-          </div>
-        </div>
-
-        <label className="row" style={{ gap: 8 }}>
-          <input type="checkbox" name="drawdown_static" defaultChecked={v.drawdown_static} />
-          <span>Drawdown FIXE (base capital de départ)</span>
-        </label>
-        <div className="note">
-          Drawdown FIXE : le plancher ne bouge jamais (ex. FundedNext, plancher à capital × (1 − DD %)).
-          Décoché = trailing sur le plus-haut atteint.
-        </div>
-
-        {/* Règles optionnelles selon la firme */}
-        <PropRuleToggle
-          name="min_days_on"
-          label="Jours de trading minimum"
-          hint="Certaines firmes exigent un nombre minimum de journées actives. Active-le seulement si ta firme l'impose."
-          defaultOn={v.min_days_on}
-        >
+        {/* Type de compte : prop firm (règles ci-dessous) ou compte propre (aucune). */}
+        <PropFieldset defaultOn={v.is_prop}>
           <div className="g2">
             <div>
-              <label>Nombre de jours requis</label>
-              <input name="min_trading_days" inputMode="numeric" defaultValue={v.min_trading_days} style={{ width: "100%" }} />
+              <label>Type de challenge</label>
+              <select name="challenge_type" defaultValue={v.challenge_type} style={{ width: "100%" }}>
+                <option value="one_phase">Une phase</option>
+                <option value="two_phase">Deux phases</option>
+                <option value="instant">Compte financé (instant)</option>
+              </select>
             </div>
             <div>
-              <label>% minimum par jour (un jour compte si gain ≥)</label>
-              <input name="trading_day_threshold_pct" inputMode="decimal" defaultValue={v.trading_day_threshold_pct} style={{ width: "100%" }} />
+              <label>Phase actuelle</label>
+              <select name="phase" defaultValue={v.phase} style={{ width: "100%" }}>
+                <option value="p1">Phase 1</option>
+                <option value="p2">Phase 2</option>
+                <option value="funded">Financé</option>
+              </select>
             </div>
           </div>
-        </PropRuleToggle>
 
-        <PropRuleToggle
-          name="consistency_on"
-          label="Cohérence (consistency)"
-          hint="Part maximale du profit total qu'un seul jour a le droit de peser. Vérifiée au retrait par beaucoup de firmes."
-          defaultOn={v.consistency_on}
-        >
-          <div style={{ maxWidth: 260 }}>
-            <label>Part max d'un seul jour (%)</label>
-            <input name="consistency_pct" inputMode="decimal" defaultValue={v.consistency_pct} style={{ width: "100%" }} />
+          <div className="g2">
+            <div>
+              <label>Drawdown max (%)<Help tip="La perte totale maximale autorisée depuis le capital de départ (ou le plus-haut si trailing). Au-delà, le challenge est perdu." /></label>
+              <input name="max_drawdown_pct" inputMode="decimal" defaultValue={v.max_drawdown_pct} style={{ width: "100%" }} />
+            </div>
+            <div>
+              <label>Objectif de gain (%)<Help tip="Le gain à atteindre pour valider la phase, en % du capital de départ." /></label>
+              <input name="profit_target_pct" inputMode="decimal" defaultValue={v.profit_target_pct} style={{ width: "100%" }} />
+            </div>
           </div>
-        </PropRuleToggle>
+
+          <label className="row" style={{ gap: 8 }}>
+            <input type="checkbox" name="drawdown_static" defaultChecked={v.drawdown_static} />
+            <span>Drawdown FIXE (base capital de départ)</span>
+          </label>
+          <div className="note">
+            Drawdown FIXE : le plancher ne bouge jamais (ex. FundedNext, plancher à capital × (1 − DD %)).
+            Décoché = trailing sur le plus-haut atteint.
+          </div>
+
+          {/* Règles optionnelles selon la firme */}
+          <PropRuleToggle
+            name="min_days_on"
+            label="Jours de trading minimum"
+            hint="Certaines firmes exigent un nombre minimum de journées actives. Active-le seulement si ta firme l'impose."
+            defaultOn={v.min_days_on}
+          >
+            <div className="g2">
+              <div>
+                <label>Nombre de jours requis</label>
+                <input name="min_trading_days" inputMode="numeric" defaultValue={v.min_trading_days} style={{ width: "100%" }} />
+              </div>
+              <div>
+                <label>% minimum par jour (un jour compte si gain ≥)</label>
+                <input name="trading_day_threshold_pct" inputMode="decimal" defaultValue={v.trading_day_threshold_pct} style={{ width: "100%" }} />
+              </div>
+            </div>
+          </PropRuleToggle>
+
+          <PropRuleToggle
+            name="consistency_on"
+            label="Cohérence (consistency)"
+            hint="Part maximale du profit total qu'un seul jour a le droit de peser. Vérifiée au retrait par beaucoup de firmes."
+            defaultOn={v.consistency_on}
+          >
+            <div style={{ maxWidth: 260 }}>
+              <label>Part max d'un seul jour (%)</label>
+              <input name="consistency_pct" inputMode="decimal" defaultValue={v.consistency_pct} style={{ width: "100%" }} />
+            </div>
+          </PropRuleToggle>
+        </PropFieldset>
 
         <div>
           <button type="submit" className="primary">Enregistrer</button>

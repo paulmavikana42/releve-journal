@@ -464,6 +464,13 @@ button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: defa
   .cal-day .pnl { display: none; font-size: .58rem; margin-top: 3px; }
   .cal-day.sel { min-height: 58px; }
   .cal-day.sel .pnl { display: block; }
+  /* calendrier mensuel mobile : 4 colonnes, montant révélé au tap. */
+  .calm { grid-template-columns: repeat(4, 1fr); gap: 4px; }
+  .calm-cell { min-height: 44px; padding: 5px 4px; border-radius: 6px; justify-content: flex-start; cursor: default; }
+  .calm-cell .num { font-size: .60rem; }
+  .calm-cell .pnl { display: none; font-size: .58rem; margin-top: 3px; }
+  .calm-cell.sel { min-height: 58px; }
+  .calm-cell.sel .pnl { display: block; }
   .matrix { grid-template-columns: 1fr 1fr; }
   .matrix .mmeta { display: none; }
 }
@@ -519,6 +526,44 @@ table.t td b { font-family: var(--font-ui); }
 .cal-day.loss .pnl, .cal-day.loss .num { color: var(--loss); }
 .cal-day.flat { background: var(--signal-soft); border-color: rgba(138,169,255,.30); }
 .cal-day.flat .pnl { color: var(--signal); }
+
+/* --- calendrier mois par mois (« tout l'historique ») : même langage visuel --- */
+.calm { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; }
+.calm-cell {
+  border: 1px solid var(--rule-soft); border-radius: 8px;
+  min-height: 62px; padding: 6px 8px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: rgba(233,239,247,.02);
+}
+.calm-cell .num { font-family: var(--font-mono); font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+.calm-cell .pnl { font-family: var(--font-mono); font-size: .78rem; font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+.calm-cell.gain { background: var(--gain-soft); border-color: rgba(79,227,166,.40); }
+.calm-cell.gain .pnl, .calm-cell.gain .num { color: var(--gain); }
+.calm-cell.loss { background: var(--loss-soft); border-color: rgba(255,138,124,.40); }
+.calm-cell.loss .pnl, .calm-cell.loss .num { color: var(--loss); }
+.calm-cell.flat { background: var(--signal-soft); border-color: rgba(138,169,255,.30); }
+.calm-cell.flat .pnl { color: var(--signal); }
+.calm-cell.clickable { cursor: pointer; }
+
+/* --- zone de dépôt d'import (jamais de débordement horizontal) --- */
+.dropzone {
+  border: 1.5px dashed var(--rule); border-radius: 10px;
+  padding: 18px 16px; display: flex; flex-direction: column; gap: 10px;
+  align-items: flex-start; background: rgba(233,239,247,.02);
+  max-width: 100%; box-sizing: border-box;
+}
+.dropzone.drag { border-color: var(--accent); background: rgba(255,196,84,.06); }
+.dropzone-icon { font-size: 1.3rem; color: var(--muted); line-height: 1; }
+.dropzone-main { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; max-width: 100%; }
+.dropzone-hint { color: var(--muted); font-size: .82rem; overflow-wrap: anywhere; }
+.dropzone-file {
+  font-size: .82rem; color: var(--ink); max-width: 100%;
+  display: flex; align-items: center; gap: 8px; min-width: 0;
+}
+.dropzone-file .dz-name {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  max-width: 100%; font-family: var(--font-mono); color: var(--accent);
+}
 
 /* --- éditeur par blocs (façon Notion) --- */
 .blk-editor { border: 1px solid var(--rule-soft); border-radius: 10px; padding: 6px; background: rgba(233,239,247,.02); }

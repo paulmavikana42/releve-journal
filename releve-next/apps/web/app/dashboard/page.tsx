@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import {
   analysisRows,
   availablePeriods,
-  compute as challengeCompute,
   convictionCalibration,
   dailyPnlRealise,
   dailyReturns,
@@ -33,6 +32,7 @@ import { currentUser, openStore } from "../journal/data";
 import { activeScope } from "../settings/data";
 import { CalibrationChart, CumulativeCurve, RHistogram } from "../components/charts";
 import CalendarGrid from "../components/CalendarGrid";
+import MonthGrid from "../components/MonthGrid";
 
 const JOURS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
@@ -124,7 +124,6 @@ export default async function Dashboard({
     const [ip, dp] = Math.abs(n).toFixed(2).split(".");
     return (n < 0 ? "-" : "+") + grp(ip!) + "." + dp + " " + cur;
   };
-  const moneyNP = (x: number | Decimal) => fmtMoney(x).replace(/^\+/, "");
   const floorFmt = (x: number | Decimal) => grp(Math.round(num(x)).toString()) + " " + cur;
   const rFmt = (x: number | Decimal | null): string => {
     if (x === null) return "—";
@@ -160,7 +159,6 @@ export default async function Dashboard({
   const sh = sharpe(rets);
   const so = sortino(rets);
 
-  const state = challengeCompute(deals, period);
   const dd = deals.length ? drawdown(dealCurve(dealsP)) : null;
 
   const parJour = dailyPnlRealise(ideasP, dealsP);
@@ -192,11 +190,17 @@ export default async function Dashboard({
   const nReviewed = ideasP.filter((i) => i.review !== null).length;
 
   // --- calendrier ---------------------------------------------------------
+  // Deux vues, MÊME UI : un mois choisi → jour par jour ; « tout l'historique »
+  // → mois par mois (une case = un mois), regroupé par année.
   const calDays = [...parJour.keys()].sort();
+  const montantCell = (pnl: number | null) =>
+    pnl === null ? null : enPct ? pctFmt((pnl / equityRef) * 100) : fmtMoney(pnl);
+  const klassCell = (pnl: number | null) =>
+    pnl === null ? "" : pnl > 0 ? "gain" : pnl < 0 ? "loss" : "flat";
+
   let cal: { y: number; m: number; cells: ({ d: number; pnl: number | null } | null)[]; total: number; verts: number; rouges: number } | null = null;
-  if (calDays.length) {
-    const target = period.is_all ? calDays[calDays.length - 1]! : `${period.year}-${String(period.month).padStart(2, "0")}`;
-    const [y, m] = period.is_all ? (target.split("-").map(Number) as [number, number]) : [period.year!, period.month!];
+  if (calDays.length && !period.is_all) {
+    const [y, m] = [period.year!, period.month!];
     const firstWeekday = (new Date(Date.UTC(y, m - 1, 1)).getUTCDay() + 6) % 7;
     const nDays = new Date(Date.UTC(y, m, 0)).getUTCDate();
     const cells: ({ d: number; pnl: number | null } | null)[] = [];
@@ -213,6 +217,33 @@ export default async function Dashboard({
       cells.push({ d, pnl });
     }
     cal = { y, m, cells, total, verts, rouges };
+  }
+
+  // Vue « tout l'historique » : agrégat par mois, une année par bloc.
+  type MCell = { label: string; klass: string; montant: string | null };
+  let monthCal: { year: number; cells: MCell[]; total: number; verts: number; rouges: number }[] | null = null;
+  if (calDays.length && period.is_all) {
+    const parMois = new Map<string, number>();
+    for (const [day, pnl] of parJour) {
+      const k = day.slice(0, 7);
+      parMois.set(k, (parMois.get(k) ?? 0) + pnl);
+    }
+    const years = [...new Set([...parMois.keys()].map((k) => Number(k.slice(0, 4))))].sort();
+    monthCal = years.map((y) => {
+      const cells: MCell[] = [];
+      let total = 0, verts = 0, rouges = 0;
+      for (let m = 1; m <= 12; m++) {
+        const key = `${y}-${String(m).padStart(2, "0")}`;
+        const pnl = parMois.has(key) ? parMois.get(key)! : null;
+        if (pnl !== null) {
+          total += pnl;
+          if (pnl > 0) verts++;
+          else if (pnl < 0) rouges++;
+        }
+        cells.push({ label: MOIS_COURT[m]!, klass: klassCell(pnl), montant: montantCell(pnl) });
+      }
+      return { year: y, cells, total, verts, rouges };
+    });
   }
 
   // --- construction des liens d'options (préserve tous les paramètres) -----
@@ -342,22 +373,31 @@ export default async function Dashboard({
 
       <Rule />
 
-      {/* 2 bis. LE CALENDRIER */}
-      <div className="eyebrow bar">le mois, jour par jour</div>
-      {cal ? (
+      {/* 2 bis. LE CALENDRIER — jour par jour (un mois) ou mois par mois (tout) */}
+      <div className="eyebrow bar">{period.is_all ? "l'historique, mois par mois" : "le mois, jour par jour"}</div>
+      <div style={{ marginBottom: 10 }}>
+        <PeriodSelect periods={periods} current={periodeKey} qp={qp} />
+      </div>
+      {monthCal ? (
         <>
-          <div style={{ marginBottom: 10 }}>
-            <PeriodSelect periods={periods} current={periodeKey} qp={qp} />
-          </div>
+          {monthCal.map((yr) => (
+            <div key={yr.year} style={{ marginBottom: 14 }}>
+              <div className="eyebrow" style={{ marginBottom: 6 }}>{yr.year}</div>
+              <MonthGrid cells={yr.cells} />
+              <div className="note" style={{ marginTop: 8 }}>
+                <b className={yr.total > 0 ? "txt-gain" : yr.total < 0 ? "txt-loss" : "txt-sig"}>{fmtMoney(yr.total)}</b> sur {yr.year} · <span className="txt-gain">{yr.verts} mois vert(s)</span> · <span className="txt-loss">{yr.rouges} rouge(s)</span>.
+              </div>
+            </div>
+          ))}
+          <div className="note">Une case = un mois. Seuls les mois où de l&apos;argent est tombé sont colorés. Choisis un mois ci-dessus pour revenir au détail jour par jour.</div>
+        </>
+      ) : cal ? (
+        <>
           <CalendarGrid
             cells={cal.cells.map((cell) =>
               cell === null
                 ? null
-                : {
-                    d: cell.d,
-                    klass: cell.pnl === null ? "" : cell.pnl > 0 ? "gain" : cell.pnl < 0 ? "loss" : "flat",
-                    montant: cell.pnl === null ? null : enPct ? pctFmt((cell.pnl / equityRef) * 100) : fmtMoney(cell.pnl),
-                  },
+                : { d: cell.d, klass: klassCell(cell.pnl), montant: montantCell(cell.pnl) },
             )}
           />
           <div className="note" style={{ marginTop: 8 }}>
@@ -396,31 +436,6 @@ export default async function Dashboard({
           </table>
           </div>
           <div className="note" style={{ marginTop: 6 }}>Le flottant vient des cours que <b>tu</b> as saisis, pas d&apos;un flux de prix. Il n&apos;entre dans aucune statistique.</div>
-          <Rule />
-        </>
-      )}
-
-      {/* 4. ÉTAT DU CHALLENGE — survie globale (seulement si des deals broker) */}
-      {state && (
-        <>
-          <div className="eyebrow bar">état du challenge</div>
-          <section className="kpigrid">
-            <Kpi label="Solde" value={moneyNP(state.balance)} sub={`${state.balance_date ? "au " + String(state.balance_date.getUTCDate()).padStart(2, "0") + "/" + String(state.balance_date.getUTCMonth() + 1).padStart(2, "0") + " · " : ""}dernier trade clos`} />
-            <Kpi label="Marge avant échec" value={moneyNP(state.margin_to_floor)} tone={state.survival_tone} sub={`plancher ${floorFmt(state.floor)} · ${state.margin_pct.toFixed(1)} % du compte`} />
-            <Kpi label="Drawdown total" value={`-${state.drawdown_from_start_pct.toFixed(2)} %`} tone={state.drawdown_from_start_pct.gt(0) ? "loss" : "none"} sub="depuis 100 000 $ · limite 10 %" />
-            {state.period_low !== null && (
-              <Kpi label={`Plus bas — ${period.label.split(" ")[0]}`} value={moneyNP(state.period_low)} sub={`pic de repli -${state.peak_drawdown_pct.toFixed(2)} %`} />
-            )}
-          </section>
-          {state.balance_date && (
-            <div className="note" style={{ marginTop: 4 }}>Ce solde date de ta dernière clôture — pas de ton solde live. En swing, une position ouverte peut l&apos;avoir fait bouger depuis.</div>
-          )}
-          {state.survival_tone === "loss" && (
-            <div className="card" style={{ borderLeft: "3px solid var(--loss)", marginTop: 10 }}>
-              <div className="eyebrow">alerte</div>
-              <div className="note">Il te reste <b>{moneyNP(state.margin_to_floor)}</b> avant le plancher de {floorFmt(state.floor)}. Un seul trade mal dimensionné peut suffire.</div>
-            </div>
-          )}
           <Rule />
         </>
       )}

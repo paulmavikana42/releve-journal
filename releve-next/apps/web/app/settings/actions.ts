@@ -58,8 +58,11 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
   // On garde l'uid du compte existant (clé de cloisonnement stable).
   const existing = await getActiveAccount(supabase, user.id);
 
-  const minDaysOn = formData.get("min_days_on") === "on";
-  const consistencyOn = formData.get("consistency_on") === "on";
+  // Compte prop firm (règles de challenge) ou compte propre (aucune règle) :
+  // un compte propre n'envoie ni challenge, ni drawdown, ni règles optionnelles.
+  const isProp = formData.get("is_prop") === "on";
+  const minDaysOn = isProp && formData.get("min_days_on") === "on";
+  const consistencyOn = isProp && formData.get("consistency_on") === "on";
 
   const rules = new PropRules({
     uid: existing?.uid, // undefined ⇒ un nouvel uid est généré
@@ -67,6 +70,7 @@ export async function saveAccountAction(formData: FormData): Promise<void> {
     currency: String(formData.get("currency") ?? "USD"),
     account_id: String(formData.get("account_id") ?? "").trim(),
     start_balance: dec(formData, "start_balance", "100000"),
+    is_prop: isProp,
     challenge_type: String(formData.get("challenge_type") ?? "two_phase"),
     phase: String(formData.get("phase") ?? "p1"),
     daily_loss_pct: new Decimal(0), // règle « perte journalière » retirée du MVP

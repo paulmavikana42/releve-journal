@@ -17,11 +17,14 @@ export default function ImportPanel() {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [drag, setDrag] = useState(false);
 
   async function upload(file: File) {
     setBusy(true);
     setError(null);
     setResult(null);
+    setFileName(file.name);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -43,33 +46,58 @@ export default function ImportPanel() {
 
   return (
     <div className="card" style={{ marginBottom: 20 }}>
-      <div className="between">
-        <div>
-          <strong>Importer un rapport</strong>
-          <div className="muted" style={{ fontSize: ".85rem" }}>
-            Rapport HTML MT5 ou export CSV (MT4/MT5). Rapproché par ticket : aucun doublon.
-          </div>
-        </div>
-        <div className="row">
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".html,.htm,.csv,.txt"
+      {/* Zone de dépôt : bouton + glisser-déposer. Le nom de fichier est tronqué
+          (jamais de débordement horizontal, même sur mobile). */}
+      <div
+        className={`dropzone ${drag ? "drag" : ""}`}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setDrag(true);
+        }}
+        onDragLeave={() => setDrag(false)}
+        onDrop={(e) => {
+          e.preventDefault();
+          setDrag(false);
+          const f = e.dataTransfer.files?.[0];
+          if (f && !busy) void upload(f);
+        }}
+      >
+        <input
+          ref={inputRef}
+          id="import-file"
+          type="file"
+          accept=".html,.htm,.csv,.txt"
+          disabled={busy}
+          style={{ display: "none" }}
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) void upload(f);
+          }}
+        />
+        <div className="dropzone-icon" aria-hidden>⬆</div>
+        <div className="dropzone-main">
+          <button
+            type="button"
+            className="ghost"
             disabled={busy}
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void upload(f);
-            }}
-          />
-          {busy && <span className="muted">Import…</span>}
+            onClick={() => inputRef.current?.click()}
+          >
+            Choisir un fichier
+          </button>
+          <span className="dropzone-hint">ou glisse-le ici · HTML MT5 ou CSV (MT4/MT5)</span>
         </div>
+        {(fileName || busy) && (
+          <div className="dropzone-file">
+            {busy ? "Import en cours…" : <><span className="dz-name">{fileName}</span></>}
+          </div>
+        )}
       </div>
 
       {error && (
-        <div style={{ marginTop: 10, color: "var(--loss)", fontSize: ".9rem" }}>{error}</div>
+        <div style={{ marginTop: 10, color: "var(--loss)", fontSize: ".9rem", overflowWrap: "anywhere" }}>{error}</div>
       )}
       {result && (
-        <div style={{ marginTop: 10, fontSize: ".9rem" }}>
+        <div style={{ marginTop: 10, fontSize: ".9rem", overflowWrap: "anywhere" }}>
           <span className="chip" style={{ marginRight: 8 }}>{result.kind}</span>
           {result.parsed_positions} position(s) lue(s) ·{" "}
           <strong>{result.imported_positions} nouvelle(s)</strong> ·{" "}
