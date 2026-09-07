@@ -33,6 +33,7 @@ import { activeScope } from "../settings/data";
 import { CalibrationChart, CumulativeCurve, RHistogram } from "../components/charts";
 import CalendarGrid from "../components/CalendarGrid";
 import MonthGrid from "../components/MonthGrid";
+import WelcomeBanner from "../components/WelcomeBanner";
 
 const JOURS = ["lun", "mar", "mer", "jeu", "ven", "sam", "dim"];
 const MOIS = ["", "janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"];
@@ -266,6 +267,9 @@ export default async function Dashboard({
         <h1 style={{ margin: 0 }}>Tableau de bord</h1>
         <div className="subtitle">{(active ? active.label + " · " : "") + period.label}</div>
       </header>
+
+      {/* Compte vierge : on accueille et on oriente vers le guide (refermable). */}
+      {all.length === 0 && deals.length === 0 && <WelcomeBanner />}
 
       {/* Comment on compte : 3 choix annoncés, jamais devinés */}
       <div className="optrow">

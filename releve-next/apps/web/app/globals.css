@@ -545,6 +545,39 @@ table.t td b { font-family: var(--font-ui); }
 .calm-cell.flat .pnl { color: var(--signal); }
 .calm-cell.clickable { cursor: pointer; }
 
+/* --- bannière de bienvenue (compte vierge) --- */
+.welcome { position: relative; background: rgba(255,196,84,.05); }
+.welcome-x {
+  position: absolute; top: 8px; right: 10px; border: 0; background: transparent;
+  color: var(--muted); cursor: pointer; font-size: .9rem; line-height: 1; padding: 4px;
+}
+.welcome-x:hover { color: var(--ink); }
+
+/* --- guide d'onboarding : accordéon du cycle --- */
+.guide-steps { display: flex; flex-direction: column; gap: 8px; }
+.guide-step { border: 1px solid var(--rule-soft); border-radius: 10px; background: rgba(233,239,247,.02); overflow: hidden; }
+.guide-step.on { border-color: var(--accent); }
+.guide-step-head {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; background: transparent; border: 0; cursor: pointer;
+  text-align: left; color: var(--ink); font-family: var(--font-ui);
+}
+.guide-step-head:hover { background: var(--card-hi); }
+.guide-step-num {
+  flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: .82rem; font-weight: 700;
+  background: var(--accent); color: var(--accent-ink);
+}
+.guide-step.on .guide-step-num { box-shadow: 0 0 0 3px rgba(255,196,84,.20); }
+.guide-step-title { flex: 1 1 auto; min-width: 0; font-weight: 600; font-size: .95rem; }
+.guide-step-caret { flex-shrink: 0; color: var(--muted); font-size: .8rem; }
+.guide-step-body { padding: 0 14px 14px 52px; margin: 0; }
+@media (max-width: 760px) {
+  .guide-step-body { padding-left: 14px; }
+  .guide-step-title { font-size: .9rem; }
+}
+
 /* --- zone de dépôt d'import (jamais de débordement horizontal) --- */
 .dropzone {
   border: 1.5px dashed var(--rule); border-radius: 10px;

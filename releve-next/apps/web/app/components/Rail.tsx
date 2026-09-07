@@ -12,6 +12,7 @@ const NAV = [
   // Conformité : verrouillée jusqu'au branchement live MT5 (voir docs/compliance.md).
   { href: "/compliance", label: "Conformité", locked: true },
   { href: "/settings", label: "Réglages" },
+  { href: "/guide", label: "Guide" },
 ] as { href: string; label: string; locked?: boolean }[];
 
 export default function Rail() {
