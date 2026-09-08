@@ -1,5 +1,17 @@
 # PLAN.md — Relevé-Journal : Plans, Essai & Bêta-test
 
+> ⚠️ **OBSOLÈTE (v2, 21 août 2026) — REMPLACÉ par le Document fondateur v3
+> (30 août 2026).** La référence définitive est
+> [`docs/Releve-Journal_Document_fondateur_v3.pdf`](docs/Releve-Journal_Document_fondateur_v3.pdf)
+> et sa synthèse [`docs/document-fondateur-v3.md`](docs/document-fondateur-v3.md).
+> Ce fichier est gardé pour l'historique **mais ses prix sont périmés** :
+> le v3 fixe **Pro 44 $** (au lieu de 39 $), **Elite 64 $** (au lieu de 59 $),
+> **supplément compte Cloud Sync 15 $** (au lieu de 10 $), **supprime l'EA
+> propriétaire** (tout Pro/Elite en Cloud Sync MetaApi G2) et ajoute un plan de
+> scaling MetaApi → API2Trade. Ne PAS se fier aux montants ci-dessous.
+>
+> ---
+>
 > Document de référence pour les sessions Claude Code. À relire en début de
 > chaque session, avant toute modification de code liée aux plans, à l'essai
 > ou au statut bêta-testeur.
