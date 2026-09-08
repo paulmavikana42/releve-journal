@@ -572,10 +572,10 @@ export default async function Dashboard({
                 const colhead = (t: string) => <div className="eyebrow bar mmeta" style={{ margin: 0, alignSelf: "end", justifyContent: "center", textAlign: "center" }}>{t}</div>;
                 const rowlabel = (t: React.ReactNode) => <div className="eyebrow mmeta" style={{ margin: 0, color: "var(--ink)", alignSelf: "center", textAlign: "right" }}>{t}</div>;
                 const Cell = ({ c }: { c: typeof cells[number] }) => (
-                  <div className="card" style={{ background: c.bg, minHeight: 150, display: "flex", flexDirection: "column", margin: 0 }}>
+                  <div className="card mcell" style={{ background: c.bg, margin: 0 }}>
                     <div className="eyebrow" style={{ margin: 0, color: c.col }}>{c.tag}</div>
-                    {c.cell.n === 0 ? <div className="stat none big" style={{ marginTop: 6 }}>—</div> : <div className="stat big" style={{ marginTop: 6, color: c.col }}>{fmtMoney(c.cell.expectancy_money)}</div>}
-                    <div className="note" style={{ marginTop: 6 }}>{c.cell.n === 0 ? "aucune donnée pour l'instant" : `${c.verdict} · ${c.cell.n} idée${c.cell.n > 1 ? "s" : ""}`}</div>
+                    {c.cell.n === 0 ? <div className="stat none big" style={{ margin: 0 }}>—</div> : <div className="stat big" style={{ margin: 0, color: c.col }}>{fmtMoney(c.cell.expectancy_money)}</div>}
+                    <div className="note" style={{ margin: 0 }}>{c.cell.n === 0 ? "aucune donnée pour l'instant" : `${c.verdict} · ${c.cell.n} idée${c.cell.n > 1 ? "s" : ""}`}</div>
                   </div>
                 );
                 return (

@@ -545,6 +545,14 @@ table.t td b { font-family: var(--font-ui); }
 .calm-cell.flat .pnl { color: var(--signal); }
 .calm-cell.clickable { cursor: pointer; }
 
+/* Cellules de la matrice analyse : 3 rangées fixes → titre, chiffre et
+   explicatif alignés d'une tuile à l'autre même si une case est vide. */
+.matrix .mcell {
+  display: grid; grid-template-rows: 2.6em auto 1fr; gap: 8px;
+  min-height: 150px; align-items: start;
+}
+.matrix .mcell .eyebrow { align-self: start; }
+
 /* --- guide contextuel de page --- */
 .pageguide { position: relative; background: rgba(255,196,84,.05); border-color: var(--rule); margin-bottom: 18px; }
 .pageguide-x {
