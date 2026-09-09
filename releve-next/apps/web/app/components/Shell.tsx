@@ -9,7 +9,8 @@ import Rail from "./Rail";
  */
 export default function Shell({ children }: { children: React.ReactNode }) {
   const p = usePathname() ?? "";
-  const bare = p === "/" || p === "/login" || p.startsWith("/auth");
+  const bare =
+    p === "/" || p === "/login" || p === "/complet" || p === "/waitlist-ok" || p.startsWith("/auth");
   if (bare) return <>{children}</>;
   return (
     <div className="shell">

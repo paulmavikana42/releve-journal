@@ -590,6 +590,25 @@ table.t td b { font-family: var(--font-ui); }
 .jr-incomplete:hover { text-decoration: underline; }
 .ticket-row-wrap { display: block; }
 
+/* --- pages de gating bêta (/complet, /waitlist-ok) --- */
+.wrap.gate { min-height: 100dvh; display: flex; align-items: center; justify-content: center; padding: 24px; }
+.gate-card { max-width: 460px; width: 100%; text-align: center; padding: 28px 26px; }
+.gate-title { font-size: 1.5rem; line-height: 1.2; margin: 8px 0 12px; }
+.gate-check {
+  width: 46px; height: 46px; margin: 0 auto 10px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--gain-soft); color: var(--gain); font-size: 1.4rem; font-weight: 700;
+}
+.gate-card form { margin: 4px 0; }
+.gate-card .primary { display: inline-block; }
+.gate-cta { text-decoration: none; }
+.gate-back { display: inline-block; margin-top: 14px; color: var(--muted); font-size: .88rem; text-decoration: none; }
+.gate-back:hover { color: var(--ink); }
+@media (max-width: 520px) {
+  .gate-title { font-size: 1.3rem; }
+  .gate-card { padding: 22px 18px; }
+}
+
 /* --- bannière de bienvenue (compte vierge) --- */
 .welcome { position: relative; background: rgba(255,196,84,.05); }
 .welcome-x {

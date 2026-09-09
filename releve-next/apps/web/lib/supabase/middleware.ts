@@ -6,6 +6,10 @@ import { NextResponse, type NextRequest } from "next/server";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 import { supabaseEnv } from "./env";
+import { betaStatus, isMember } from "@/lib/beta";
+
+// Routes privées de l'app (nécessitent un accès bêta accordé).
+const APP_PREFIXES = ["/dashboard", "/journal", "/settings", "/import", "/campaigns"];
 
 // Routes publiques du site → fichier statique dans public/site/.
 // (Le footer des pages pointe déjà vers /legal, /terms, /privacy, /refund-policy,
@@ -17,10 +21,16 @@ const SITE: Record<string, string> = {
   "/fonctionnalites": "fonctionnalites",
   "/tarifs": "tarifs",
   "/a-propos": "a-propos",
-  "/legal": "legal",
-  "/terms": "terms",
-  "/privacy": "privacy",
-  "/refund-policy": "refund",
+  // Légales : le footer du design pointe vers /legal,/terms,/privacy,/refund-policy ;
+  // on garde ces routes + les alias français, tous servis par les nouveaux fichiers.
+  "/legal": "mentions-legales",
+  "/mentions-legales": "mentions-legales",
+  "/terms": "cgu-cgv",
+  "/cgu-cgv": "cgu-cgv",
+  "/privacy": "confidentialite",
+  "/confidentialite": "confidentialite",
+  "/refund-policy": "remboursement",
+  "/remboursement": "remboursement",
   "/support": "a-propos",
 };
 
@@ -52,13 +62,24 @@ export async function updateSession(request: NextRequest) {
     process.env.NODE_ENV !== "production" && process.env.RELEVE_DEV_PREVIEW === "1";
 
   const path = request.nextUrl.pathname;
-
-  // Connecté : la landing et le login renvoient vers l'app.
-  if (user && (path === "/" || path === "/login")) {
+  const isApp = APP_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
+  const isGate = path === "/complet" || path === "/waitlist-ok";
+  const redirectTo = (pathname: string) => {
     const to = request.nextUrl.clone();
-    to.pathname = "/dashboard";
+    to.pathname = pathname;
     to.search = "";
     return NextResponse.redirect(to);
+  };
+
+  // Aperçu dev : la landing/login mènent directement à l'app.
+  if (devPreview && (path === "/" || path === "/login")) {
+    return redirectTo("/dashboard");
+  }
+
+  // Connecté sur la landing/login : on route selon l'accès bêta.
+  if (user && (path === "/" || path === "/login")) {
+    const status = await betaStatus(supabase);
+    return redirectTo(isMember(status) ? "/dashboard" : status === "waitlisted" ? "/waitlist-ok" : "/complet");
   }
 
   // Site public : on sert le bundle statique correspondant (URL propre conservée).
@@ -74,12 +95,20 @@ export async function updateSession(request: NextRequest) {
     return response;
   }
 
-  // Routes privées : sans session, on renvoie vers le login.
-  if (!user && !devPreview) {
-    const to = request.nextUrl.clone();
-    to.pathname = "/login";
-    to.search = "";
-    return NextResponse.redirect(to);
+  // Pages de gating (complet / liste d'attente) : session requise, pas d'accès bêta.
+  if (isGate) {
+    if (!user && !devPreview) return redirectTo("/login");
+    return response;
+  }
+
+  // Routes privées de l'app : session requise…
+  if (!user && !devPreview) return redirectTo("/login");
+  // …ET accès bêta accordé (sinon page complet / liste d'attente).
+  if (user && !devPreview && isApp) {
+    const status = await betaStatus(supabase);
+    if (!isMember(status)) {
+      return redirectTo(status === "waitlisted" ? "/waitlist-ok" : "/complet");
+    }
   }
 
   return response;
