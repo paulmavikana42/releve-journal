@@ -76,10 +76,14 @@ export async function updateSession(request: NextRequest) {
     return redirectTo("/dashboard");
   }
 
-  // Connecté sur la landing/login : on route selon l'accès bêta.
+  // Connecté : un MEMBRE va à l'app. Un non-membre / en attente qui vise /login est
+  // renvoyé vers sa page de gating, MAIS la landing "/" reste consultable (marketing)
+  // — sinon « Retour à l'accueil » depuis /waitlist-ok boucle.
   if (user && (path === "/" || path === "/login")) {
     const status = await betaStatus(supabase);
-    return redirectTo(isMember(status) ? "/dashboard" : status === "waitlisted" ? "/waitlist-ok" : "/complet");
+    if (isMember(status)) return redirectTo("/dashboard");
+    if (path === "/login") return redirectTo(status === "waitlisted" ? "/waitlist-ok" : "/complet");
+    // path === "/" pour un non-membre : on laisse la réécriture SITE servir la landing.
   }
 
   // Site public : on sert le bundle statique correspondant (URL propre conservée).
