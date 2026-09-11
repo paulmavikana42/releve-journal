@@ -149,6 +149,25 @@ describe("PHASE 2 — cloisonnement multi-comptes (preuve bout-en-bout)", () => 
     expect([...b.campaigns.values()].map((c) => c.name)).toEqual(["Crypto hiver"]);
   });
 
+  it("GARANTIE : une thèse DOIT être taguée du compte actif, sinon invisible ailleurs", () => {
+    // Reproduit le bug corrigé (createCampaign passait account_id "") : une thèse
+    // sans compte part sur le compte PAR DÉFAUT (uids[0] = A) et devient donc
+    // INVISIBLE quand un AUTRE compte (B) est actif. Le correctif = tag du compte actif.
+    const store = journal();
+    store.create_campaign(new Campaign({ name: "Sans compte (bug)", account_id: "" }));
+    store.create_campaign(new Campaign({ name: "Taguée du compte actif (fix)", account_id: B.uid }));
+    const load = store.load();
+    const campaigns = store.campaigns();
+    const b = [...scopeToAccount({ ...load, campaigns }, B.uid, uids).campaigns.values()].map((c) => c.name);
+    const a = [...scopeToAccount({ ...load, campaigns }, A.uid, uids).campaigns.values()].map((c) => c.name);
+    // Taguée du compte actif → visible sous ce compte.
+    expect(b).toContain("Taguée du compte actif (fix)");
+    // account_id "" → NON visible sous B (retombe sur le défaut A) : c'est le symptôme
+    // exact du bug. Toute création DOIT donc taguer le compte actif.
+    expect(b).not.toContain("Sans compte (bug)");
+    expect(a).toContain("Sans compte (bug)");
+  });
+
   it("le n° broker vide ne confond pas deux comptes (uid unique)", () => {
     const store = journal();
     expect(A.uid).not.toBe(B.uid);
