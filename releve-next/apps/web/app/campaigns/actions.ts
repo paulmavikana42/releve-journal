@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { Campaign } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
+import { activeScope } from "../settings/data";
 import { type Block, serializeBlocks, toNote } from "@/lib/blocks";
 
 /** Parse en toute sécurité le JSON des blocs venus du formulaire. */
@@ -35,7 +36,15 @@ export async function createCampaign(formData: FormData): Promise<void> {
   if (!name) return;
   const conv = String(formData.get("conviction") ?? "").trim();
   const blocks = parseBlocks(formData.get("blocks"));
-  const { s } = await store();
+  const { supabase, user } = await currentUser();
+  if (!user) redirect("/login");
+  // La thèse est cloisonnée par compte (comme les idées) : on la tague avec le
+  // compte actif. Sans ça (account_id ""), elle est rattachée au compte par
+  // défaut et disparaît quand un autre compte est actif.
+  const [{ activeUid }, s] = await Promise.all([
+    activeScope(supabase, user.id),
+    openStore(supabase, user.id),
+  ]);
   s.create_campaign(
     new Campaign({
       name,
@@ -45,7 +54,7 @@ export async function createCampaign(formData: FormData): Promise<void> {
       note: toNote(blocks),
       blocks,
       kill_switch: String(formData.get("kill_switch") ?? "").trim(),
-      account_id: "",
+      account_id: activeUid,
     }),
   );
   await s.flush();
