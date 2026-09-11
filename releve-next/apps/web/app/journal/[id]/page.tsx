@@ -117,8 +117,8 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
         <BackLink fallback="/journal">← Retour</BackLink>
       </div>
 
-      <header className="between" style={{ marginBottom: 16 }}>
-        <div>
+      <header className="between" style={{ marginBottom: 16, flexWrap: "wrap", gap: 12, alignItems: "flex-start" }}>
+        <div style={{ minWidth: 0 }}>
           <div className="row">
             <h1 style={{ margin: 0 }}>{idea.symbol}</h1>
             <span className="muted">{dir}</span>
@@ -130,7 +130,7 @@ export default async function IdeaDetail({ params }: { params: Promise<{ id: str
             {idea.closed_at && ` · clôturée le ${idea.closed_at.toISOString().slice(0, 10)}`}
           </div>
         </div>
-        <div className="row" style={{ gap: 8 }}>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap", flexShrink: 0 }}>
           {!rev && (
             <Link
               href={`/journal/${idea.id}/edit`}
