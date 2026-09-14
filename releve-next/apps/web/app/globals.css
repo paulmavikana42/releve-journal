@@ -1,7 +1,9 @@
 /* Relevé — identité visuelle sombre, portée fidèlement de app/theme.py.
    Terminal la nuit + ticket d'ordre : chiffres en chasse fixe sur fond profond,
    un seul accent ambre, titres en serif. Contrastes mesurés WCAG (voir theme.py). */
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600;700&family=Newsreader:wght@400;500;600;700&display=swap');
+/* Police globale = Inter (« police Notion »), UI + titres + chiffres. Les nombres
+   restent alignés via font-feature-settings "tnum" (Inter supporte tabular-nums). */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
 :root {
   --paper: #0B1220;
@@ -28,9 +30,9 @@
   --warn-soft: #E9B44C1C;
   --accent-soft: #F5A83C1C;
 
-  --font-ui: 'Space Grotesk', system-ui, -apple-system, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', monospace;
-  --font-title: 'Newsreader', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-mono: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  --font-title: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
 
   /* alias rétrocompat avec le CSS précédent */
   --bg: var(--paper);
@@ -759,13 +761,23 @@ input[type="file"] { max-width: 100%; }
   .capture-form .cap-file, .capture-form .cap-caption, .capture-form select, .capture-form button { width: 100%; }
 }
 
-/* --- garde-fous mobile : rien ne déborde à droite --- */
-.note, .card, .stat, p { overflow-wrap: anywhere; }
+/* === ANTI-DÉBORDEMENT GLOBAL (tout le SaaS) ===
+   Rien ne déborde horizontalement, sur aucun support : les mots longs s'enroulent,
+   une tuile grandit pour contenir son texte, une sous-tuile pousse sa tuile parente,
+   et un enfant de grille/flex peut rétrécir (sinon un mot long force la largeur). */
+body { overflow-wrap: anywhere; word-break: break-word; }
+img, video, canvas { max-width: 100%; height: auto; }
+input, textarea, select, button, a { max-width: 100%; }
+.row > *, .between > *, .split > *, .split-a > *, .matrix > *,
+.g2 > *, .g3 > *, .g4 > *, .g-split > *, .kpigrid > *, .cal > *, .calm > *,
+.add-risk-fields > * { min-width: 0; }
+.stat, .note, .card, p, li, td, th, label, h1, h2, h3, .eyebrow { overflow-wrap: anywhere; }
+/* Tables larges : défilement interne, jamais la page qui déborde. */
+.tablewrap, .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
 @media (max-width: 600px) {
-  .card.between { flex-wrap: wrap; }
+  .card.between, .card .between { flex-wrap: wrap; }
   .card .row { flex-wrap: wrap; }
   .ticket-row { flex-wrap: wrap; gap: 8px; }
   .ticket-row > div { min-width: 0; }
 }
-
-img { max-width: 100%; }

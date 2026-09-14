@@ -108,7 +108,11 @@ export async function updateSession(request: NextRequest) {
   // Routes privées de l'app : session requise…
   if (!user && !devPreview) return redirectTo("/login");
   // …ET accès bêta accordé (sinon page complet / liste d'attente).
-  if (user && !devPreview && isApp) {
+  // On ne vérifie l'accès que sur une NAVIGATION (GET). Un POST (Server Action,
+  // envoi de formulaire) part forcément d'une page d'app déjà chargée par un
+  // membre : y refaire l'appel RPC ajoutait un aller-retour Supabase à CHAQUE
+  // clic → latence de plusieurs secondes qui poussait au double-clic.
+  if (user && !devPreview && isApp && request.method === "GET") {
     const status = await betaStatus(supabase);
     if (!isMember(status)) {
       return redirectTo(status === "waitlisted" ? "/waitlist-ok" : "/complet");

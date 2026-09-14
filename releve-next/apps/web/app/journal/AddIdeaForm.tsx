@@ -60,8 +60,7 @@ export default function AddIdeaForm({ symbols }: { symbols: string[] }) {
           name="label"
           placeholder="Libellé (ex. Short NDX100 — CPI)"
           rows={1}
-          className="blk-text"
-          style={{ flex: 1, minHeight: 40 }}
+          style={{ flex: 1, minHeight: 40, resize: "none", overflow: "hidden", lineHeight: 1.5 }}
           onInput={(e) => {
             const el = e.currentTarget;
             el.style.height = "auto";

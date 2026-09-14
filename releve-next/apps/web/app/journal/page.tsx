@@ -65,6 +65,8 @@ export default async function JournalPage({ searchParams }: { searchParams: Prom
 
   const list = [...ideas.values()]
     .filter((i) => mine(i, activeUid, accountUids))
+    // Les idées abandonnées ne s'affichent plus dans le journal.
+    .filter((i) => i.status !== IdeaStatus.ABANDONED)
     .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
 
   const toReview = list.filter((i) => i.is_executed && !i.is_running && i.review === null).length;

@@ -389,9 +389,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 <script id="__site">(function(){
 function norm(s){s=(s||"").replace(/[\u2019\u2018]/g,"'").replace(/\u2192/g,"").replace(/\s+/g," ").trim().toLowerCase();return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
 var NAV={"la methode":"/methode","fonctionnalites":"/fonctionnalites","tarifs":"/tarifs","a propos":"/a-propos","se connecter":"/login","commencer gratuitement":"/login","j'ai deja un compte":"/login","voir la demo":"/methode","support":"/a-propos","conditions d'utilisation":"/terms","conditions generales":"/terms","conditions generales (cgu/cgv)":"/terms","politique de confidentialite":"/privacy","politique de remboursement":"/refund-policy","mentions legales":"/legal","mentions legales & contact":"/legal"};
-function paint(){try{var b=getComputedStyle(document.body).backgroundColor;if(!b||b==="rgba(0, 0, 0, 0)"||b==="transparent")b="#060A12";document.documentElement.style.background=b;document.documentElement.style.colorScheme="dark";}catch(e){}}
+function font(){
+  if(!document.getElementById("__interlink")){var l=document.createElement("link");l.id="__interlink";l.rel="stylesheet";l.href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap";(document.head||document.documentElement).appendChild(l);}
+  var s=document.getElementById("__interstyle");if(!s){s=document.createElement("style");s.id="__interstyle";(document.head||document.documentElement).appendChild(s);}
+  s.textContent="*{font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif !important;}";
+}
+function paint(){try{var b=getComputedStyle(document.body).backgroundColor;if(!b||b==="rgba(0, 0, 0, 0)"||b==="transparent")b="#060A12";document.documentElement.style.background=b;document.documentElement.style.colorScheme="dark";}catch(e){}font();}
 function links(){var as=document.querySelectorAll("a");for(var i=0;i<as.length;i++){var a=as[i],key=norm(a.textContent);if(key.indexOf("continuer avec google")>=0){a.setAttribute("href","/auth/google");a.removeAttribute("target");continue;}if(NAV[key]){a.setAttribute("href",NAV[key]);a.removeAttribute("target");continue;}if(key==="r"||key==="releve"||key==="rreleve"){a.setAttribute("href","/");}}}
 function run(){paint();links();}
 if(document.readyState!=="loading")run();else document.addEventListener("DOMContentLoaded",run);
-[150,500,1200,2500,4000].forEach(function(t){setTimeout(run,t);});
+[80,300,800,1600,3000].forEach(function(t){setTimeout(run,t);});
 })();</script>
