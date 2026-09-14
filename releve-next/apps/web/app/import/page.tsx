@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { candidates as matchCandidates, Direction, mine } from "@releve/core";
 import { currentUser, openStore } from "../journal/data";
-import { activeScope } from "../settings/data";
+import { activeScope, getAccounts } from "../settings/data";
 import ImportPanel from "../journal/ImportPanel";
 import OrphanRow from "../journal/OrphanRow";
 import ConfirmSubmit from "../components/ConfirmSubmit";
@@ -39,9 +39,20 @@ export default async function ImportPage() {
   const { activeUid, accountUids } = await activeScope(supabase, user.id);
   const list = [...store.load().ideas.values()].filter((i) => mine(i, activeUid, accountUids));
 
+  // Une POSITION importée est taguée du n° de compte BROKER (ex. 81734056), pas de
+  // l'uid interne. On mappe donc le n° broker vers l'uid du compte correspondant,
+  // sinon un orphelin est attribué au compte par défaut et disparaît quand un AUTRE
+  // compte (dont c'est pourtant le broker) est actif.
+  const accounts = await getAccounts(supabase, user.id);
+  const brokerToUid = new Map<string, string>();
+  for (const a of accounts) if (a.account_id) brokerToUid.set(a.account_id, a.uid);
+  const orphanVisible = (p: { account_id?: string }) =>
+    accountUids.length <= 1 ||
+    mine({ account_id: brokerToUid.get(p.account_id || "") ?? p.account_id }, activeUid, accountUids);
+
   const orphans = store
     .orphans()
-    .filter((p) => mine(p, activeUid, accountUids))
+    .filter(orphanVisible)
     // Par heure d'OUVERTURE croissante : le noyau (ouvert le premier) est en tête,
     // on le rattache d'abord, puis les tickets qui chevauchent deviennent des renforts.
     .sort((a, b) => a.open_time.getTime() - b.open_time.getTime())
