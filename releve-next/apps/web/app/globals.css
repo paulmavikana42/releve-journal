@@ -773,6 +773,14 @@ input, textarea, select, button, a { max-width: 100%; }
 .row > *, .between > *, .split > *, .split-a > *, .matrix > *,
 .g2 > *, .g3 > *, .g4 > *, .g-split > *, .kpigrid > *, .cal > *, .calm > *,
 .add-risk-fields > * { min-width: 0; }
+/* Grilles inline en colonne unique (display:grid sans colonnes définies) : leur
+   piste implicite vaut max-content → un <select> à longue option ou un mot long
+   la faisait déborder hors de sa carte. minmax(0,1fr) la borne à son conteneur.
+   Couvre les 12 formulaires en grille du SaaS d'un coup (thèses, réglages,
+   détail idée, review, rapprochement) sans toucher aux grilles à colonnes. */
+[style*="display:grid"]:not([style*="grid-template"]):not([style*="grid-auto-flow"]) {
+  grid-template-columns: minmax(0, 1fr);
+}
 .stat, .note, .card, p, li, td, th, label, h1, h2, h3, .eyebrow { overflow-wrap: anywhere; }
 /* Tables larges : défilement interne, jamais la page qui déborde. */
 .tablewrap, .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
