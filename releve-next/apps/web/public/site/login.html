@@ -386,6 +386,14 @@ document.addEventListener('DOMContentLoaded', async function() {
 </body>
 </html>
 
+<style id="__siteflash">
+/* Splash de chargement propre : pas d'indicateur "Unpacking..." de dev, et le
+   logo R en petit badge centre au lieu d'un R geant plein ecran (le "noir +
+   logo dans le coin" du desordre au chargement). */
+#__bundler_loading{display:none !important;}
+#__bundler_thumbnail{background:#060A12 !important;}
+#__bundler_thumbnail svg{width:112px !important;height:112px !important;object-fit:contain !important;}
+</style>
 <script id="__site">(function(){
 function norm(s){s=(s||"").replace(/[\u2019\u2018]/g,"'").replace(/\u2192/g,"").replace(/\s+/g," ").trim().toLowerCase();return s.normalize("NFD").replace(/[\u0300-\u036f]/g,"");}
 var NAV={"la methode":"/methode","fonctionnalites":"/fonctionnalites","tarifs":"/tarifs","a propos":"/a-propos","se connecter":"/login","commencer gratuitement":"/login","j'ai deja un compte":"/login","voir la demo":"/methode","support":"/a-propos","conditions d'utilisation":"/terms","conditions generales":"/terms","conditions generales (cgu/cgv)":"/terms","politique de confidentialite":"/privacy","politique de remboursement":"/refund-policy","mentions legales":"/legal","mentions legales & contact":"/legal"};

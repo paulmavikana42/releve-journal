@@ -685,8 +685,8 @@ table.t td b { font-family: var(--font-ui); }
 }
 .blk-text:focus { outline: none; border-color: var(--rule-soft); background: var(--card); }
 .blk-text::placeholder { color: var(--muted); opacity: .7; }
-.blk-img-wrap { padding: 4px 8px; }
-.blk-img { position: relative; display: inline-block; max-width: 100%; min-width: 20%; }
+.blk-img-wrap { padding: 4px 8px; text-align: center; }
+.blk-img { position: relative; display: inline-block; max-width: 100%; min-width: 20%; text-align: left; }
 .blk-img > img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--rule-soft); }
 .blk-img-ph {
   display: flex; align-items: center; justify-content: center; min-height: 80px;
@@ -743,7 +743,9 @@ table.t td b { font-family: var(--font-ui); }
 /* --- rendu lecture des blocs --- */
 .blk-view { display: flex; flex-direction: column; gap: 10px; }
 .blk-p { margin: 0; white-space: pre-wrap; line-height: 1.6; color: var(--ink); font-size: .95rem; }
-.blk-fig { margin: 0; max-width: 100%; }
+/* Images des idées/thèses TOUJOURS centrées (tous supports) — prépare un export
+   ou un partage propre : l'image ne colle jamais au bord gauche. */
+.blk-fig { margin: 0 auto; max-width: 100%; align-self: center; text-align: center; }
 .blk-fig > img { display: block; width: 100%; height: auto; border-radius: 8px; border: 1px solid var(--rule-soft); }
 .blk-cap-view { margin-top: 4px; font-size: .78rem; color: var(--muted); font-style: italic; }
 
