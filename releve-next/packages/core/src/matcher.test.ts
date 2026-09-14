@@ -69,6 +69,34 @@ describe("matcher", () => {
     expect(cands[0]!.late).toBe(false);
   });
 
+  it("scénario réel : 2 USDJPY qui se chevauchent → le 2e est un RENFORT (add)", () => {
+    const store = new Store();
+    const id = idee(store);
+    // Noyau : ouvert EN PREMIER (10/09 13:06 → 11/09 12:45).
+    const core = pos("474379314", "147.00", new Date("2026-09-10T13:06:21Z"), "148.50", new Date("2026-09-11T12:45:20Z"));
+    store.import_report([core], []);
+    store.link(id.id, core.uid);
+    const idea = store.load().ideas.get(id.id)!;
+    // Renfort : ouvert PENDANT que le noyau vit (10/09 16:22 → 11/09 12:43).
+    const add = pos("474525480", "147.50", new Date("2026-09-10T16:22:28Z"), "148.20", new Date("2026-09-11T12:43:23Z"));
+    const cands = candidates(add, [idea]);
+    expect(cands.length).toBeGreaterThan(0);
+    expect(cands[0]!.is_add).toBe(true); // → l'appariement demande son stop + « noyau au BE »
+  });
+
+  it("piège d'ordre : rattacher le ticket TARDIF comme noyau empêche de voir le renfort antérieur", () => {
+    // D'où le tri des orphelins par heure d'ouverture : on rattache le NOYAU (ouvert
+    // le premier) d'abord ; sinon le ticket antérieur n'est plus détecté comme add.
+    const store = new Store();
+    const id = idee(store);
+    const tardif = pos("474525480", "147.50", new Date("2026-09-10T16:22:28Z"), "148.20", new Date("2026-09-11T12:43:23Z"));
+    store.import_report([tardif], []);
+    store.link(id.id, tardif.uid);
+    const idea = store.load().ideas.get(id.id)!;
+    const anterieur = pos("474379314", "147.00", new Date("2026-09-10T13:06:21Z"), "148.50", new Date("2026-09-11T12:45:20Z"));
+    expect(candidates(anterieur, [idea]).length).toBe(0);
+  });
+
   it("une thèse hors fenêtre sur un premier ticket est éliminée", () => {
     const store = new Store();
     const id = idee(store); // created_at ≈ maintenant

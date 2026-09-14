@@ -148,6 +148,9 @@ export async function linkPosition(formData: FormData): Promise<void> {
   await store.flush();
   revalidatePath("/journal");
   revalidatePath(`/journal/${ideaId}`);
+  // Rafraîchit l'appariement : une fois le noyau rattaché, le ticket qui chevauche
+  // devient un RENFORT (kind "add") et la page import doit le recalculer.
+  revalidatePath("/import");
 }
 
 /**
@@ -203,6 +206,7 @@ export async function createOffPlan(formData: FormData): Promise<void> {
   store.link(idea.id, p.uid);
   await store.flush();
   revalidatePath("/journal");
+  revalidatePath("/import");
 }
 
 function decOf(fd: FormData, k: string): Decimal | null {
@@ -464,6 +468,7 @@ export async function unlinkPosition(formData: FormData): Promise<void> {
   await store.flush();
   revalidatePath(`/journal/${ideaId}`);
   revalidatePath("/journal");
+  revalidatePath("/import");
 }
 
 /** Saisir le cours courant d'un trade en cours → flottant (déclaratif). */

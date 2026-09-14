@@ -42,7 +42,9 @@ export default async function ImportPage() {
   const orphans = store
     .orphans()
     .filter((p) => mine(p, activeUid, accountUids))
-    .sort((a, b) => b.close_time.getTime() - a.close_time.getTime())
+    // Par heure d'OUVERTURE croissante : le noyau (ouvert le premier) est en tête,
+    // on le rattache d'abord, puis les tickets qui chevauchent deviennent des renforts.
+    .sort((a, b) => a.open_time.getTime() - b.open_time.getTime())
     .map((p) => ({
       uid: p.uid,
       symbol: p.symbol,
