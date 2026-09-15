@@ -330,6 +330,24 @@ input, select, textarea {
 }
 input::placeholder, textarea::placeholder { color: var(--muted); opacity: .7; }
 input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+/* Autofill navigateur : garder le fond SOMBRE et le texte clair. Le fond d'autofill
+   (bleu-blanc) n'est pas surchargeable par `background` → on le masque avec un
+   box-shadow inset de la couleur de la carte, et on force la couleur du texte. */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  border: 1px solid var(--rule);
+  -webkit-box-shadow: 0 0 0 1000px var(--card) inset;
+  box-shadow: 0 0 0 1000px var(--card) inset;
+  transition: background-color 600000s 0s, color 600000s 0s;
+}
 textarea { resize: vertical; font-family: var(--font-ui); }
 input[inputmode="decimal"], input[inputmode="numeric"] { font-family: var(--font-mono); }
 
