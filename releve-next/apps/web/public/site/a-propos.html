@@ -540,6 +540,62 @@ function links(){var as=document.querySelectorAll('a');for(var i=0;i<as.length;i
 function run(){add();links();}
 if(document.readyState!=='loading')run();else document.addEventListener('DOMContentLoaded',run);
 [80,400,1000,2200,3500].forEach(function(t){setTimeout(run,t);});})();</script>
+
+<script>/* __premium : mobile ultra premium (5 pages phares) */
+(function(){var __PCSS=`
+@media (max-width:767px){
+  /* typographie premium : hierarchie confiante, corps compact */
+  .r-page h1{ font-size:clamp(30px,8.4vw,38px) !important; line-height:1.05 !important; letter-spacing:-.6px !important; margin:0 0 12px !important; }
+  .r-page h2{ font-size:clamp(21px,5.6vw,26px) !important; line-height:1.12 !important; letter-spacing:-.3px !important; margin:0 0 8px !important; }
+  .r-page h3{ margin:0 0 5px !important; }
+  .r-page p{ line-height:1.5 !important; margin:0 0 10px !important; }
+  /* rythme vertical constant et maitrise */
+  .r-page > div, .r-page > section{ padding-top:30px !important; padding-bottom:30px !important; }
+  .r-page > div:first-child{ padding-top:14px !important; padding-bottom:14px !important; }
+  /* medias : cartes encadrees premium */
+  .r-page img{ border-radius:14px !important; border:1px solid #1e2a44 !important; box-shadow:0 14px 36px rgba(0,0,0,.42) !important; }
+  /* divulgation progressive */
+  .r-clamp{ position:relative !important; max-height:var(--clh,470px) !important; overflow:hidden !important; }
+  .r-clamp.r-open{ max-height:none !important; }
+  .r-fade{ position:absolute; left:0; right:0; bottom:0; height:170px; pointer-events:none;
+    background:linear-gradient(to bottom, rgba(6,10,18,0), var(--fadeto,#060A12) 82%); z-index:1; }
+  .r-more{ position:absolute; left:50%; bottom:16px; transform:translateX(-50%); z-index:2;
+    background:#0E1727; color:#F5A83C; border:1px solid #F5A83C; border-radius:999px;
+    padding:10px 22px; font:600 14px/1 'Inter',system-ui,sans-serif; letter-spacing:.2px;
+    cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.4); display:inline-flex; align-items:center; gap:8px; }
+  .r-more:active{ transform:translateX(-50%) scale(.97); }
+}
+`;
+
+function ready(){
+  var mq = window.matchMedia('(max-width:767px)').matches;
+  var page = document.querySelector('.r-page'); if(!page) return;
+  addStyle();
+  if(!mq){ unclamp(); return; }
+  var kids = Array.prototype.slice.call(page.children);
+  kids.forEach(function(s,i){
+    if(i<2) return;                                   // nav + hero intacts
+    if(s.querySelector('.r-foot')) return;            // footer intact
+    if(s.querySelector('.r-swipe,.r-quads,.r-row5,.r-mock')) return; // visuels/cartes/tarifs intacts
+    if(s.getAttribute('data-clamp')==='done') return;
+    var h = s.getBoundingClientRect().height;
+    if(h <= 1000) return;
+    s.setAttribute('data-clamp','done');
+    s.classList.add('r-clamp');
+    var fade = document.createElement('div'); fade.className='r-fade';
+    var btn = document.createElement('button'); btn.className='r-more'; btn.type='button';
+    btn.innerHTML = 'Lire la suite <span style="font-size:12px">&#9660;</span>';
+    btn.addEventListener('click', function(){ s.classList.add('r-open'); fade.remove(); btn.remove(); });
+    s.appendChild(fade); s.appendChild(btn);
+  });
+}
+function unclamp(){ document.querySelectorAll('.r-clamp').forEach(function(s){ s.classList.remove('r-clamp','r-open'); s.removeAttribute('data-clamp'); }); document.querySelectorAll('.r-fade,.r-more').forEach(function(e){e.remove();}); }
+function addStyle(){ var id='__premiumcss'; var e=document.getElementById(id); if(!e){e=document.createElement('style');e.id=id;e.textContent=__PCSS;} (document.head||document.documentElement).appendChild(e); }
+if(document.readyState!=='loading') ready(); else document.addEventListener('DOMContentLoaded', ready);
+[120,500,1200,2400,3800].forEach(function(t){setTimeout(ready,t);});
+window.addEventListener('resize', function(){ clearTimeout(window.__pz); window.__pz=setTimeout(ready,200); });
+
+})();</script>
 </body>
 </html>
 
