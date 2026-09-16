@@ -395,10 +395,10 @@ img { max-width:100%; height:auto; }
 
 .r-page { width:100%; max-width:none; min-width:0; margin:0 auto; }
 /* pleine largeur : les bandes filent d'un bord à l'autre, le contenu reste centré */
-@media (min-width:1441px) {
+@media (min-width:1025px) {
   .r-page:not(.r-login) > div, .r-page:not(.r-login) > section, .r-page:not(.r-login) > footer {
-    padding-left: max(64px, calc((100% - 1620px) / 2)) !important;
-    padding-right: max(64px, calc((100% - 1620px) / 2)) !important;
+    padding-left: max(64px, calc((100% - 1280px) / 2)) !important;
+    padding-right: max(64px, calc((100% - 1280px) / 2)) !important;
   }
 }
 .only-m { display:none !important; }
@@ -587,6 +587,7 @@ function ready(){
   var page = document.querySelector('.r-page'); if(!page) return;
   addStyle();
   alignNums();
+  fixRevue();
   if(!mq){ unclamp(); return; }
   var kids = Array.prototype.slice.call(page.children);
   kids.forEach(function(s,i){
@@ -620,6 +621,22 @@ function alignNums(){
     var d=(r.top+r.height/2)-(rl.top+rl.height/2);           // position naturelle
     if(Math.abs(d)>1) num.style.transform='translateY('+(-d).toFixed(1)+'px)';
   });
+}
+// methode : capture revue a GAUCHE + texte "Les chiffres..." a DROITE
+function fixRevue(){
+  if(document.querySelector('[data-revuefix]')) return;
+  var imgs=Array.prototype.slice.call(document.querySelectorAll('.r-page img'));
+  var rev=imgs.filter(function(i){return (i.alt||'').indexOf('La revue')===0;})[0];
+  if(!rev) return;
+  var ps=Array.prototype.slice.call(document.querySelectorAll('.r-page p'));
+  var chiffres=ps.filter(function(p){return /Les chiffres n'apparaissent/.test(p.textContent);})[0];
+  if(!chiffres) return;
+  var capturesRow=rev.parentElement;
+  var row=document.createElement('div'); row.setAttribute('data-revuefix','1'); row.className='r-side';
+  row.style.cssText='display:grid;grid-template-columns:minmax(0,820px) minmax(0,1fr);gap:44px;align-items:center;margin-bottom:24px';
+  capturesRow.parentNode.insertBefore(row, capturesRow);
+  row.appendChild(rev); row.appendChild(chiffres);
+  rev.style.maxWidth='none'; rev.style.margin='0';
 }
 function addStyle(){ var id='__premiumcss'; var e=document.getElementById(id); if(!e){e=document.createElement('style');e.id=id;e.textContent=__PCSS;} (document.head||document.documentElement).appendChild(e); }
 if(document.readyState!=='loading') ready(); else document.addEventListener('DOMContentLoaded', ready);
