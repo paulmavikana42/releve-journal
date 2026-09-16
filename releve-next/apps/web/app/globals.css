@@ -809,3 +809,25 @@ input, textarea, select, button, a { max-width: 100%; }
   .ticket-row { flex-wrap: wrap; gap: 8px; }
   .ticket-row > div { min-width: 0; }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Fluidité — transitions douces sur les éléments interactifs (ajout global).
+   Purement cosmétique : aucun changement de mise en page, respecte
+   prefers-reduced-motion. (input/select exclus : le hack anti-autofill garde
+   sa propre transition.)
+   ───────────────────────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: no-preference) {
+  a:not(.card), .primary, button.primary, .ghost, button.ghost,
+  .danger, button.danger, .pill, .pop-btn, .pop-item, .radio, .help,
+  .railclose, .pageguide-x, .pageguide-reopen {
+    transition: background-color .18s ease, border-color .18s ease, color .18s ease,
+                box-shadow .2s ease, transform .15s cubic-bezier(.2,.7,.2,1), filter .18s ease;
+  }
+  .card, a.card {
+    transition: border-color .2s ease, box-shadow .22s ease,
+                transform .2s cubic-bezier(.2,.7,.2,1);
+  }
+  a.card:hover { transform: translateY(-2px); box-shadow: 0 20px 44px -24px rgba(0,0,0,.6); }
+  .primary:active, button.primary:active, .ghost:active, button.ghost:active,
+  .danger:active, .pill:active { transform: translateY(1px) scale(.992); }
+}

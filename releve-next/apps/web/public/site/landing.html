@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
+<head><meta name="theme-color" content="#0B1220"><style>html{background:#0B1220!important}</style>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Relevé — trade comme une table institutionnelle</title>
@@ -685,6 +685,47 @@ if(document.readyState!=='loading') ready(); else document.addEventListener('DOM
 [120,500,1200,2400,3800].forEach(function(t){setTimeout(ready,t);});
 window.addEventListener('resize', function(){ clearTimeout(window.__pz); window.__pz=setTimeout(ready,200); });
 
+})();</script>
+
+<script>/* __siteextras : anti-flash + cookies + analytics (sans cookie, consenti) */
+(function(){
+  try{ document.documentElement.style.background='#0B1220'; }catch(e){}
+  var KEY='releve_consent';
+  function get(){ try{ return localStorage.getItem(KEY); }catch(e){ return null; } }
+  function set(v){ try{ localStorage.setItem(KEY,v); }catch(e){} }
+  function loadAnalytics(){
+    if(window.__va_loaded) return; window.__va_loaded=true;
+    // Vercel Web Analytics — sans cookie, respectueux de la vie privee.
+    window.va = window.va || function(){ (window.vaq = window.vaq || []).push(arguments); };
+    var s=document.createElement('script'); s.defer=true; s.src='/_vercel/insights/script.js';
+    (document.head||document.documentElement).appendChild(s);
+  }
+  function banner(){
+    if(document.getElementById('__cookies')) return;
+    var w=document.createElement('div'); w.id='__cookies';
+    w.style.cssText='position:fixed;left:16px;right:16px;bottom:16px;z-index:99999;max-width:760px;margin:0 auto;'
+      +'background:#111B2E;border:1px solid #22304A;border-radius:14px;padding:16px 18px;'
+      +'box-shadow:0 24px 60px -20px rgba(0,0,0,.7);display:flex;gap:16px;align-items:center;flex-wrap:wrap;'
+      +"font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#E9EFF7";
+    w.innerHTML='<div style="flex:1;min-width:220px;font-size:13.5px;line-height:1.55;color:#B7C4D6">'
+      +'On utilise une mesure d\'audience <strong style="color:#E9EFF7">sans cookie</strong> pour ameliorer Releve. '
+      +'Aucune donnee personnelle vendue. <a href="/privacy" style="color:#F5A83C">En savoir plus</a>.</div>'
+      +'<div style="display:flex;gap:10px;flex-shrink:0">'
+      +'<button id="__ckno" style="background:transparent;color:#93A4BD;border:1px solid #35455f;border-radius:8px;padding:10px 16px;font-size:13.5px;cursor:pointer">Refuser</button>'
+      +'<button id="__ckok" style="background:#F5A83C;color:#0B1220;border:0;border-radius:8px;padding:10px 18px;font-weight:700;font-size:13.5px;cursor:pointer">Accepter</button>'
+      +'</div>';
+    document.body.appendChild(w);
+    document.getElementById('__ckok').onclick=function(){ set('granted'); w.remove(); loadAnalytics(); };
+    document.getElementById('__ckno').onclick=function(){ set('denied'); w.remove(); };
+  }
+  function run(){
+    var c=get();
+    if(c==='granted'){ loadAnalytics(); return; }
+    if(c==='denied'){ return; }
+    if(document.body) banner(); else document.addEventListener('DOMContentLoaded',banner);
+  }
+  if(document.readyState!=='loading') run(); else document.addEventListener('DOMContentLoaded',run);
+  [400,1500].forEach(function(t){setTimeout(run,t);});
 })();</script>
 </body>
 </html>
