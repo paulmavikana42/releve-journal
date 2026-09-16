@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head><!-- __flashfix --><meta name="theme-color" content="#0B1220"><style>html,body{background:#0B1220!important}#__bundler_thumbnail{background:#0B1220!important}#__bundler_loading{background:#111B2E!important;color:#93A4BD!important;border:1px solid #22304A!important;box-shadow:0 8px 24px rgba(0,0,0,.5)!important}#__bundler_placeholder{color:#93A4BD!important}</style><!-- /__flashfix --><meta name="theme-color" content="#0B1220"><style>html{background:#0B1220!important}</style>
+<head><!-- __flashfix --><meta name="theme-color" content="#0B1220"><style>html,body{background:#0B1220!important}#__bundler_thumbnail{background:#0B1220!important}#__bundler_loading{background:#111B2E!important;color:#93A4BD!important;border:1px solid #22304A!important;box-shadow:0 8px 24px rgba(0,0,0,.5)!important}#__bundler_placeholder{color:#93A4BD!important}</style><!-- /__flashfix -->
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Relevé — trade comme une table institutionnelle</title>
@@ -32,7 +32,18 @@ body { margin:0; background:#0B1220; color:#E9EFF7; font-family:'Space Grotesk',
   @keyframes heroGlow { 0%,100%{opacity:.55;transform:scale(1)} 50%{opacity:.85;transform:scale(1.06)} }
   .hero-glow { animation:heroGlow 9s ease-in-out infinite; }
 
+@media (max-width:820px){
+  /* padding lateral raisonnable : le contenu remplit l'ecran, plus de textes en filet */
+  .r-page > div, .r-page > footer{ padding-left:clamp(18px,5vw,40px) !important; padding-right:clamp(18px,5vw,40px) !important; }
+  .r-page{ overflow-x:hidden !important; }
+}
 @media (max-width:767px){
+  /* rangees flex "texte | texte/visuel" (ex: en-tete du cycle) : empiler */
+  .r-page div[style*="align-items:flex-end"][style*="space-between"]{ flex-direction:column !important; align-items:flex-start !important; gap:14px !important; }
+  .r-page div[style*="align-items:flex-end"][style*="space-between"] > *{ max-width:none !important; }
+  /* le halo decoratif ne doit jamais elargir la page */
+  .hero-glow{ max-width:100% !important; left:-40px !important; }
+  /* CTA : empiler proprement (boutons pleine largeur) */
   .r-cta-row{ flex-direction:column !important; align-items:stretch !important; gap:20px !important; }
   .r-cta-row > div{ width:100% !important; max-width:none !important; }
 }
@@ -167,8 +178,7 @@ img { max-width:100%; height:auto; }
   }
 }
 </style>
-
-<!-- __seo --><meta name="description" content="Le journal de trading qui confronte ta thèse écrite AVANT le trade à ce que le marché a réellement fait. Discipline d&#x27;exécution pour challenge prop firm."><link rel="canonical" href="https://releve-journal.vercel.app/"><meta property="og:type" content="website"><meta property="og:site_name" content="Relevé"><meta property="og:title" content="Relevé — trade comme une table institutionnelle"><meta property="og:description" content="Le journal de trading qui confronte ta thèse écrite AVANT le trade à ce que le marché a réellement fait. Discipline d&#x27;exécution pour challenge prop firm."><meta property="og:url" content="https://releve-journal.vercel.app/"><meta property="og:locale" content="fr_FR"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="Relevé — trade comme une table institutionnelle"><meta name="twitter:description" content="Le journal de trading qui confronte ta thèse écrite AVANT le trade à ce que le marché a réellement fait. Discipline d&#x27;exécution pour challenge prop firm."><!-- /__seo --></head>
+</head>
 <body>
 <div class="r-shell" style="width:100%">
     <div class="r-page" data-screen-label="Landing" style="width:100%;background:#0B1220;overflow:hidden">
@@ -696,8 +706,7 @@ window.addEventListener('resize', function(){ clearTimeout(window.__pz); window.
 (function(){
   try{ document.documentElement.style.background='#0B1220'; }catch(e){}
   var KEY='releve_consent';
-  // >>> Coller ici l'ID de ton projet Microsoft Clarity (clarity.microsoft.com) <<<
-  var CLARITY_ID='';
+  var CLARITY_ID='yj965acx3d';
   function get(){ try{ return localStorage.getItem(KEY); }catch(e){ return null; } }
   function set(v){ try{ localStorage.setItem(KEY,v); }catch(e){} }
   function loadVercel(){
