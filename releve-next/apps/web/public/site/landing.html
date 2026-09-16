@@ -577,6 +577,11 @@ if(document.readyState!=='loading')go();else document.addEventListener('DOMConte
 
 <script>/* __premium : mobile ultra premium (5 pages phares) */
 (function(){var __PCSS=`
+/* captures surdimensionnees (revue/KPI/metriques a 1272px sur methode) ramenees
+   au gabarit des autres (~860), centrees. N'affecte que methode (selecteurs alt). */
+.r-page img[alt^="La revue"], .r-page img[alt^="Les KPI"], .r-page img[alt^="Les métriques"]{
+  max-width:860px !important; margin-left:auto !important; margin-right:auto !important; display:block !important;
+}
 /* === systeme d'espacement premium : rythme de section CONSTANT sous 1024px ===
    (les valeurs inline d'origine partaient dans tous les sens : 61/56/48/30/0) */
 @media (max-width:1024px){
@@ -618,6 +623,7 @@ function ready(){
   var mq = window.matchMedia('(max-width:767px)').matches;
   var page = document.querySelector('.r-page'); if(!page) return;
   addStyle();
+  alignNums();
   if(!mq){ unclamp(); return; }
   var kids = Array.prototype.slice.call(page.children);
   kids.forEach(function(s,i){
@@ -637,6 +643,21 @@ function ready(){
   });
 }
 function unclamp(){ document.querySelectorAll('.r-clamp').forEach(function(s){ s.classList.remove('r-clamp','r-open'); s.removeAttribute('data-clamp'); }); document.querySelectorAll('.r-fade,.r-more').forEach(function(e){e.remove();}); }
+// aligne le chiffre du geste (petit cercle) sur son libelle voisin (methode : chiffre 6px trop bas)
+function alignNums(){
+  document.querySelectorAll('.r-page div').forEach(function(row){
+    if(getComputedStyle(row).display!=='flex') return;
+    var k=row.children; if(k.length!==2) return;
+    var num=k[0], lab=k[1]; var t=(num.textContent||'').trim();
+    if(!/^[1-6]$/.test(t)) return;
+    num.style.transform='';                                  // reset AVANT de mesurer (sinon boucle)
+    var r=num.getBoundingClientRect(); if(r.width>44 || Math.abs(r.width-r.height)>6) return;
+    var br=getComputedStyle(num).borderRadius; if(br.indexOf('50%')<0 && parseInt(br)<10) return;
+    var rl=lab.getBoundingClientRect();
+    var d=(r.top+r.height/2)-(rl.top+rl.height/2);           // position naturelle
+    if(Math.abs(d)>1) num.style.transform='translateY('+(-d).toFixed(1)+'px)';
+  });
+}
 function addStyle(){ var id='__premiumcss'; var e=document.getElementById(id); if(!e){e=document.createElement('style');e.id=id;e.textContent=__PCSS;} (document.head||document.documentElement).appendChild(e); }
 if(document.readyState!=='loading') ready(); else document.addEventListener('DOMContentLoaded', ready);
 [120,500,1200,2400,3800].forEach(function(t){setTimeout(ready,t);});
