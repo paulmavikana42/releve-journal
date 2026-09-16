@@ -35,6 +35,46 @@ const SITE: Record<string, string> = {
 };
 
 export async function updateSession(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+
+  // Aperçu local dev : auth désactivée (jamais en prod).
+  const devPreview =
+    process.env.NODE_ENV !== "production" && process.env.RELEVE_DEV_PREVIEW === "1";
+
+  // ─── FAST PATH sans Supabase ────────────────────────────────────────────────
+  // getUser() est un ALLER-RETOUR RÉSEAU vers Supabase, joué sur CHAQUE requête.
+  // Sur une page marketing statique il ajoutait ~1 s de TTFB pour rien. On sert
+  // donc ces pages immédiatement, sans toucher à Supabase.
+  //
+  // Fichiers du site + OAuth + robots/sitemap : jamais d'auth.
+  if (
+    path.startsWith("/site/") ||
+    path.startsWith("/auth") ||
+    path === "/robots.txt" ||
+    path === "/sitemap.xml"
+  ) {
+    return NextResponse.next({ request });
+  }
+  // Pages marketing/légales : servies en statique sans Supabase.
+  //   • pages pures (méthode, tarifs, …) : toujours.
+  //   • "/" et "/login" : seulement si le visiteur est ANONYME (aucun cookie
+  //     d'auth Supabase) — un membre connecté doit y être redirigé vers l'app,
+  //     donc là on garde le chemin complet ci-dessous.
+  if (Object.prototype.hasOwnProperty.call(SITE, path)) {
+    const needsAuthCheck =
+      (path === "/" || path === "/login") &&
+      (devPreview ||
+        request.cookies
+          .getAll()
+          .some((c) => c.name.startsWith("sb-") && c.name.includes("auth-token")));
+    if (!needsAuthCheck) {
+      const to = request.nextUrl.clone();
+      to.pathname = `/site/${SITE[path]}.html`;
+      to.search = "";
+      return NextResponse.rewrite(to);
+    }
+  }
+
   let response = NextResponse.next({ request });
 
   const { url, key } = supabaseEnv();
@@ -57,11 +97,6 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Aperçu local dev : auth désactivée (jamais en prod).
-  const devPreview =
-    process.env.NODE_ENV !== "production" && process.env.RELEVE_DEV_PREVIEW === "1";
-
-  const path = request.nextUrl.pathname;
   const isApp = APP_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
   const isGate = path === "/complet" || path === "/waitlist-ok";
   const redirectTo = (pathname: string) => {
