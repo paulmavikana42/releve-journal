@@ -512,11 +512,8 @@ img { max-width:100%; height:auto; }
 }
 
 @media (max-width:767px){
-  /* rythme vertical resserre : sections plus courtes, respiration maitrisee */
-  .r-page > div, .r-page > section, .r-page > footer{
-    padding-top:26px !important; padding-bottom:26px !important;
-  }
-  .r-page > div:first-child{ padding-top:14px !important; padding-bottom:14px !important; }
+  /* (l'espacement de section est gere par la couche __premium sur les 5 pages
+     phares ; ici on ne touche qu'a la typo/medias pour login + pages legales) */
   /* titres compacts, sans casser la hierarchie */
   .r-page h1{ margin:0 0 10px !important; line-height:1.08 !important; letter-spacing:-.4px; }
   .r-page h2{ margin:0 0 6px !important; line-height:1.14 !important; }
@@ -543,15 +540,28 @@ if(document.readyState!=='loading')run();else document.addEventListener('DOMCont
 
 <script>/* __premium : mobile ultra premium (5 pages phares) */
 (function(){var __PCSS=`
+/* === systeme d'espacement premium : rythme de section CONSTANT sous 1024px ===
+   (les valeurs inline d'origine partaient dans tous les sens : 61/56/48/30/0) */
+@media (max-width:1024px){
+  .r-page > div, .r-page > section{ padding-top:52px !important; padding-bottom:52px !important; }
+  .r-page > div:first-child{ padding-top:16px !important; padding-bottom:16px !important; }  /* nav */
+  .r-page > div:last-child{ padding-top:22px !important; }                                     /* barre © */
+  .r-page h1{ margin:0 0 14px !important; }
+  .r-page h2{ margin:0 0 10px !important; }
+  .r-page h3{ margin:0 0 6px !important; }
+  .r-page p{ margin:0 0 11px !important; }
+  /* eyebrow (petit label majuscule) -> titre : respiration constante */
+  .r-page [style*="letter-spacing"]{ margin-bottom:12px; }
+}
 @media (max-width:767px){
   /* typographie premium : hierarchie confiante, corps compact */
   .r-page h1{ font-size:clamp(30px,8.4vw,38px) !important; line-height:1.05 !important; letter-spacing:-.6px !important; margin:0 0 12px !important; }
   .r-page h2{ font-size:clamp(21px,5.6vw,26px) !important; line-height:1.12 !important; letter-spacing:-.3px !important; margin:0 0 8px !important; }
   .r-page h3{ margin:0 0 5px !important; }
   .r-page p{ line-height:1.5 !important; margin:0 0 10px !important; }
-  /* rythme vertical constant et maitrise */
-  .r-page > div, .r-page > section{ padding-top:30px !important; padding-bottom:30px !important; }
-  .r-page > div:first-child{ padding-top:14px !important; padding-bottom:14px !important; }
+  /* rythme vertical resserre mais TOUJOURS constant */
+  .r-page > div, .r-page > section{ padding-top:36px !important; padding-bottom:36px !important; }
+  .r-page > div:first-child{ padding-top:12px !important; padding-bottom:12px !important; }
   /* medias : cartes encadrees premium */
   .r-page img{ border-radius:14px !important; border:1px solid #1e2a44 !important; box-shadow:0 14px 36px rgba(0,0,0,.42) !important; }
   /* divulgation progressive */

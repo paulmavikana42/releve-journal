@@ -512,11 +512,8 @@ img { max-width:100%; height:auto; }
 }
 
 @media (max-width:767px){
-  /* rythme vertical resserre : sections plus courtes, respiration maitrisee */
-  .r-page > div, .r-page > section, .r-page > footer{
-    padding-top:26px !important; padding-bottom:26px !important;
-  }
-  .r-page > div:first-child{ padding-top:14px !important; padding-bottom:14px !important; }
+  /* (l'espacement de section est gere par la couche __premium sur les 5 pages
+     phares ; ici on ne touche qu'a la typo/medias pour login + pages legales) */
   /* titres compacts, sans casser la hierarchie */
   .r-page h1{ margin:0 0 10px !important; line-height:1.08 !important; letter-spacing:-.4px; }
   .r-page h2{ margin:0 0 6px !important; line-height:1.14 !important; }
