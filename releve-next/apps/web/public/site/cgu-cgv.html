@@ -543,15 +543,26 @@ if(document.readyState!=='loading')run();else document.addEventListener('DOMCont
 (function(){
   try{ document.documentElement.style.background='#0B1220'; }catch(e){}
   var KEY='releve_consent';
+  // >>> Coller ici l'ID de ton projet Microsoft Clarity (clarity.microsoft.com) <<<
+  var CLARITY_ID='';
   function get(){ try{ return localStorage.getItem(KEY); }catch(e){ return null; } }
   function set(v){ try{ localStorage.setItem(KEY,v); }catch(e){} }
-  function loadAnalytics(){
+  function loadVercel(){
     if(window.__va_loaded) return; window.__va_loaded=true;
-    // Vercel Web Analytics — sans cookie, respectueux de la vie privee.
+    // Vercel Web Analytics — audience globale, sans cookie.
     window.va = window.va || function(){ (window.vaq = window.vaq || []).push(arguments); };
     var s=document.createElement('script'); s.defer=true; s.src='/_vercel/insights/script.js';
     (document.head||document.documentElement).appendChild(s);
   }
+  function loadClarity(){
+    if(!CLARITY_ID || window.__clarity_loaded) return; window.__clarity_loaded=true;
+    // Microsoft Clarity — heatmaps, cartes de defilement, enregistrements de session :
+    // montre OU les visiteurs s'arretent et comment ils parcourent chaque page.
+    (function(c,l,a,r,i,t,y){c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+      t=l.createElement(r);t.async=1;t.src='https://www.clarity.ms/tag/'+i;
+      y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);})(window,document,'clarity','script',CLARITY_ID);
+  }
+  function loadAnalytics(){ loadVercel(); loadClarity(); }
   function banner(){
     if(document.getElementById('__cookies')) return;
     var w=document.createElement('div'); w.id='__cookies';
@@ -560,8 +571,8 @@ if(document.readyState!=='loading')run();else document.addEventListener('DOMCont
       +'box-shadow:0 24px 60px -20px rgba(0,0,0,.7);display:flex;gap:16px;align-items:center;flex-wrap:wrap;'
       +"font-family:'Inter',ui-sans-serif,system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#E9EFF7";
     w.innerHTML='<div style="flex:1;min-width:220px;font-size:13.5px;line-height:1.55;color:#B7C4D6">'
-      +'On utilise une mesure d\'audience <strong style="color:#E9EFF7">sans cookie</strong> pour ameliorer Releve. '
-      +'Aucune donnee personnelle vendue. <a href="/privacy" style="color:#F5A83C">En savoir plus</a>.</div>'
+      +'On utilise des cookies de <strong style="color:#E9EFF7">mesure d\'audience</strong> pour comprendre comment tu utilises Releve (pages, parcours) et l\'ameliorer. '
+      +'Aucune donnee revendue. <a href="/privacy" style="color:#F5A83C">En savoir plus</a>.</div>'
       +'<div style="display:flex;gap:10px;flex-shrink:0">'
       +'<button id="__ckno" style="background:transparent;color:#93A4BD;border:1px solid #35455f;border-radius:8px;padding:10px 16px;font-size:13.5px;cursor:pointer">Refuser</button>'
       +'<button id="__ckok" style="background:#F5A83C;color:#0B1220;border:0;border-radius:8px;padding:10px 18px;font-weight:700;font-size:13.5px;cursor:pointer">Accepter</button>'
