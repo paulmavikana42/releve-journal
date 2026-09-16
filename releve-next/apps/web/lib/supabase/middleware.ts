@@ -93,9 +93,23 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() plutôt que getUser() : le projet signe ses JWT avec des clés
+  // ASYMÉTRIQUES (ES256), donc getClaims vérifie le token EN LOCAL (WebCrypto +
+  // JWKS mis en cache) sans aller-retour réseau, tout en rafraîchissant les
+  // tokens expirés via les cookies (comme getUser). getUser ajoutait ~900 ms à
+  // CHAQUE navigation de l'app. Compromis assumé : une déconnexion faite sur un
+  // autre appareil n'est pas vue avant l'expiration du token (~1 h) — sans
+  // conséquence pour un simple gating bêta, les données restant protégées par RLS.
+  let user: unknown = null;
+  try {
+    const { data: claimsData } = await supabase.auth.getClaims();
+    user = claimsData?.claims ?? null;
+  } catch {
+    // Filet : si getClaims échoue (surprise SDK), on retombe sur getUser —
+    // comportement jamais pire qu'avant, jamais de blocage de connexion.
+    const { data } = await supabase.auth.getUser();
+    user = data.user ?? null;
+  }
 
   const isApp = APP_PREFIXES.some((p) => path === p || path.startsWith(p + "/"));
   const isGate = path === "/complet" || path === "/waitlist-ok";
