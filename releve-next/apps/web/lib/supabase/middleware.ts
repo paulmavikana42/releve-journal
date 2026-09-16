@@ -94,14 +94,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.rewrite(to);
   }
 
-  // Fichiers statiques du site + flux OAuth : accès libre.
-  if (path.startsWith("/site/") || path.startsWith("/auth")) {
+  // Fichiers statiques du site + flux OAuth + robots/sitemap : accès libre.
+  if (
+    path.startsWith("/site/") ||
+    path.startsWith("/auth") ||
+    path === "/robots.txt" ||
+    path === "/sitemap.xml"
+  ) {
     return response;
   }
 
   // Pages de gating (complet / liste d'attente) : session requise, pas d'accès bêta.
   if (isGate) {
     if (!user && !devPreview) return redirectTo("/login");
+    return response;
+  }
+
+  // Route inconnue (ni site, ni app, ni gating) : on laisse Next rendre le 404
+  // de marque (app/not-found.tsx) au lieu de renvoyer vers /login.
+  if (!isApp) {
     return response;
   }
 

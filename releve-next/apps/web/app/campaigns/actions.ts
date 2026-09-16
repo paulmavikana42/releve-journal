@@ -59,6 +59,9 @@ export async function createCampaign(formData: FormData): Promise<void> {
   );
   await s.flush();
   revalidatePath("/campaigns");
+  // Comme pour une idée (addIdea → /journal?vue=journal) : on sort de la section
+  // écriture pour revenir au panneau des thèses dès que c'est enregistré.
+  redirect("/campaigns?vue=list");
 }
 
 // Modifier une thèse (même parcours que Streamlit : écran de création pré-rempli).
