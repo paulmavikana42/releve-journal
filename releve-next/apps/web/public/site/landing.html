@@ -42,10 +42,10 @@ img { max-width:100%; height:auto; }
 
 .r-page { width:100%; max-width:none; min-width:0; margin:0 auto; }
 /* pleine largeur : les bandes filent d'un bord à l'autre, le contenu reste centré */
-@media (min-width:1441px) {
+@media (min-width:1025px) {
   .r-page:not(.r-login) > div, .r-page:not(.r-login) > section, .r-page:not(.r-login) > footer {
-    padding-left: max(64px, calc((100% - 1620px) / 2)) !important;
-    padding-right: max(64px, calc((100% - 1620px) / 2)) !important;
+    padding-left: max(64px, calc((100% - 1280px) / 2)) !important;
+    padding-right: max(64px, calc((100% - 1280px) / 2)) !important;
   }
 }
 .only-m { display:none !important; }
@@ -164,7 +164,7 @@ img { max-width:100%; height:auto; }
     <div class="r-page" data-screen-label="Landing" style="width:100%;background:#0B1220;overflow:hidden">
 
       <!-- NAV -->
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px clamp(20px,5vw,64px);border-bottom:1px solid #22304A;flex-wrap:wrap">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px clamp(20px,5vw,72px);border-bottom:1px solid #22304A">
         <div style="display:flex;align-items:center;gap:44px">
           <div style="display:flex;align-items:center;gap:11px">
             <div style="width:32px;height:32px;border-radius:8px;background:#F5A83C;color:#0B1220;font-family:'Newsreader',serif;font-weight:700;font-size:19px;display:flex;align-items:center;justify-content:center">R</div>
@@ -195,7 +195,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 1 · HERO — la thèse macro en vitrine ═══ -->
-      <div style="position:relative;padding:96px clamp(20px,5vw,64px) 104px;overflow:hidden">
+      <div style="position:relative;padding:96px clamp(20px,5vw,72px) 104px;overflow:hidden">
         <div class="hero-glow" style="position:absolute;top:-260px;left:200px;width:900px;height:640px;border-radius:50%;background:radial-gradient(closest-side,rgba(245,168,60,.09),rgba(245,168,60,0))"></div>
         <div style="position:relative;CLASS:r-side||display:grid;grid-template-columns:minmax(0,500px) minmax(0,1fr);gap:64px;align-items:center">
           <div>
@@ -268,7 +268,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- BANDE — trois règles de salle de marché -->
-      <div style="border-top:1px solid #22304A;border-bottom:1px solid #22304A;padding:44px clamp(20px,5vw,64px);display:grid;CLASS:r-side||grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:56px;align-items:center;background:#0C1424">
+      <div style="border-top:1px solid #22304A;border-bottom:1px solid #22304A;padding:44px clamp(20px,5vw,72px);display:grid;CLASS:r-side||grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:56px;align-items:center;background:#0C1424">
         <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;color:#93A4BD;line-height:1.7">Trois règles<br>de salle de marché</div>
         <div class="r-3" style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px">
           
@@ -291,7 +291,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 2 · LE VRAI PROBLÈME ═══ -->
-      <div style="padding:96px clamp(20px,5vw,64px);background:#0E1727;border-bottom:1px solid #22304A">
+      <div style="padding:96px clamp(20px,5vw,72px);background:#0E1727;border-bottom:1px solid #22304A">
         <div style="display:grid;CLASS:r-side||grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:64px;align-items:start">
           <div>
             <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:#F5A83C">Le vrai problème</div>
@@ -323,7 +323,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 3 · LE CŒUR — la thèse macro d'abord ═══ -->
-      <div style="padding:96px clamp(20px,5vw,64px);display:grid;CLASS:r-side||grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:56px;align-items:start">
+      <div style="padding:96px clamp(20px,5vw,72px);display:grid;CLASS:r-side||grid-template-columns:minmax(0,430px) minmax(0,1fr);gap:56px;align-items:start">
         <div>
           <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:#93A4BD;border-left:3px solid #F5A83C;padding-left:10px">Le cœur de l'outil</div>
           <h2 style="font-family:'Newsreader',serif;font-weight:600;font-size:38px;line-height:1.12;letter-spacing:-.02em;margin:20px 0 0;text-wrap:pretty">La thèse macro d'abord. Les positions ensuite.</h2>
@@ -390,7 +390,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 4 · LE CYCLE, EN 6 GESTES ═══ -->
-      <div style="padding:0 clamp(20px,5vw,64px) 96px">
+      <div style="padding:0 clamp(20px,5vw,72px) 96px">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:40px">
           <div style="max-width:560px">
             <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:#93A4BD;border-left:3px solid #F5A83C;padding-left:10px">Le cycle, en 6 gestes</div>
@@ -458,7 +458,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 5 · DÉCISION × RÉSULTAT ═══ -->
-      <div style="padding:96px clamp(20px,5vw,64px);background:#0E1727;border-top:1px solid #22304A;border-bottom:1px solid #22304A">
+      <div style="padding:96px clamp(20px,5vw,72px);background:#0E1727;border-top:1px solid #22304A;border-bottom:1px solid #22304A">
         <div style="display:grid;CLASS:r-side||grid-template-columns:minmax(0,1fr) minmax(0,420px);gap:56px;align-items:center">
           <div class="reveal lift" style="border:1px solid #22304A;border-radius:16px;background:#111B2E;padding:16px;box-shadow:0 34px 80px -34px rgba(0,0,0,.7)">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
@@ -506,7 +506,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 6 · DASHBOARD — preuve secondaire (visuel à gauche, texte à droite) ═══ -->
-      <div style="padding:96px clamp(20px,5vw,64px)">
+      <div style="padding:96px clamp(20px,5vw,72px)">
         <div style="display:grid;CLASS:r-side||grid-template-columns:minmax(0,1fr) minmax(0,400px);gap:60px;align-items:center">
           <div>
             <div class="reveal lift" style="border:1px solid #22304A;border-radius:14px;padding:12px;background:#0E1727;box-shadow:0 34px 80px -34px rgba(0,0,0,.75)">
@@ -523,7 +523,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- ═══ 7 · CLÔTURE ═══ -->
-      <div style="border-top:1px solid #22304A;background:#0E1727;CLASS:r-cta-row||padding:88px clamp(20px,5vw,64px);display:flex;align-items:center;justify-content:space-between;gap:48px">
+      <div style="border-top:1px solid #22304A;background:#0E1727;padding:88px clamp(20px,5vw,72px);display:flex;align-items:center;justify-content:space-between;gap:48px">
         <div style="max-width:580px">
           <div style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;letter-spacing:.17em;text-transform:uppercase;color:#F5A83C">À toi de jouer</div>
           <h2 style="font-family:'Newsreader',serif;font-weight:600;font-size:36px;line-height:1.12;letter-spacing:-.02em;margin:18px 0 0">Pose ta thèse avant ta prochaine position.</h2>
@@ -536,7 +536,7 @@ img { max-width:100%; height:auto; }
       </div>
 
       <!-- FOOTER -->
-      <div style="border-top:1px solid #22304A;padding:64px clamp(20px,5vw,64px) 0;display:grid;CLASS:r-foot||grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:start">
+      <div style="border-top:1px solid #22304A;padding:64px clamp(20px,5vw,72px) 0;display:grid;CLASS:r-foot||grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,1fr);gap:56px;align-items:start">
         <div>
           <div style="display:flex;align-items:center;gap:11px">
             <div style="width:28px;height:28px;border-radius:7px;background:#F5A83C;color:#0B1220;font-family:'Newsreader',serif;font-weight:700;font-size:17px;display:flex;align-items:center;justify-content:center">R</div>
@@ -559,7 +559,7 @@ img { max-width:100%; height:auto; }
           <p style="margin:18px 0 0;font-size:12.5px;line-height:1.75;color:#93A4BD">Nos paiements, factures et taxes sont gérés en toute sécurité par <span style="color:#E9EFF7;font-weight:600">Paddle.com Market Limited</span>, notre revendeur agréé (Merchant of Record).</p>
         </div>
       </div>
-      <div style="margin-top:44px;border-top:1px solid #22304A;padding:18px clamp(20px,5vw,64px);display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap">
+      <div style="margin-top:44px;border-top:1px solid #22304A;padding:18px clamp(20px,5vw,72px);display:flex;align-items:center;justify-content:space-between;gap:32px;flex-wrap:wrap">
         <div style="font-size:12.5px;color:#93A4BD">© 2026 Relevé. Tous droits réservés.</div>
         <div style="font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#93A4BD;white-space:nowrap">Trader mieux, chaque jour.</div>
       </div>
@@ -570,31 +570,6 @@ img { max-width:100%; height:auto; }
 function go(){document.querySelectorAll('.countup').forEach(run);}
 if(document.readyState!=='loading')go();else document.addEventListener('DOMContentLoaded',go);})();
 </script>
-
-<script>/* __mobilefix : condensation mobile premium (landing) */
-(function(){var css=`
-/* === pleine largeur desktop : fin des bandes noires laterales (cap 1200 -> 1620 centre) === */
-.r-page, .r-page[style], [style*="max-width:1200px"], [style*="max-width: 1200px"]{ max-width:none !important; }
-@media (min-width:1441px){
-  .r-page > div, .r-page > section, .r-page > footer{
-    padding-left:max(64px, calc((100% - 1620px) / 2)) !important;
-    padding-right:max(64px, calc((100% - 1620px) / 2)) !important;
-  }
-}
-@media (max-width:767px){
-  .r-page > div, .r-page > section, .r-page > footer{ padding-top:26px !important; padding-bottom:26px !important; }
-  .r-page > div:first-child{ padding-top:14px !important; padding-bottom:14px !important; }
-  .r-page h1{ margin:0 0 10px !important; line-height:1.08 !important; letter-spacing:-.4px; }
-  .r-page h2{ margin:0 0 6px !important; line-height:1.14 !important; }
-  .r-page h3{ margin:0 0 5px !important; }
-  .r-page p{ margin:0 0 9px !important; line-height:1.5 !important; }
-  .r-side{ gap:18px !important; }
-  .r-2,.r-3,.r-4{ gap:14px !important; }
-  .r-page img{ border-radius:12px; max-height:56vh; object-fit:cover; object-position:left top; }
-  .r-page li{ margin-bottom:6px !important; }
-  .r-foot{ gap:24px !important; }
-}
-`;function add(){var id='__mobilefix';var e=document.getElementById(id);if(!e){e=document.createElement('style');e.id=id;}e.textContent=css;(document.head||document.documentElement).appendChild(e);}if(document.readyState!=='loading')add();else document.addEventListener('DOMContentLoaded',add);[80,400,1000,2200].forEach(function(t){setTimeout(add,t);});})();</script>
 
 <script>/* __premium : mobile ultra premium (5 pages phares) */
 (function(){var __PCSS=`
