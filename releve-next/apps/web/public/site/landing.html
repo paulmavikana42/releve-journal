@@ -152,10 +152,20 @@ img { max-width:100%; height:auto; }
   .r-foot a, .r-links a { font-size:15px !important; min-height:36px; display:flex; align-items:center; }
 }
 </style>
+<style>
+/* Pas de bande laterale : fonds de section pleine largeur, contenu cape a 1280
+   (proportions V6) et centre. padding vertical d'origine conserve. */
+@media (min-width:1025px){
+  .r-page:not(.r-login) > div, .r-page:not(.r-login) > section, .r-page:not(.r-login) > footer{
+    padding-left:max(72px, calc((100% - 1280px) / 2)) !important;
+    padding-right:max(72px, calc((100% - 1280px) / 2)) !important;
+  }
+}
+</style>
 </head>
 <body>
 <div class="r-shell" style="width:100%">
-    <div class="r-page" data-screen-label="Landing" style="width:100%;max-width:1280px;margin:0 auto;background:#0B1220;overflow:hidden">
+    <div class="r-page" data-screen-label="Landing" style="width:100%;background:#0B1220;overflow:hidden">
 
       <!-- NAV -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 72px;border-bottom:1px solid #22304A;flex-wrap:wrap">
