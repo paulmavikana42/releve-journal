@@ -569,7 +569,15 @@ export default async function Dashboard({
                   { bg: "transparent", col: "var(--muted)", tag: "coût normal du métier", verdict: "process propre, marché contraire — rien à corriger ici", cell: tem.clean_wrong },
                   { bg: "var(--loss-soft)", col: "var(--loss)", tag: "zone rouge", verdict: "mauvaise lecture ET mauvaise exécution — le vrai signal d'alarme", cell: tem.dirty_wrong },
                 ];
-                const colhead = (t: string) => <div className="eyebrow bar mmeta" style={{ margin: 0, alignSelf: "end", justifyContent: "center", textAlign: "center" }}>{t}</div>;
+                // En-tête de colonne en DEUX lignes (libellé en haut, note en bas,
+                // centrés) : les deux barres oranges ont ainsi la même hauteur, quelle
+                // que soit la longueur du libellé.
+                const colhead = (label: string, rating: string) => (
+                  <div className="eyebrow bar mmeta colhead" style={{ margin: 0 }}>
+                    <span className="ch-lab">{label}</span>
+                    <span className="ch-rate">{rating}</span>
+                  </div>
+                );
                 const rowlabel = (t: React.ReactNode) => <div className="eyebrow mmeta" style={{ margin: 0, color: "var(--ink)", alignSelf: "center", textAlign: "right" }}>{t}</div>;
                 const Cell = ({ c }: { c: typeof cells[number] }) => (
                   <div className="card mcell" style={{ background: c.bg, margin: 0 }}>
@@ -582,8 +590,8 @@ export default async function Dashboard({
                   <>
                     <div className="matrix">
                       <div className="mmeta" />
-                      {colhead("exécution propre · 5/5")}
-                      {colhead("exécution dégradée · ≤3/5")}
+                      {colhead("exécution propre", "5/5")}
+                      {colhead("exécution dégradée", "≤3/5")}
                       {rowlabel(<>idée<br />correcte</>)}
                       <Cell c={cells[0]!} />
                       <Cell c={cells[1]!} />
@@ -601,6 +609,7 @@ export default async function Dashboard({
             </div>
             <div>
               <h3 style={{ margin: "0 0 8px" }}>Calibration</h3>
+              <div className="note" style={{ marginBottom: 10 }}>Le P&amp;L moyen de tes idées <b>selon la conviction</b> que tu leur avais donnée (de 2/5 à 5/5). Si ta conviction est un vrai signal, la barre doit <b>monter</b> avec elle ; sinon, tu sizes sur du bruit.</div>
               {calib.length >= 2 ? (
                 <>
                   <CalibrationChart points={calib} />
