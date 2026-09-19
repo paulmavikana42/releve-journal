@@ -73,7 +73,7 @@ export function CumulativeCurve({
     ` L${X(n - 1).toFixed(1)},${zeroY.toFixed(1)} Z`;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} width="100%" height={height} role="img" style={{ display: "block" }}>
+    <svg className="rchart" viewBox={`0 0 ${W} ${H}`} width="100%" height={height} role="img" style={{ display: "block" }}>
       <defs>
         <clipPath id="clipTop"><rect x="0" y="0" width={W} height={zeroY} /></clipPath>
         <clipPath id="clipBot"><rect x="0" y={zeroY} width={W} height={H - zeroY} /></clipPath>

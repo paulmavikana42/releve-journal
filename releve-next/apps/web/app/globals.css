@@ -512,6 +512,10 @@ button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: defa
   .calm.sel-col-3 { grid-template-columns: 1fr 1fr 1fr 2fr; }
   .matrix { grid-template-columns: 1fr 1fr; }
   .matrix .mmeta { display: none; }
+  /* Courbe d'équité : hauteur AUTO en mobile (aspect du viewBox) — sinon la
+     hauteur fixe (300) laisse un grand vide sous la courbe et le texte semble
+     appartenir à la section suivante. */
+  .rchart { height: auto !important; }
 }
 @media (max-width: 440px) {
   /* KPI Gain net → Sortino : 2 colonnes comme la matrice décision × résultat.
