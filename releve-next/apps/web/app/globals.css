@@ -516,6 +516,9 @@ button:disabled, .primary:disabled, .ghost:disabled { opacity: .45; cursor: defa
      hauteur fixe (300) laisse un grand vide sous la courbe et le texte semble
      appartenir à la section suivante. */
   .rchart { height: auto !important; }
+  /* En mobile, courbe et « décision × résultat » s'empilent dans la même grille :
+     on aère entre les deux comme entre deux sections (même rythme). */
+  .dash .split { gap: 40px; }
 }
 @media (max-width: 440px) {
   /* KPI Gain net → Sortino : 2 colonnes comme la matrice décision × résultat.
