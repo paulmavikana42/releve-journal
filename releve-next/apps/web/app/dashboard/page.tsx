@@ -578,7 +578,6 @@ export default async function Dashboard({
                     <span className="ch-rate">{rating}</span>
                   </div>
                 );
-                const rowlabel = (t: React.ReactNode) => <div className="eyebrow mmeta" style={{ margin: 0, color: "var(--ink)", alignSelf: "center", textAlign: "right" }}>{t}</div>;
                 const Cell = ({ c }: { c: typeof cells[number] }) => (
                   <div className="card mcell" style={{ background: c.bg, margin: 0 }}>
                     <div className="eyebrow" style={{ margin: 0, color: c.col }}>{c.tag}</div>
@@ -589,13 +588,10 @@ export default async function Dashboard({
                 return (
                   <>
                     <div className="matrix">
-                      <div className="mmeta" />
                       {colhead("exécution propre", "5/5")}
                       {colhead("exécution dégradée", "≤3/5")}
-                      {rowlabel(<>idée<br />correcte</>)}
                       <Cell c={cells[0]!} />
                       <Cell c={cells[1]!} />
-                      {rowlabel(<>idée<br />fausse</>)}
                       <Cell c={cells[2]!} />
                       <Cell c={cells[3]!} />
                     </div>
