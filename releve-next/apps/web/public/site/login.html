@@ -610,6 +610,46 @@ if(document.readyState!=='loading')run();else document.addEventListener('DOMCont
     document.addEventListener('touchstart', scan, {passive:true});
   })();
 })();</script>
+
+<script>/* __accueil : lien Accueil en tete de nav (desktop) et du menu hamburger */
+(function(){
+  function add(){
+    ['.r-navlinks', '.r-menu'].forEach(function(sel){
+      var c = document.querySelector(sel);
+      if(!c) return;
+      // idempotent : ne pas ajouter deux fois, ni doublonner un lien "/" existant
+      if(c.querySelector('a[data-accueil]')) return;
+      var already = Array.prototype.some.call(c.querySelectorAll('a'), function(a){
+        return (a.getAttribute('href')||'') === '/' ||
+               (a.textContent||'').trim().toLowerCase() === 'accueil';
+      });
+      if(already) return;
+      var a = document.createElement('a');
+      a.href = '/'; a.textContent = 'Accueil'; a.setAttribute('data-accueil','1');
+      if(sel === '.r-navlinks'){ a.style.color = '#93A4BD'; }  // meme teinte que les autres liens desktop
+      c.insertBefore(a, c.firstChild);
+    });
+  }
+  if(document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add);
+  // les bundles rendent la nav apres coup -> on reessaie quelques fois
+  [150,400,900,1800,3000].forEach(function(t){ setTimeout(add, t); });
+})();</script>
+
+<script>/* __loginclean : epuration mobile de la colonne connexion */
+(function(){
+  var CSS = "@media (max-width:620px){"
+    + ".r-login-panel>p{display:none!important}"          /* sous-titre CTA + 'Premiere connexion ?' */
+    + ".r-login-panel>h2{margin:0 0 22px!important}"       /* respiration avant le bouton */
+    + ".r-login-panel>a{margin:6px 0 24px!important}"      /* espace sous le bouton avant le legal */
+    + "}";
+  function apply(){
+    if(document.getElementById('__loginclean_css')) return; /* si le head a ete reconstruit, getElementById=null -> on re-ajoute */
+    var s=document.createElement('style'); s.id='__loginclean_css'; s.textContent=CSS;
+    (document.head||document.documentElement).appendChild(s);
+  }
+  if(document.readyState!=='loading') apply(); else document.addEventListener('DOMContentLoaded', apply);
+  [150,400,900,1800,3000].forEach(function(t){ setTimeout(apply, t); });
+})();</script>
 </body>
 </html>
 

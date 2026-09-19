@@ -807,5 +807,29 @@ window.addEventListener('resize', function(){ clearTimeout(window.__pz); window.
     document.addEventListener('touchstart', scan, {passive:true});
   })();
 })();</script>
+
+<script>/* __accueil : lien Accueil en tete de nav (desktop) et du menu hamburger */
+(function(){
+  function add(){
+    ['.r-navlinks', '.r-menu'].forEach(function(sel){
+      var c = document.querySelector(sel);
+      if(!c) return;
+      // idempotent : ne pas ajouter deux fois, ni doublonner un lien "/" existant
+      if(c.querySelector('a[data-accueil]')) return;
+      var already = Array.prototype.some.call(c.querySelectorAll('a'), function(a){
+        return (a.getAttribute('href')||'') === '/' ||
+               (a.textContent||'').trim().toLowerCase() === 'accueil';
+      });
+      if(already) return;
+      var a = document.createElement('a');
+      a.href = '/'; a.textContent = 'Accueil'; a.setAttribute('data-accueil','1');
+      if(sel === '.r-navlinks'){ a.style.color = '#93A4BD'; }  // meme teinte que les autres liens desktop
+      c.insertBefore(a, c.firstChild);
+    });
+  }
+  if(document.readyState !== 'loading') add(); else document.addEventListener('DOMContentLoaded', add);
+  // les bundles rendent la nav apres coup -> on reessaie quelques fois
+  [150,400,900,1800,3000].forEach(function(t){ setTimeout(add, t); });
+})();</script>
 </body>
 </html>
