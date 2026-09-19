@@ -309,6 +309,14 @@ a.card:hover { border-color: var(--rule); text-decoration: none; }
 /* --- règle horizontale --- */
 .rule { border: none; border-top: 1px solid var(--rule-soft); margin: 22px 0 16px; }
 
+/* --- Tableau de bord : un peu plus d'air entre les blocs et dans les grilles,
+   sur tous les supports (espacement uniquement, rien de structurel). Scopé à
+   .dash pour ne pas toucher les autres pages qui partagent .wrap/.rule. --- */
+.dash .rule { margin: 40px 0 26px; }
+.dash .split { margin-top: 40px; }
+.dash .kpigrid, .dash .grid3, .dash .grid2 { gap: 12px; }
+.dash header { margin-bottom: 14px; }
+
 /* --- stepper (cycle de vie d'une idée) --- */
 .stepper { display: flex; gap: 0; margin: 8px 0 14px; flex-wrap: wrap; }
 .step {

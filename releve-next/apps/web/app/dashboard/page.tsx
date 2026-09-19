@@ -263,7 +263,7 @@ export default async function Dashboard({
       : <>Les chiffres ci-dessous comptent <b>chaque idée séparément</b>, y compris les jambes d&apos;une même thèse macro. Utile pour juger l&apos;exécution instrument par instrument ; trompeur pour juger ton edge, puisqu&apos;un seul pari joué sur trois instruments compte alors trois fois.</>;
 
   return (
-    <main className="wrap">
+    <main className="wrap dash">
       <header>
         <h1 style={{ margin: 0 }}>Tableau de bord</h1>
         <div className="subtitle">{(active ? active.label + " · " : "") + period.label}</div>
@@ -598,7 +598,7 @@ export default async function Dashboard({
                     {tem.cost_of_indiscipline !== null && (
                       <div className="note" style={{ marginTop: 4 }}><b>Le coût d&apos;indiscipline</b> — sur tes idées <b>correctes</b>, passer d&apos;une exécution propre à dégradée te coûte <b className="txt-loss">{tem.cost_of_indiscipline.toFixed(2)} R par idée</b>. Ce n&apos;est pas ton analyse qui te ruine, c&apos;est ta discipline.</div>
                     )}
-                    <div className="note" style={{ marginTop: 6 }}><b>La question que ça règle</b> : si la colonne « dégradée » est toujours pire que « propre », ton problème est ta <b>discipline</b>. Si c&apos;est la ligne « fausse » qui domine, révise ta <b>lecture</b> du marché — ton exécution, elle, est déjà bonne.</div>
+                    <div className="note" style={{ marginTop: 6 }}><b>La question que ça règle</b> : compare d&apos;abord les deux <b>colonnes</b> — si « dégradée » reste toujours en dessous de « propre », c&apos;est ta <b>discipline</b> qu&apos;il faut travailler. Regarde ensuite les deux <b>cases du bas</b> (les idées que le marché a invalidées) : si ce sont elles qui pèsent le plus, révise ta <b>lecture</b> du marché — ton exécution, elle, est déjà bonne.</div>
                   </>
                 );
               })()}
