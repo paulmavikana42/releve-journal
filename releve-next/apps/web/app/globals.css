@@ -636,6 +636,14 @@ table.t td b { font-family: var(--font-ui); }
 .add-risk-fields { display: grid; grid-template-columns: 200px 1fr; gap: 12px; align-items: end; }
 .add-risk-fields .add-be { align-self: center; }
 .add-risk-toggle { padding: 6px 10px; font-size: .82rem; }
+/* La case « noyau au breakeven » : coche + libellé TOUJOURS côte à côte. Sans ça,
+   le retour à la ligne mobile de `.card .row` détachait la coche sur sa propre
+   ligne, le texte tombant dessous — on ne savait plus quoi cocher. La coche
+   s'aligne sur la 1re ligne du texte, qui s'enroule à côté d'elle.
+   (`label.add-be` : spécificité > `.card .row`, quel que soit l'ordre source.) */
+.add-risk-fields label.add-be { flex-wrap: nowrap; align-items: flex-start; }
+.add-risk-fields label.add-be > input[type="checkbox"] { flex-shrink: 0; margin-top: 3px; }
+.add-risk-fields label.add-be > span { flex: 1; min-width: 0; }
 @media (max-width: 640px) {
   .add-risk-fields { grid-template-columns: 1fr; align-items: stretch; }
 }
