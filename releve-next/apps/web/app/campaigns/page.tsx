@@ -109,21 +109,21 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
               const legs = [...c.ideas].sort((a, b) => (a.opened_at?.getTime() ?? 0) - (b.opened_at?.getTime() ?? 0));
               const canModify = !c.closed;
               return (
-                <div key={c.id} className="card">
-                  {/* en-tête : résumé à gauche · conviction + 3-points + abandon à droite */}
-                  <div className="between" style={{ alignItems: "flex-start", gap: 12 }}>
-                    <div style={{ minWidth: 0 }}>
-                      <div className="eyebrow" style={{ marginBottom: 2 }}>{c.macro_theme || "thèse macro"}</div>
-                      <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
-                        <strong style={{ fontSize: "1.05rem" }}>{c.display_name}</strong>
-                        {c.conviction != null && <span className="chip">conv {c.conviction}/5</span>}
-                      </div>
-                      <div className="note mono" style={{ marginTop: 4 }}>
-                        {c.ideas.length} idée(s) · {c.instruments.length ? c.instruments.join(" · ") : "aucune idée exécutée"}
-                      </div>
+                <div key={c.id} className="card" style={{ position: "relative" }}>
+                  {/* Les 3-points : toujours collés en haut-droite de la carte (marge fixe),
+                      jamais décalés par la longueur du contenu. Le popover s'ouvre dessous. */}
+                  <div className="campaign-menu-anchor">
+                    <CampaignMenu id={c.id} canModify={canModify} />
+                  </div>
+                  {/* résumé (padding-right pour laisser respirer le bouton ⋮) */}
+                  <div style={{ minWidth: 0, paddingRight: 34 }}>
+                    <div className="eyebrow" style={{ marginBottom: 2 }}>{c.macro_theme || "thèse macro"}</div>
+                    <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
+                      <strong style={{ fontSize: "1.05rem" }}>{c.display_name}</strong>
+                      {c.conviction != null && <span className="chip">conv {c.conviction}/5</span>}
                     </div>
-                    <div style={{ flexShrink: 0 }}>
-                      <CampaignMenu id={c.id} canModify={canModify} />
+                    <div className="note mono" style={{ marginTop: 4 }}>
+                      {c.ideas.length} idée(s) · {c.instruments.length ? c.instruments.join(" · ") : "aucune idée exécutée"}
                     </div>
                   </div>
 
